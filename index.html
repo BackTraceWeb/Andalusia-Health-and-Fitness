@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Andalusia Health & Fitness — Home</title>
+  <title>Andalusia Health & Fitness — Get fit & healthy</title>
   <link rel="stylesheet" href="styles.css"/>
-  <meta name="description" content="Local 24/7 gym in Andalusia, AL. Lose body fat, gain lean muscle tone.">
+  <meta name="description" content="Andalusia Health & Fitness — 24/7 local gym. Join online; access reactivates automatically after payment.">
 </head>
 <body>
-  <header class="bar">
-    <div class="wrap nav">
+  <!-- Header -->
+  <div class="header">
+    <div class="wrap">
       <div class="brand">
         <img src="assets/logo.png" alt="Andalusia Health & Fitness" />
         <div class="brand-name">
@@ -17,62 +18,53 @@
           <div class="line2">Health &amp; Fitness</div>
         </div>
       </div>
-      <nav class="links">
+      <nav class="nav">
         <a href="index.html">Home</a>
         <a href="pricing.html">Pricing</a>
         <a href="dashboard.html">Dashboard</a>
+        <a href="tel:+13345822000" class="cta-mini">Call • (334) 582-2000</a>
       </nav>
     </div>
-  </header>
+  </div>
 
-  <main class="wrap">
-    <section class="hero">
-      <div>
-        <h1>Your community gym — open 24/7</h1>
-        <p class="lead">Dedicated to helping people lose unwanted body fat and gain lean muscle tone.</p>
-        <div class="row">
-          <a class="btn" href="pricing.html">Join Now</a>
-          <a class="btn secondary" target="_blank"
-             href="https://www.facebook.com/p/Andalusia-Health-and-Fitness-100057140663701/">
-            Follow on Facebook
-          </a>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="content">
+      <h1>Get fit &amp; healthy.</h1>
+      <p class="lead">Local, friendly, and open 24/7. Join online today — your door access reactivates automatically after payment.</p>
+      <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap">
+        <a class="btn primary" href="pricing.html">Get a membership</a>
+        <a class="btn ghost" target="_blank" href="https://www.facebook.com/p/Andalusia-Health-and-Fitness-100057140663701/">Follow on Facebook</a>
+      </div>
+      <div class="badges">
+        <div class="badge">24/7 Access</div>
+        <div class="badge">Classes &amp; amenities</div>
+        <div class="badge">Downtown Andalusia</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature row -->
+  <section class="section">
+    <div class="wrap">
+      <div class="grid3">
+        <div class="card">
+          <h3>Clean, friendly facility</h3>
+          <div class="muted">Well-maintained equipment and a welcoming atmosphere.</div>
         </div>
-
-        <div class="card contact">
-          <div><b>Address</b><br>205 Church St, Andalusia, AL 36420</div>
-          <div><b>Phone</b><br><a href="tel:+13345822000">(334) 582-2000</a></div>
-          <div><b>Hours</b><br>Open 24 hours</div>
-          <div class="row"><a class="btn secondary" target="_blank"
-               href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420">Open in Maps</a></div>
+        <div class="card">
+          <h3>Flexible memberships</h3>
+          <div class="muted">Month-to-month with no surprises.</div>
+        </div>
+        <div class="card">
+          <h3>Tap to join online</h3>
+          <div class="muted">Stripe checkout and instant fob reactivation.</div>
         </div>
       </div>
+    </div>
+  </section>
 
-      <div class="card">
-        <div class="muted small">Upcoming / Regular Classes</div>
-        <ul class="bullets">
-          <li><b>Spin</b> — Tue & Thu at 8:00 AM</li>
-          <li><b>Dance Fitness</b> — Mon & Thu at 6:00 PM</li>
-        </ul>
-        <div class="muted tiny">Schedules may change — check Facebook for latest updates.</div>
-      </div>
-    </section>
-
-    <section class="grid3">
-      <div class="card"><b>Clean, friendly facility</b><div class="muted">Great equipment & atmosphere.</div></div>
-      <div class="card"><b>Flexible memberships</b><div class="muted">Month-to-month, no nonsense.</div></div>
-      <div class="card"><b>24/7 access</b><div class="muted">Work out day or night.</div></div>
-    </section>
-
-    <section class="card cta">
-      <div>
-        <div class="bigbold">Ready to get started?</div>
-        <div class="muted">Pay online and your door fob activates automatically after payment.</div>
-      </div>
-      <a class="btn" href="pricing.html">Join Andalusia Health &amp; Fitness</a>
-    </section>
-  </main>
-
-  <footer class="foot">
+  <footer class="footer">
     © <script>document.write(new Date().getFullYear())</script> Andalusia Health &amp; Fitness — Open 24/7.
   </footer>
 </body>
