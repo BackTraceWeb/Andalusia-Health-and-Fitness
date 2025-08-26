@@ -1,77 +1,112 @@
+/* ====== Theme ====== */
 :root{
-  --brand:#d81b60;      /* Andalusia accent */
-  --brand-2:#a80c47;    /* darker hover */
-  --ink:#ffffff;        /* light text on hero */
-  --body:#0b0b0b;       /* body text for light sections */
-  --muted:#64748b;      /* gray text */
-  --border:#e5e7eb;
+  --brand:#d81b60;         /* Andalusia pink/red accent (from logo) */
+  --brand-dark:#a80c47;    /* darker hover */
+  --ink:#ffffff;           /* light text on hero */
+  --body:#0b0b0b;          /* body text */
+  --muted:#8b98a9;         /* muted on dark hero */
+  --muted-light:#64748b;   /* muted on light sections */
+  --border:#22252a;        /* border for dark UI bits */
+  --card-border:#e5e7eb;   /* border for light cards */
 }
 
+/* Base */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,"Helvetica Neue",Arial,sans-serif;
-  background:#fff; color:var(--body);
+  color:var(--body);
+  background:#000; /* page starts dark like the reference */
 }
-a{text-decoration:none;color:inherit}
-img{max-width:100%;display:block}
 
-/* Header */
-.header{position:fixed;top:0;left:0;right:0;z-index:40;background:transparent}
-.header .wrap{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:12px}
-.brand img{height:48px;width:auto}
-.brand-name{font-family:Georgia,"Times New Roman",Times,serif;font-weight:800;color:#fff;line-height:1}
-.brand-name .line1{font-size:24px}
-.brand-name .line2{font-size:12px;opacity:.9}
-.nav a{color:#fff;margin-left:22px;font-weight:600}
-.nav a:hover{opacity:.85}
-.cta-mini{padding:10px 16px;background:var(--brand);color:#fff;border-radius:999px;font-weight:800;border:2px solid rgba(255,255,255,.15)}
-.cta-mini:hover{background:var(--brand-2)}
+/* Shell / container */
+.shell{max-width:1200px;margin:0 auto;padding:0 24px}
 
-/* Hero */
+/* ====== Top bar (like reference: brand pill left, nav center, CTA right) ====== */
+.topbar{
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  background:rgba(0,0,0,.45); backdrop-filter:saturate(140%) blur(8px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.topbar .shell{
+  height:64px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:16px;
+}
+
+/* Brand pill */
+.brand-pill{
+  display:inline-flex; align-items:center; gap:10px;
+  background:#0e1013; border:1px solid rgba(255,255,255,.08);
+  color:#fff; padding:8px 12px; border-radius:999px; width:max-content;
+}
+.brand-pill img{height:22px; width:auto; display:block}
+.brand-pill span{font-weight:800; letter-spacing:.6px; font-size:12px}
+
+/* Center nav */
+.mainnav{display:flex; gap:22px; justify-content:center}
+.mainnav a{color:#cfd6de; text-decoration:none; font-weight:600; font-size:14px}
+.mainnav a:hover{color:#fff}
+.mainnav a.active{color:#fff}
+
+/* Right CTA */
+.top-cta{display:flex; justify-content:flex-end}
+.pill-cta{
+  display:inline-block; color:#fff; background:var(--brand); border:2px solid rgba(255,255,255,.08);
+  padding:10px 16px; border-radius:999px; font-weight:800; text-decoration:none;
+}
+.pill-cta:hover{background:var(--brand-dark)}
+
+/* ====== HERO ====== */
 .hero{
-  min-height:100vh;display:grid;place-items:center;color:var(--ink);
-  /* Replace with a real photo if you want. This gradient is a safe placeholder. */
-  background:
-    radial-gradient(1200px 600px at 20% 40%, rgba(216,27,96,.28), transparent 60%),
-    linear-gradient(to bottom, rgba(0,0,0,.65), rgba(0,0,0,.75));
-  background-color:#0a0a0c;
+  min-height:100vh; position:relative; display:flex; align-items:center;
+  background:#0a0b0d url('assets/hero.jpg') center/cover no-repeat; /* replace with a real gym photo if you want */
 }
-.hero .content{position:relative;width:100%;max-width:1200px;padding:120px 24px 64px}
-h1{font-size:64px;line-height:1.05;margin:0 0 12px 0;color:#fff;font-weight:800;letter-spacing:.3px}
-.lead{color:#cbd5e1;font-size:18px;max-width:720px}
-.btn{display:inline-block;padding:14px 22px;border-radius:14px;font-weight:800}
-.btn.primary{background:var(--brand);color:#fff}
-.btn.primary:hover{background:var(--brand-2)}
-.btn.ghost{border:2px solid rgba(255,255,255,.25);color:#fff}
-.btn.ghost:hover{border-color:#fff}
+.hero .overlay{
+  position:absolute; inset:0;
+  background:
+    radial-gradient(1200px 600px at 20% 40%, rgba(216,27,96,.24), transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,.70) 0%, rgba(0,0,0,.78) 100%);
+}
+.hero .shell{position:relative; z-index:1}
+.hero-copy{color:var(--ink); padding-top:96px}
+.hero-copy h1{
+  margin:0 0 12px 0; font-size:64px; line-height:1.06; font-weight:800; letter-spacing:.2px; color:#fff;
+}
+.hero-copy h1 span{color:#fff}
+.hero-copy .lede{color:var(--muted); font-size:18px; max-width:720px}
+.cta-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:22px}
+.btn{display:inline-block; padding:14px 22px; border-radius:14px; font-weight:800; text-decoration:none}
+.btn-primary{background:var(--brand); color:#fff}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-ghost{border:2px solid rgba(255,255,255,.25); color:#fff}
+.btn-ghost:hover{border-color:#fff}
 
-.badges{display:flex;gap:8px;margin-top:36px;flex-wrap:wrap}
-.badge{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15);padding:8px 12px;border-radius:999px;font-size:12px;letter-spacing:.2px}
+/* scroll dots bottom-left (style cue from reference) */
+.scroll-dots{position:absolute; left:24px; bottom:24px; display:flex; gap:8px; z-index:1}
+.scroll-dots .dot{width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.25)}
+.scroll-dots .dot.active{background:#fff}
 
-/* Sections */
-.section{padding:64px 24px;display:flex;justify-content:center}
-.wrap{width:100%;max-width:1100px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.card{border:1px solid var(--border);border-radius:16px;padding:20px;background:#fff}
+/* ====== Features Section (light cards on dark bg) ====== */
+.features{background:#0a0b0d; padding:56px 0}
+.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+.card{
+  background:#fff; border:1px solid var(--card-border); border-radius:16px; padding:20px;
+}
 .card h3{margin:0 0 6px 0}
-.muted{color:var(--muted)}
-.small{font-size:14px}
-.tiny{font-size:12px}
-.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:12px}
+.muted{color:var(--muted-light)}
 
-.bullets{margin:12px 0 0 20px}
-.bullets li{margin:6px 0}
+/* ====== Footer ====== */
+.sitefoot{
+  background:#0a0b0d; color:#8a95a5; text-align:center; padding:24px; border-top:1px solid rgba(255,255,255,.06);
+}
 
-/* Footer */
-.footer{border-top:1px solid var(--border);padding:24px;text-align:center;color:#64748b}
+/* ====== Inputs (pricing page uses these) ====== */
+.input{width:100%; padding:12px 14px; border:1px solid #e5e7eb; border-radius:12px}
 
-/* Responsive tweaks */
-@media (max-width:900px){
-  h1{font-size:40px}
-  .grid3{grid-template-columns:1fr}
-  .brand-name{display:none}
+/* ====== Responsive ====== */
+@media (max-width:980px){
+  .topbar .shell{grid-template-columns:1fr auto auto}
+  .mainnav{display:none} /* collapse the middle menu on small screens for simplicity */
+  .hero-copy h1{font-size:44px}
+  .grid-3{grid-template-columns:1fr}
 }
