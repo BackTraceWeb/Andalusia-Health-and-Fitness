@@ -34,20 +34,24 @@ img{max-width:100%;display:block}
 }
 
 /* Brand pill — bubble slightly smaller, logo larger */
+/* Brand pill — snug bubble around the logo */
 .brand-pill{
-  display:flex; align-items:center; justify-content:center;
+  display:inline-flex;                 /* shrink-to-fit */
+  align-items:center;
+  justify-content:center;
   background:#fff;
   border:1.5px solid rgba(0,0,0,0.12);
-  border-radius:999px;
-  padding:6px 14px;          /* ↓ a bit tighter bubble */
-  height:44px;               /* ↓ bubble height */
+  border-radius:9999px;
+  padding:6px 10px;                    /* tight wrap */
+  line-height:0;                       /* remove extra inline height */
   box-shadow:0 2px 8px rgba(0,0,0,0.18);
   transition:transform .2s ease, box-shadow .2s ease;
 }
 .brand-pill:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 4px 14px rgba(0,0,0,0.25) }
 .brand-pill img{
-  height:38px;               /* ↑ bigger logo inside */
+  height:40px;                         /* bigger logo */
   width:auto;
+  display:block;
 }
 
 /* Center nav */
@@ -69,7 +73,7 @@ img{max-width:100%;display:block}
 /* ====== HERO ====== */
 .hero{
   min-height:100vh; position:relative; display:flex; align-items:center;
-  background:#0a0b0d url('assets/hero.jpg') center/cover no-repeat;
+  background:#0a0b0d url('girlgym.png') center/cover no-repeat;
 }
 /* Stronger overlay for readability */
 .hero .overlay{
@@ -136,3 +140,4 @@ img{max-width:100%;display:block}
   .hero-copy h1{font-size:44px}
   .grid-3{grid-template-columns:1fr}
 }
+
