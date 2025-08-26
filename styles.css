@@ -35,23 +35,26 @@ img{max-width:100%;display:block}
 
 /* Brand pill — bubble slightly smaller, logo larger */
 /* Brand pill — snug bubble around the logo */
-.brand-pill{
-  display:inline-flex;                 /* shrink-to-fit */
-  align-items:center;
-  justify-content:center;
-  background:#fff;
-  border:1.5px solid rgba(0,0,0,0.12);
-  border-radius:9999px;
-  padding:6px 10px;                    /* tight wrap */
-  line-height:0;                       /* remove extra inline height */
-  box-shadow:0 2px 8px rgba(0,0,0,0.18);
-  transition:transform .2s ease, box-shadow .2s ease;
+.brand-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  border-radius: 9999px;
+  padding: 4px 8px;        /* tightened padding */
+  line-height: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  transition: transform .2s ease, box-shadow .2s ease;
 }
-.brand-pill:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 4px 14px rgba(0,0,0,0.25) }
-.brand-pill img{
-  height:40px;                         /* bigger logo */
-  width:auto;
-  display:block;
+.brand-pill:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+.brand-pill img {
+  height: 42px;            /* logo bigger */
+  width: auto;
+  display: block;
 }
 
 /* Center nav */
@@ -76,12 +79,15 @@ img{max-width:100%;display:block}
   background:#0a0b0d url('girlgym.png') center/cover no-repeat;
 }
 /* Stronger overlay for readability */
-.hero .overlay{
-  position:absolute; inset:0;
+.hero .overlay {
+  position: absolute;
+  inset: 0;
+  /* Lighter so photo shows more */
   background:
-    radial-gradient(800px 480px at 40% 45%, rgba(0,0,0,.40), transparent 70%), /* darker under text */
-    linear-gradient(180deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,.86) 100%);        /* overall vignette */
+    radial-gradient(900px 520px at 42% 45%, rgba(0,0,0,.22), transparent 70%),
+    linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.70) 100%);
 }
+
 .hero .shell{position:relative; z-index:1}
 .hero-copy{color:var(--ink); padding-top:96px}
 .hero-copy h1{
@@ -140,4 +146,5 @@ img{max-width:100%;display:block}
   .hero-copy h1{font-size:44px}
   .grid-3{grid-template-columns:1fr}
 }
+
 
