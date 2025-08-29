@@ -3,7 +3,7 @@
    File: assets/css/styles.css
    ========================================================= */
 
-/* ====== Theme ====== */
+/* ===== Theme ===== */
 :root{
   --brand:#d81b60;
   --brand-dark:#a80c47;
@@ -15,23 +15,21 @@
   --card-border:#e5e7eb;
 }
 
-/* ====== Base ====== */
-*{box-sizing:border-box}
-html,body{height:100%}
+/* ===== Base ===== */
+*{ box-sizing:border-box }
+html,body{ height:100% }
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,"Helvetica Neue",Arial,sans-serif;
   color:var(--body);
   background:#000;
 }
-a{text-decoration:none;color:inherit}
-img{max-width:100%;display:block}
-
-/* Layout shell */
-.shell{max-width:1200px;margin:0 auto;padding:0 24px}
+a{ color:inherit; text-decoration:none }
+img{ max-width:100%; display:block }
+.shell{ max-width:1200px; margin:0 auto; padding:0 24px }
 
 /* =========================================================
-   Top Bar / Navigation (logo + nav)
+   Header: Topbar (logo + nav)
    ========================================================= */
 .topbar{
   position:fixed; top:0; left:0; right:0; z-index:50;
@@ -40,7 +38,7 @@ img{max-width:100%;display:block}
 }
 .topbar .shell{
   display:grid;
-  grid-template-columns: auto 1fr;  /* logo | nav */
+  grid-template-columns: auto 1fr;   /* logo | nav */
   align-items:center;
   height:72px;
   gap:16px;
@@ -48,15 +46,11 @@ img{max-width:100%;display:block}
 
 /* Logo pill */
 .brand-pill{
-  display:inline-flex;
-  align-items:center; justify-content:center;
-  padding:6px 14px;                 /* skinny bubble */
-  background:#fff;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:6px 14px; background:#fff;
   border:2px solid rgba(255,255,255,.08);
-  border-radius:999px;
-  box-shadow:0 2px 6px rgba(0,0,0,.18);
-  width:max-content; white-space:nowrap;
-  line-height:0;
+  border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.18);
+  width:max-content; white-space:nowrap; line-height:0;
   transition:transform .2s ease, box-shadow .2s ease;
 }
 .brand-pill:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 4px 14px rgba(0,0,0,.25) }
@@ -66,35 +60,27 @@ img{max-width:100%;display:block}
 .mainnav{
   display:flex; gap:24px; justify-content:flex-end; align-items:center;
 }
-.mainnav a{
-  color:#cfd6de; font-weight:700; font-size:15px;
-}
-.mainnav a:hover, .mainnav a.active{ color:#fff }
-
-/* Join Today inside nav (goes to membership.html) */
-.mainnav a.btn-join{
-  color:#fff; background:var(--brand);
-  border:2px solid rgba(255,255,255,.08);
-  padding:10px 16px; border-radius:999px; font-weight:800;
-  transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
-}
-.mainnav a.btn-join:hover{ background:var(--brand-dark); transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.28) }
-.mainnav a.btn-join:focus-visible{ outline:3px solid rgba(216,27,96,.45); outline-offset:2px }
+.mainnav a{ color:#cfd6de; font-weight:700; font-size:15px }
+.mainnav a:hover,.mainnav a.active{ color:#fff }
 
 /* =========================================================
-   Call bar (just below the topbar)
+   CTA Bar (below the topbar): Join Today, Quick Pay, Call
    ========================================================= */
-.callbar{
-  position:sticky; top:72px; z-index:40;
+.ctabar{
+  position:sticky; top:72px; z-index:40;   /* sits right under the topbar */
   background:#000;
   border-bottom:1px solid rgba(255,255,255,.08);
 }
-.callbar .shell{
-  display:flex; justify-content:flex-end; align-items:center;
-  gap:12px; padding:8px 24px;
+.ctabar .shell{
+  display:flex; flex-wrap:wrap; gap:12px;
+  justify-content:flex-end; align-items:center;
+  padding:10px 24px;
 }
+
+/* Pink pill button style */
 .pill-cta{
-  display:inline-block; color:#fff; background:var(--brand); border:2px solid rgba(255,255,255,.08);
+  display:inline-block; color:#fff; background:var(--brand);
+  border:2px solid rgba(255,255,255,.08);
   padding:10px 16px; border-radius:999px; font-weight:800;
   transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
   white-space:nowrap; line-height:1;
@@ -103,7 +89,7 @@ img{max-width:100%;display:block}
 .pill-cta:focus-visible{ outline:3px solid rgba(216,27,96,.45); outline-offset:2px }
 
 /* =========================================================
-   Hero (index + inner pages)
+   Hero
    ========================================================= */
 .hero{
   min-height:100vh; position:relative; display:flex; align-items:center;
@@ -116,7 +102,9 @@ img{max-width:100%;display:block}
     linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.70) 100%);
 }
 .hero .shell{ position:relative; z-index:1 }
-.hero-copy{ color:var(--ink); padding-top:112px } /* allow for topbar + callbar */
+
+/* Extra top padding so hero clears fixed bars */
+.hero-copy{ color:var(--ink); padding-top:112px }
 .hero-copy h1{
   margin:0 0 12px 0; font-size:64px; line-height:1.06; font-weight:800; letter-spacing:.2px;
   color:#fff; text-shadow:0 3px 10px rgba(0,0,0,.65);
@@ -126,17 +114,17 @@ img{max-width:100%;display:block}
   text-shadow:0 2px 6px rgba(0,0,0,.55);
 }
 
-/* Compact hero for inner pages */
+/* Inner pages: compact hero */
 .hero--compact{
   background:#0a0b0d; min-height:auto;
-  padding:140px 0 60px; /* account for fixed bars */
+  padding:140px 0 60px; /* account for fixed top + CTA bar */
 }
 .hero--compact .hero-copy h1{ font-size:48px }
 .hero--compact .hero-copy .lede{ font-size:20px; margin-top:8px }
 .hero--compact .hero-copy .muted{ font-size:14px; color:var(--muted-light) }
 
 /* =========================================================
-   Buttons
+   Buttons (general)
    ========================================================= */
 .cta-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:22px }
 .btn{
@@ -194,100 +182,30 @@ img{max-width:100%;display:block}
   .mainnav{ gap:18px }
   .brand-pill img{ height:56px }
 }
+
 @media (max-width:768px){
-  .topbar .shell{ height:64px }
-  .brand-pill img{ height:40px }
-  .mainnav{ gap:14px; flex-wrap:wrap; justify-content:flex-end }
-  .callbar .shell{ justify-content:center }   /* center call button on phones */
-  .hero-copy{ padding-top:96px }
+  /* Topbar becomes two rows: logo then nav */
+  .topbar .shell{
+    grid-template-columns:1fr; height:auto; padding:8px 0; gap:8px;
+  }
+
+  /* Logo pill: centered & larger for readability */
+  .brand-pill{ margin:0 auto; padding:4px 12px }
+  .brand-pill img{ height:52px; }
+
+  /* Nav: centered and wrapping */
+  .mainnav{ justify-content:center; gap:12px; flex-wrap:wrap; }
+  .mainnav a{ font-size:14px }
+
+  /* CTA bar: centered pills under nav */
+  .ctabar .shell{ justify-content:center; padding:12px 16px; }
+  .pill-cta{ font-size:14px; padding:10px 16px }
+
+  /* Hero spacing so it clears fixed bars */
+  .hero-copy{ padding-top:120px }
+  .hero-copy h1{ font-size:40px }
+  .hero-copy .lede{ font-size:18px }
+
+  /* Cards become single column */
   .grid-3{ grid-template-columns:1fr }
 }
-
-/* Wider logo pill */
-.brand-pill {
-  padding: 6px 28px;     /* increased horizontal padding (was 14px) */
-  min-width: 200px;      /* ensures pill doesn’t collapse */
-  justify-content: center;
-}
-
-.brand-pill img {
-  height: 80px;      /* was 65px → bump up for readability */
-  width: auto;       /* maintain aspect ratio */
-  display: inline-block;
-}
-
-/* =========================
-   MOBILE FIX PACK (≤768px)
-   ========================= */
-@media (max-width: 768px){
-
-  /* Topbar: become two rows (logo then nav), smaller height */
-  .topbar { position: fixed; top: 0; left: 0; right: 0; }
-  .topbar .shell{
-    grid-template-columns: 1fr;   /* stack */
-    height: auto;
-    padding: 8px 0;
-    gap: 8px;
-  }
-
-  /* Logo pill: smaller & centered */
-  .brand-pill{
-    margin: 0 auto;
-    padding: 4px 12px;
-  }
-  .brand-pill img{
-    height: 40px;                 /* was 65 on desktop */
-    width: auto;
-  }
-
-  /* Nav: inline, centered, wraps nicely */
-  .mainnav{
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 4px 0 6px;
-  }
-  .mainnav a{
-    font-size: 14px;
-  }
-  .mainnav a.btn-join,
-  .mainnav a.btn-pay{
-    padding: 8px 14px;
-    font-weight: 800;
-  }
-
-  /* Call bar: just below topbar, centered */
-  .callbar{
-    position: fixed;
-    top: auto;
-    left: 0; right: 0;
-    margin-top: 72px;             /* sits under the fixed topbar block */
-    z-index: 40;
-    border-bottom: 1px solid rgba(255,255,255,.08);
-  }
-  .callbar .shell{
-    justify-content: center;
-    padding: 8px 16px;
-  }
-  .pill-cta{
-    font-size: 14px;
-    padding: 8px 16px;
-    white-space: nowrap;
-  }
-
-  /* Hero: add extra top padding so it clears fixed bars */
-  .hero .shell,
-  .hero--compact .shell{ padding-top: 120px; }  /* header + callbar clearance */
-  .hero-copy{ padding-top: 0; }                 /* was large on desktop */
-  .hero-copy h1{ font-size: 40px; }
-  .hero-copy .lede{ font-size: 18px; }
-
-  /* Buttons in hero: full-width and stacked for thumbs */
-  .cta-row{ gap: 10px; }
-  .cta-row .btn{ width: 100%; text-align: center; }
-
-  /* Features/cards: single column */
-  .grid-3{ grid-template-columns: 1fr; }
-
-}
-
