@@ -1,6 +1,6 @@
 /* =========================================================
    Andalusia Health & Fitness – Global Styles
-   File: assets/css/style.css
+   File: assets/css/styles.css
    ========================================================= */
 
 /* ====== Theme ====== */
@@ -31,68 +31,73 @@ img{max-width:100%;display:block}
 .shell{max-width:1200px;margin:0 auto;padding:0 24px}
 
 /* =========================================================
-   Top Bar / Navigation (shared across all pages)
+   Top Bar / Navigation (logo + nav)
    ========================================================= */
-/* Fix: don't let the brand pill stretch full width */
-/* Let the brand cell size naturally */
-.topbar .shell {
-  grid-template-columns: auto 1fr auto;  /* brand auto, nav flex, CTA auto */
-  align-items: center;
-  height: 120px;                        /* increase bar height */
+.topbar{
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  background:rgba(0,0,0,.45); backdrop-filter:saturate(140%) blur(8px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.topbar .shell{
+  display:grid;
+  grid-template-columns: auto 1fr;  /* logo | nav */
+  align-items:center;
+  height:72px;
+  gap:16px;
 }
 
-
-.brand-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;                            /* CTA uses brand color, logo pill stays white */
-  border: 2px solid rgba(255,255,255,.08);
-  padding: 10px 16px;                          /* identical padding as .pill-cta */
-  border-radius: 999px;
-  font-weight: 800;
-  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
-  height: auto;                                /* let logo decide height */
-  width: max-content;                          /* bubble hugs logo */
+/* Logo pill */
+.brand-pill{
+  display:inline-flex;
+  align-items:center; justify-content:center;
+  padding:6px 14px;                 /* skinny bubble */
+  background:#fff;
+  border:2px solid rgba(255,255,255,.08);
+  border-radius:999px;
+  box-shadow:0 2px 6px rgba(0,0,0,.18);
+  width:max-content; white-space:nowrap;
+  line-height:0;
+  transition:transform .2s ease, box-shadow .2s ease;
 }
+.brand-pill:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 4px 14px rgba(0,0,0,.25) }
+.brand-pill img{ height:65px; width:auto; display:inline-block }
 
-.brand-pill:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+/* Nav */
+.mainnav{
+  display:flex; gap:24px; justify-content:flex-end; align-items:center;
 }
-
-.brand-pill img {
-  height: 28px;                                /* ~same visual height as CTA text */
-  width: auto;                                 /* preserve aspect ratio */
-  display: block;
+.mainnav a{
+  color:#cfd6de; font-weight:700; font-size:15px;
 }
+.mainnav a:hover, .mainnav a.active{ color:#fff }
 
-
-/* Scale logo down a bit on small screens */
-@media (max-width: 640px){
-  .brand-pill img{ height: 48px; }
+/* Join Today inside nav (goes to membership.html) */
+.mainnav a.btn-join{
+  color:#fff; background:var(--brand);
+  border:2px solid rgba(255,255,255,.08);
+  padding:10px 16px; border-radius:999px; font-weight:800;
+  transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
+.mainnav a.btn-join:hover{ background:var(--brand-dark); transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.28) }
+.mainnav a.btn-join:focus-visible{ outline:3px solid rgba(216,27,96,.45); outline-offset:2px }
 
-.brand-pill:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 4px 14px rgba(0,0,0,0.25) }
-.brand-pill img {
-  height: 40px;        /* controls vertical size */
-  width: auto;         /* auto keeps the correct aspect ratio */
-  display: block;
+/* =========================================================
+   Call bar (just below the topbar)
+   ========================================================= */
+.callbar{
+  position:sticky; top:72px; z-index:40;
+  background:#000;
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
-
-
-/* Center nav */
-.mainnav{ display:flex; gap:22px; justify-content:center }
-.mainnav a{ color:#cfd6de; font-weight:600; font-size:14px }
-.mainnav a:hover{ color:#fff }
-.mainnav a.active{ color:#fff }
-
-/* Right CTA (Join Today pill) */
-.top-cta{ display:flex; justify-content:flex-end }
+.callbar .shell{
+  display:flex; justify-content:flex-end; align-items:center;
+  gap:12px; padding:8px 24px;
+}
 .pill-cta{
   display:inline-block; color:#fff; background:var(--brand); border:2px solid rgba(255,255,255,.08);
   padding:10px 16px; border-radius:999px; font-weight:800;
   transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+  white-space:nowrap; line-height:1;
 }
 .pill-cta:hover{ background:var(--brand-dark); transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.28) }
 .pill-cta:focus-visible{ outline:3px solid rgba(216,27,96,.45); outline-offset:2px }
@@ -104,7 +109,6 @@ img{max-width:100%;display:block}
   min-height:100vh; position:relative; display:flex; align-items:center;
   background:#0a0b0d url('girlgym.png') center/cover no-repeat;
 }
-/* Overlay for readability on hero image */
 .hero .overlay{
   position:absolute; inset:0;
   background:
@@ -112,7 +116,7 @@ img{max-width:100%;display:block}
     linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.70) 100%);
 }
 .hero .shell{ position:relative; z-index:1 }
-.hero-copy{ color:var(--ink); padding-top:96px }
+.hero-copy{ color:var(--ink); padding-top:112px } /* allow for topbar + callbar */
 .hero-copy h1{
   margin:0 0 12px 0; font-size:64px; line-height:1.06; font-weight:800; letter-spacing:.2px;
   color:#fff; text-shadow:0 3px 10px rgba(0,0,0,.65);
@@ -122,11 +126,10 @@ img{max-width:100%;display:block}
   text-shadow:0 2px 6px rgba(0,0,0,.55);
 }
 
-/* Compact hero variant for inner pages (used by pricing) */
+/* Compact hero for inner pages */
 .hero--compact{
-  background:#0a0b0d;       /* solid, no image */
-  min-height:auto;
-  padding:120px 0 60px;     /* account for fixed topbar */
+  background:#0a0b0d; min-height:auto;
+  padding:140px 0 60px; /* account for fixed bars */
 }
 .hero--compact .hero-copy h1{ font-size:48px }
 .hero--compact .hero-copy .lede{ font-size:20px; margin-top:8px }
@@ -160,12 +163,11 @@ img{max-width:100%;display:block}
 .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px }
 .card{
   background:#fff; border:1px solid var(--card-border); border-radius:16px; padding:20px;
-  box-shadow:0 10px 0 #000;    /* bold bottom shadow like your screenshot */
+  box-shadow:0 10px 0 #000;
 }
 .card h3{ margin:0 0 6px 0 }
 .muted{ color:var(--muted-light) }
 
-/* Pricing lists inside cards */
 .features ul{ list-style:disc; padding-left:20px; margin:0 }
 .features ul li{ margin:6px 0 }
 .features .card span.muted{
@@ -173,7 +175,7 @@ img{max-width:100%;display:block}
 }
 
 /* =========================================================
-   Forms / Inputs (if needed later)
+   Forms / Inputs
    ========================================================= */
 .input{ width:100%; padding:12px 14px; border:1px solid #e5e7eb; border-radius:12px }
 
@@ -188,14 +190,29 @@ img{max-width:100%;display:block}
 /* =========================================================
    Responsive
    ========================================================= */
-@media (max-width:980px){
-  .topbar .shell{ grid-template-columns:1fr auto auto }
-  .mainnav{ display:none }           /* hide center nav on small screens; add burger later if needed */
-  .hero-copy h1{ font-size:44px }
+@media (max-width:1024px){
+  .mainnav{ gap:18px }
+  .brand-pill img{ height:56px }
+}
+@media (max-width:768px){
+  .topbar .shell{ height:64px }
+  .brand-pill img{ height:40px }
+  .mainnav{ gap:14px; flex-wrap:wrap; justify-content:flex-end }
+  .callbar .shell{ justify-content:center }   /* center call button on phones */
+  .hero-copy{ padding-top:96px }
   .grid-3{ grid-template-columns:1fr }
 }
 
+/* Wider logo pill */
+.brand-pill {
+  padding: 6px 28px;     /* increased horizontal padding (was 14px) */
+  min-width: 200px;      /* ensures pill doesn’t collapse */
+  justify-content: center;
+}
 
-
-
+.brand-pill img {
+  height: 80px;      /* was 65px → bump up for readability */
+  width: auto;       /* maintain aspect ratio */
+  display: inline-block;
+}
 
