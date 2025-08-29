@@ -1,3 +1,8 @@
+/* =========================================================
+   Andalusia Health & Fitness – Global Styles
+   File: assets/css/style.css
+   ========================================================= */
+
 /* ====== Theme ====== */
 :root{
   --brand:#d81b60;
@@ -10,7 +15,7 @@
   --card-border:#e5e7eb;
 }
 
-/* Base */
+/* ====== Base ====== */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -21,50 +26,69 @@ body{
 }
 a{text-decoration:none;color:inherit}
 img{max-width:100%;display:block}
+
+/* Layout shell */
 .shell{max-width:1200px;margin:0 auto;padding:0 24px}
 
-/* ====== Top bar ====== */
-.topbar{
-  position:fixed; top:0; left:0; right:0; z-index:50;
-  background:rgba(0,0,0,.45); backdrop-filter:saturate(140%) blur(8px);
-  border-bottom:1px solid rgba(255,255,255,.06);
-}
-.topbar .shell{
-  height:64px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:16px;
+/* =========================================================
+   Top Bar / Navigation (shared across all pages)
+   ========================================================= */
+/* Fix: don't let the brand pill stretch full width */
+/* Let the brand cell size naturally */
+.topbar .shell {
+  grid-template-columns: auto 1fr auto;  /* brand auto, nav flex, CTA auto */
+  align-items: center;
+  height: 120px;                        /* increase bar height */
 }
 
-/* Brand pill — bubble slightly smaller, logo larger */
-/* Brand pill — snug bubble around the logo */
+
 .brand-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
-  border: 1.5px solid rgba(0,0,0,0.12);
-  border-radius: 9999px;
-  padding: 6px 12px;     /* smaller padding so bubble hugs */
-  line-height: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-  transition: transform .2s ease, box-shadow .2s ease;
+  background: #fff;                            /* CTA uses brand color, logo pill stays white */
+  border: 2px solid rgba(255,255,255,.08);
+  padding: 10px 16px;                          /* identical padding as .pill-cta */
+  border-radius: 999px;
+  font-weight: 800;
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  height: auto;                                /* let logo decide height */
+  width: max-content;                          /* bubble hugs logo */
 }
+
 .brand-pill:hover {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
 }
+
 .brand-pill img {
-  height: 40px;         /* bigger logo size */
-  width: 100px;
+  height: 28px;                                /* ~same visual height as CTA text */
+  width: auto;                                 /* preserve aspect ratio */
   display: block;
 }
 
-/* Center nav */
-.mainnav{display:flex; gap:22px; justify-content:center}
-.mainnav a{color:#cfd6de; font-weight:600; font-size:14px}
-.mainnav a:hover{color:#fff}
-.mainnav a.active{color:#fff}
 
-/* Right CTA (call button) */
-.top-cta{display:flex; justify-content:flex-end}
+/* Scale logo down a bit on small screens */
+@media (max-width: 640px){
+  .brand-pill img{ height: 48px; }
+}
+
+.brand-pill:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 4px 14px rgba(0,0,0,0.25) }
+.brand-pill img {
+  height: 40px;        /* controls vertical size */
+  width: auto;         /* auto keeps the correct aspect ratio */
+  display: block;
+}
+
+
+/* Center nav */
+.mainnav{ display:flex; gap:22px; justify-content:center }
+.mainnav a{ color:#cfd6de; font-weight:600; font-size:14px }
+.mainnav a:hover{ color:#fff }
+.mainnav a.active{ color:#fff }
+
+/* Right CTA (Join Today pill) */
+.top-cta{ display:flex; justify-content:flex-end }
 .pill-cta{
   display:inline-block; color:#fff; background:var(--brand); border:2px solid rgba(255,255,255,.08);
   padding:10px 16px; border-radius:999px; font-weight:800;
@@ -73,23 +97,22 @@ img{max-width:100%;display:block}
 .pill-cta:hover{ background:var(--brand-dark); transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.28) }
 .pill-cta:focus-visible{ outline:3px solid rgba(216,27,96,.45); outline-offset:2px }
 
-/* ====== HERO ====== */
+/* =========================================================
+   Hero (index + inner pages)
+   ========================================================= */
 .hero{
   min-height:100vh; position:relative; display:flex; align-items:center;
   background:#0a0b0d url('girlgym.png') center/cover no-repeat;
 }
-/* Stronger overlay for readability */
-.hero .overlay {
-  position: absolute;
-  inset: 0;
-  /* Lighter so photo shows more */
+/* Overlay for readability on hero image */
+.hero .overlay{
+  position:absolute; inset:0;
   background:
     radial-gradient(900px 520px at 42% 45%, rgba(0,0,0,.22), transparent 70%),
     linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.70) 100%);
 }
-
-.hero .shell{position:relative; z-index:1}
-.hero-copy{color:var(--ink); padding-top:96px}
+.hero .shell{ position:relative; z-index:1 }
+.hero-copy{ color:var(--ink); padding-top:96px }
 .hero-copy h1{
   margin:0 0 12px 0; font-size:64px; line-height:1.06; font-weight:800; letter-spacing:.2px;
   color:#fff; text-shadow:0 3px 10px rgba(0,0,0,.65);
@@ -99,8 +122,20 @@ img{max-width:100%;display:block}
   text-shadow:0 2px 6px rgba(0,0,0,.55);
 }
 
-/* Buttons + hover/focus */
-.cta-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:22px}
+/* Compact hero variant for inner pages (used by pricing) */
+.hero--compact{
+  background:#0a0b0d;       /* solid, no image */
+  min-height:auto;
+  padding:120px 0 60px;     /* account for fixed topbar */
+}
+.hero--compact .hero-copy h1{ font-size:48px }
+.hero--compact .hero-copy .lede{ font-size:20px; margin-top:8px }
+.hero--compact .hero-copy .muted{ font-size:14px; color:var(--muted-light) }
+
+/* =========================================================
+   Buttons
+   ========================================================= */
+.cta-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:22px }
 .btn{
   display:inline-block; padding:14px 22px; border-radius:14px; font-weight:800;
   transition:transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease, color .2s ease;
@@ -118,34 +153,48 @@ img{max-width:100%;display:block}
 }
 .btn-ghost:focus-visible{ outline:3px solid rgba(255,255,255,.45); outline-offset:2px }
 
-/* scroll dots cue */
-.scroll-dots{position:absolute; left:24px; bottom:24px; display:flex; gap:8px; z-index:1}
-.scroll-dots .dot{width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.25)}
-.scroll-dots .dot.active{background:#fff}
-
-/* ====== Features Section ====== */
-.features{background:#0a0b0d; padding:56px 0}
-.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
-.card{ background:#fff; border:1px solid var(--card-border); border-radius:16px; padding:20px }
+/* =========================================================
+   Features / Cards / Grid
+   ========================================================= */
+.features{ background:#0a0b0d; padding:56px 0 }
+.grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px }
+.card{
+  background:#fff; border:1px solid var(--card-border); border-radius:16px; padding:20px;
+  box-shadow:0 10px 0 #000;    /* bold bottom shadow like your screenshot */
+}
 .card h3{ margin:0 0 6px 0 }
 .muted{ color:var(--muted-light) }
 
-/* Inputs (pricing page) */
+/* Pricing lists inside cards */
+.features ul{ list-style:disc; padding-left:20px; margin:0 }
+.features ul li{ margin:6px 0 }
+.features .card span.muted{
+  display:block; font-size:13px; color:var(--muted-light); margin-top:2px;
+}
+
+/* =========================================================
+   Forms / Inputs (if needed later)
+   ========================================================= */
 .input{ width:100%; padding:12px 14px; border:1px solid #e5e7eb; border-radius:12px }
 
-/* Footer */
+/* =========================================================
+   Footer
+   ========================================================= */
 .sitefoot{
   background:#0a0b0d; color:#8a95a5; text-align:center; padding:24px;
   border-top:1px solid rgba(255,255,255,.06);
 }
 
-/* Responsive */
+/* =========================================================
+   Responsive
+   ========================================================= */
 @media (max-width:980px){
-  .topbar .shell{grid-template-columns:1fr auto auto}
-  .mainnav{display:none}
-  .hero-copy h1{font-size:44px}
-  .grid-3{grid-template-columns:1fr}
+  .topbar .shell{ grid-template-columns:1fr auto auto }
+  .mainnav{ display:none }           /* hide center nav on small screens; add burger later if needed */
+  .hero-copy h1{ font-size:44px }
+  .grid-3{ grid-template-columns:1fr }
 }
+
 
 
 

@@ -1,69 +1,109 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Pricing — Andalusia Health & Fitness</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Membership & Pricing — Andalusia Health & Fitness</title>
+ <link rel="stylesheet" href="styles.css"/>
+  <link rel="icon" href="assets/images/favicon.png" />
 </head>
 <body>
-  <div class="header">
-    <div class="wrap">
-      <div class="brand">
-        <img src="assets/logo.png" alt="">
-        <div class="brand-name"><div class="line1">Andalusia</div><div class="line2">Health &amp; Fitness</div></div>
-      </div>
-      <nav class="nav"><a href="index.html">Home</a><a href="pricing.html">Pricing</a><a href="dashboard.html">Dashboard</a></nav>
+
+  <!-- Global Header -->
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="index.html" aria-label="Andalusia Health & Fitness">
+        <img src="AHFlogo.png" alt="Andalusia Health & Fitness" class="brand-logo">
+      </a>
+
+      <nav class="site-nav">
+        <a href="index.html">Home</a>
+        <a href="pricing.html" class="active">Pricing</a>
+        <a href="classes.html">Classes</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+
+      <a class="btn btn-primary btn-pill join-cta" href="join.html">Join Today</a>
+
+      <!-- (Optional) mobile toggle if your index uses it -->
+      <button class="nav-toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
-  </div>
+  </header>
 
+  <!-- Hero -->
+  <section class="section section--hero">
+    <div class="container">
+      <h1 class="section-title">Membership & Pricing</h1>
+      <p class="lead">Open 24 hours • 7 days a week</p>
+      <p class="text-muted">Office Hours: Mon–Thu 8am–5pm · Fri 8am–12pm · Closed Sat & Sun</p>
+    </div>
+  </section>
+
+  <!-- Pricing Grid -->
   <section class="section">
-    <div class="wrap">
-      <div class="card">
-        <h2>Simple membership</h2>
-        <div style="font-size:38px;font-weight:800">$49 <span class="muted">/ month</span></div>
-        <ul class="bullets">
-          <li>24/7 facility access</li>
-          <li>Classes & amenities</li>
-          <li>Instant fob reactivation after payment</li>
-        </ul>
+    <div class="container">
+      <div class="grid grid-3">
 
-        <label class="muted small" style="display:block;margin-top:8px">Your email (optional, for prefill)</label>
-        <input id="email" class="input" placeholder="you@example.com" value="sam@example.com"/>
-
-        <div class="row" style="margin-top:12px">
-          <a id="pay" class="btn primary" href="#">Subscribe</a>
-          <a class="btn ghost" href="index.html">Back</a>
+        <div class="card">
+          <h3 class="card-title">Membership Fees</h3>
+          <ul class="list">
+            <li><strong>Single</strong> — $35.00 / month</li>
+            <li><strong>Couples (married)</strong> — $55.00 / month</li>
+            <li><strong>Family</strong> — $65.00 / month
+              <span class="note">Includes spouse + 1 child · $10 per additional child</span>
+            </li>
+            <li><strong>Senior (65+)</strong> — $25.00 / month</li>
+            <li><strong>Daily Rate</strong> — $5.00</li>
+            <li><strong>Student</strong> — $30.00 / month
+              <span class="note">HS/College with proof of enrollment</span>
+            </li>
+          </ul>
         </div>
 
-        <div class="tiny muted" style="margin-top:8px">Set your Stripe Payment Link in the script below.</div>
+        <div class="card">
+          <h3 class="card-title">Other Fees</h3>
+          <ul class="list">
+            <li><strong>24/7 Access Key</strong> — $15.00 one-time</li>
+            <li><strong>Initiation Fee</strong> — $20.00
+              <span class="note">Waived with draft signup</span>
+            </li>
+            <li><strong>Fitness Classes</strong> — $5.00 per session
+              <span class="note">Included with draft membership</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">Tanning</h3>
+          <ul class="list">
+            <li><strong>Members</strong> — $27.50</li>
+            <li><strong>Non-Members</strong> — $45.00</li>
+            <li><strong>Per Session</strong> — $8.00</li>
+          </ul>
+        </div>
+
       </div>
     </div>
   </section>
 
-  <footer class="footer">© <script>document.write(new Date().getFullYear())</script> Andalusia Health &amp; Fitness</footer>
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© <span id="y"></span> Andalusia Health & Fitness · 205 Church Street, Andalusia, AL 36420 · (334) 582-2000</p>
+  </div>
+  </footer>
 
   <script>
-    // ⚠️ Replace with your Stripe Payment Link (https://buy.stripe.com/...)
-    const PAYMENT_LINK = "https://buy.stripe.com/YOUR_PAYMENT_LINK";
-
-    const email = document.getElementById('email');
-    const pay   = document.getElementById('pay');
-
-    function buildUrl(){
-      const em = encodeURIComponent(email.value || "");
-      const success = encodeURIComponent(location.origin + "/success.html");
-      const cancel  = encodeURIComponent(location.origin + "/cancel.html");
-      const sep = PAYMENT_LINK.includes("?") ? "&" : "?";
-      // prefilled_email/client_reference_id are best-effort; Stripe ignores if unsupported
-      return PAYMENT_LINK + sep + "prefilled_email=" + em +
-             "&client_reference_id=" + em +
-             "&success_url=" + success +
-             "&cancel_url=" + cancel;
+    // year
+    document.getElementById('y').textContent = new Date().getFullYear();
+    // (Optional) mobile nav toggle if used on index
+    const toggle = document.querySelector('.nav-toggle');
+    const nav = document.querySelector('.site-nav');
+    if (toggle && nav) {
+      toggle.addEventListener('click', () => nav.classList.toggle('open'));
     }
-    function update(){ pay.href = buildUrl(); }
-    email.addEventListener('input', update);
-    update();
   </script>
 </body>
 </html>
