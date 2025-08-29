@@ -209,3 +209,18 @@ img{ max-width:100%; display:block }
   /* Cards become single column */
   .grid-3{ grid-template-columns:1fr }
 }
+
+/* ========== MOBILE SPACING PATCH (pills sit a bit lower) ========== */
+/* Use a variable for the topbar height so CTA can sit just below it */
+:root{ --topbar-h: 72px; }                /* desktop value */
+.ctabar{ position: sticky; top: var(--topbar-h); }
+
+@media (max-width: 768px){
+  :root{ --topbar-h: 100px; }             /* stacked logo + nav height */
+  .topbar .shell{ padding-bottom: 6px; }  /* tiny air under nav */
+  .ctabar{
+    top: var(--topbar-h);                 /* anchor CTA under the header */
+    margin-top: 8px;                      /* nudge pills further down */
+  }
+  .ctabar .shell{ padding-top: 6px; padding-bottom: 10px; }
+}
