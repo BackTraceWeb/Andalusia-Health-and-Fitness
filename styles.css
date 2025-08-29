@@ -43,18 +43,38 @@ img{ max-width:250%; display:inline-block }
   height:72px;
   gap:16px;
 }
-
 /* Logo pill */
 .brand-pill{
   display:inline-flex; align-items:center; justify-content:center;
-  padding:0.5px 0.5px; background:#fff;
-  border:0.5px solid rgba(255,255,255,.08);
+  padding:4px 20px; background:#fff;
+  border:1px solid rgba(255,255,255,.08);
   border-radius:1500px; box-shadow:0 2px 6px rgba(0,0,0,.18);
-  width: 155px;; white-space:nowrap; line-height:0;
+  width: 180px; /* reduced pill width */
+  min-height: 56px; /* reduced pill height */
+  white-space:nowrap; line-height:0;
   transition:transform .2s ease, box-shadow .2s ease;
+  overflow: hidden; /* prevent text from overflowing */
 }
-.brand-pill:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 4px 14px rgba(0,0,0,.25) }
-.brand-pill img{ height: 50px; width: 120px;; display:inline-block }
+
+.brand-pill span, .brand-pill .logo-text {
+  font-size: 24px; /* increased font size */
+  font-weight: 800;
+  color: #d81b60;
+  letter-spacing: 0.5px;
+  margin-left: 10px;
+  line-height: 1;
+  flex: 1;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: none; /* prevent overflow */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-pill:hover{ transform:translateY(-2px) scale(1.04); box-shadow:0 4px 14px rgba(0,0,0,.25) }
 
 /* Nav */
 .mainnav{
@@ -191,7 +211,7 @@ img{ max-width:250%; display:inline-block }
 
   /* Logo pill: centered & larger for readability */
   .brand-pill{ margin:0 auto; padding:4px 12px }
-  .brand-pill img{ height:52px; }
+  .brand-pill img{ height:72px; } /* Increased from 52px to 72px */
 
   /* Nav: centered and wrapping */
   .mainnav{ justify-content:center; gap:12px; flex-wrap:wrap; }
@@ -223,4 +243,42 @@ img{ max-width:250%; display:inline-block }
     margin-top: 8px;                      /* nudge pills further down */
   }
   .ctabar .shell{ padding-top: 6px; padding-bottom: 10px; }
+}
+
+/* ===== Overlay the CTA pills on top of the hero (no black bar) ===== */
+
+/* Remove bar background/border and layer above hero */
+.ctabar{
+  position: absolute;
+  top: calc(var(--topbar-h) + 18px); /* nudge below header */
+  left: 0; right: 0;
+  background: transparent;
+  border-bottom: none;
+  z-index: 55; /* ensure pills overlay topbar */
+  margin-top: 0;
+  margin-bottom: 0;
+  pointer-events: none; /* allow clicks to pass through except pills */
+}
+.ctabar .shell{
+  justify-content: flex-end;
+  pointer-events: auto; /* pills remain clickable */
+}
+
+/* ===== Overlay the CTA pills on top of the hero (no black bar) ===== */
+
+/* Remove bar background/border and layer above hero */
+.ctabar{
+  position: absolute;
+  top: calc(var(--topbar-h) + 18px); /* nudge below header */
+  left: 0; right: 0;
+  background: transparent;
+  border-bottom: none;
+  z-index: 55; /* ensure pills overlay topbar */
+  margin-top: 0;
+  margin-bottom: 0;
+  pointer-events: none; /* allow clicks to pass through except pills */
+}
+.ctabar .shell{
+  justify-content: flex-end;
+  pointer-events: auto; /* pills remain clickable */
 }
