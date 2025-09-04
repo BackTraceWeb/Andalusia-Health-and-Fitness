@@ -159,166 +159,194 @@
   </footer>
 
   <script>
+  // Year in footer
   document.getElementById('y').textContent = new Date().getFullYear();
 
   // ===== Simple Signature Pad (no external lib) =====
-  (function(){
+  (function () {
+    const form = document.getElementById('membershipForm');
+
+    // Ensure the form actually navigates
+    form.action = 'payments.html';
+    form.method = 'get';
+
     const canvas = document.getElementById('sigpad');
     const ctx = canvas.getContext('2d');
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
+
     const sigPngInput = document.getElementById('signature_png');
     const signedAtInput = document.getElementById('signed_at_iso');
     const clearBtn = document.getElementById('sigClear');
     const undoBtn  = document.getElementById('sigUndo');
+
     const strokes = [];
     let drawing = false, currentStroke = [];
 
     // HiDPI scale
-    function resizeCanvas(){
+    function resizeCanvas() {
+      // Get current CSS size (fallback to attr if no CSS width)
       const cssW = canvas.clientWidth || canvas.width;
       const cssH = canvas.clientHeight || canvas.height;
-      canvas.width  = cssW * ratio;
+
+      // Reset transform before resizing to avoid scale compounding
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+      canvas.width = cssW * ratio;
       canvas.height = cssH * ratio;
-      canvas.style.width  = cssW + 'px';
+      canvas.style.width = cssW + 'px';
       canvas.style.height = cssH + 'px';
+
       ctx.scale(ratio, ratio);
       redraw();
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    function getPos(e){
+    function getPos(e) {
       const r = canvas.getBoundingClientRect();
       const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
       const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
-      return {x, y};
+      return { x, y };
     }
 
-    function start(e){
+    function start(e) {
       e.preventDefault();
       drawing = true;
       currentStroke = [];
-      const p = getPos(e);
-      currentStroke.push(p);
+      currentStroke.push(getPos(e));
       redraw();
     }
-    function move(e){
-      if(!drawing) return;
-      const p = getPos(e);
-      currentStroke.push(p);
+    function move(e) {
+      if (!drawing) return;
+      currentStroke.push(getPos(e));
       redraw();
     }
-    function end(e){
-      if(!drawing) return;
+    function end() {
+      if (!drawing) return;
       drawing = false;
-      if(currentStroke.length) strokes.push(currentStroke);
+      if (currentStroke.length) strokes.push(currentStroke);
       currentStroke = [];
       redraw();
     }
 
-    function redraw(){
+    function redraw() {
+      // Clear full pixel buffer
       ctx.save();
-      ctx.setTransform(1,0,0,1,0,0);
-      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
 
-      // white bg
+      // White background with subtle border in CSS pixels
+      const w = canvas.width / ratio, h = canvas.height / ratio, rad = 14;
+
       ctx.fillStyle = '#fff';
       ctx.strokeStyle = '#e5e7eb';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      const w = canvas.width/ratio, h = canvas.height/ratio, r = 14;
-      ctx.moveTo(r,0); ctx.arcTo(w,0,w,h,r); ctx.arcTo(w,h,0,h,r); ctx.arcTo(0,h,0,0,r); ctx.arcTo(0,0,w,0,r);
-      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.moveTo(rad, 0);
+      ctx.arcTo(w, 0, w, h, rad);
+      ctx.arcTo(w, h, 0, h, rad);
+      ctx.arcTo(0, h, 0, 0, rad);
+      ctx.arcTo(0, 0, w, 0, rad);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
 
+      // Ink
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.strokeStyle = '#111';
       ctx.lineWidth = 2.2;
 
-      function drawStroke(s){
-        if(s.length<2) return;
+      function drawStroke(s) {
+        if (s.length < 2) return;
         ctx.beginPath();
         ctx.moveTo(s[0].x, s[0].y);
-        for(let i=1;i<s.length;i++){ ctx.lineTo(s[i].x, s[i].y); }
+        for (let i = 1; i < s.length; i++) ctx.lineTo(s[i].x, s[i].y);
         ctx.stroke();
       }
       strokes.forEach(drawStroke);
-      if(currentStroke.length) drawStroke(currentStroke);
+      if (currentStroke.length) drawStroke(currentStroke);
     }
 
+    // Pointer/touch events
     canvas.addEventListener('mousedown', start);
     canvas.addEventListener('mousemove', move);
     window.addEventListener('mouseup', end);
-    canvas.addEventListener('touchstart', start, {passive:false});
-    canvas.addEventListener('touchmove', move, {passive:false});
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
     canvas.addEventListener('touchend', end);
 
-    clearBtn.addEventListener('click', function(){
+    // Clear/Undo
+    clearBtn.addEventListener('click', function () {
       strokes.length = 0; currentStroke = []; redraw();
     });
-    undoBtn.addEventListener('click', function(){
+    undoBtn.addEventListener('click', function () {
       strokes.pop(); redraw();
     });
 
     // ===== Submit handler =====
-    document.getElementById('membershipForm').addEventListener('submit', function(e){
+    form.addEventListener('submit', function (e) {
+      // Waiver & signature checks (block submit if invalid)
       const agreed = document.getElementById('agree').checked;
       const hasSignature = strokes.length > 0;
-      if(!agreed){
+
+      if (!agreed) {
         e.preventDefault();
         alert('Please agree to the Membership Agreement & Liability Waiver.');
         return;
       }
-      if(!hasSignature){
+      if (!hasSignature) {
         e.preventDefault();
         alert('Please add your signature.');
         return;
       }
 
-      // Export PNG (data URL)
-      const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = canvas.width;
-      exportCanvas.height = canvas.height;
-      const ex = exportCanvas.getContext('2d');
-      ex.fillStyle = '#fff';
-      ex.fillRect(0,0,exportCanvas.width,exportCanvas.height);
-      ex.drawImage(canvas,0,0);
-      sigPngInput.value = exportCanvas.toDataURL('image/png');
-      signedAtInput.value = new Date().toISOString();
-
-      // Phone validation
-      const phone = (this.phone.value||'').replace(/[^\d]/g,'');
-      if(phone.length < 10){
+      // Basic phone validation
+      const phoneRaw = (this.phone?.value || '').replace(/[^\d]/g, '');
+      if (phoneRaw.length < 10) {
         e.preventDefault();
         alert('Please enter a valid phone number.');
         return;
       }
 
-     // >>> Save details for payments.html
-const selectedPlan = this.querySelector('input[name="plan"]:checked');
-const [plan_name, plan_amount] = selectedPlan ? selectedPlan.value.split('|') : ['',''];
+      // Export signature PNG (with white background)
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = canvas.width;
+      exportCanvas.height = canvas.height;
+      const ex = exportCanvas.getContext('2d');
+      ex.fillStyle = '#fff';
+      ex.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+      ex.drawImage(canvas, 0, 0);
+      sigPngInput.value = exportCanvas.toDataURL('image/png');
+      signedAtInput.value = new Date().toISOString();
 
-const payload = {
-  first_name: this.first_name.value,
-  last_name:  this.last_name.value,
-  email:      this.email.value,
-  phone:      this.phone.value,
-  address1:   this.address1.value,
-  address2:   this.address2.value,
-  city:       this.city.value,
-  state:      this.state.value,
-  zip:        this.zip.value,
-  plan_name,              // <-- NEW
-  plan_amount,            // numeric string, e.g. "35"
-  signed_at:  signedAtInput.value
-};
-sessionStorage.setItem('ahfSignup', JSON.stringify(payload));
+      // Gather plan
+      const selectedPlan = this.querySelector('input[name="plan"]:checked');
+      const [plan_name, plan_amount] = selectedPlan ? selectedPlan.value.split('|') : ['', ''];
 
-// >>> Redirect to payments page
-e.preventDefault();
-window.location.href = 'payments.html';
+      // Gather person/address fields (assumes inputs exist in your form)
+      const payload = {
+        first_name: this.first_name?.value || '',
+        last_name:  this.last_name?.value || '',
+        email:      this.email?.value || '',
+        phone:      this.phone?.value || '',
+        address1:   this.address1?.value || '',
+        address2:   this.address2?.value || '',
+        city:       this.city?.value || '',
+        state:      this.state?.value || '',
+        zip:        this.zip?.value || '',
+        plan_name,
+        plan_amount, // numeric string, e.g., "35"
+        signed_at:  signedAtInput.value
+      };
 
+      // Save for payments.html
+      sessionStorage.setItem('ahfSignup', JSON.stringify(payload));
+
+      // IMPORTANT: Do NOT preventDefault here.
+      // Let the browser follow the form action to payments.html
+      // (We already set form.action/method at the top.)
     });
   })();
 </script>
