@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Join Today — Andalusia Health & Fitness</title>
+  <link rel="icon" href="assets/images/favicon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- === HEADER (Topbar) === -->
+  <div class="topbar">
+    <div class="shell">
+      <div class="brand-pill">
+        <a href="index.html"><img src="AHFlogo.png" alt="Andalusia Health & Fitness"></a>
+      </div>
+
+      <nav class="mainnav">
+        <a href="index.html">Home</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- CTA pills over hero (optional — remove if you don’t want them on this page) -->
+  <section class="hero hero--compact">
+    <div class="shell">
+      <div class="hero-copy">
+        <h1>Join Today</h1>
+        <p class="lede">Fill out the form below to start your membership. You’ll get 24/7 access. Seniors and students save with valid ID.</p>
+      </div>
+    </div>
+  </section>
+
+  <main class="section">
+    <div class="shell">
+
+      <!-- ===== Membership Form ===== -->
+      <!-- If you want to use Formspree or a backend, replace action with that URL -->
+      <form id="membershipForm" class="form-card" method="POST" action="#">
+        <!-- Hidden inputs populated before submit -->
+        <input type="hidden" name="signature_png" id="signature_png" />
+        <input type="hidden" name="signed_at_iso" id="signed_at_iso" />
+
+        <!-- Person -->
+        <fieldset class="fieldset">
+  <legend>Choose Your Membership</legend>
+
+  <div class="grid-3 plan-grid">
+    <label class="plan">
+      <input type="radio" name="plan" value="Single|35" required>
+      <div class="plan-body">
+        <strong>Single</strong>
+        <span class="muted">$35 / month</span>
+      </div>
+    </label>
+
+    <label class="plan">
+      <input type="radio" name="plan" value="Couples (married)|55">
+      <div class="plan-body">
+        <strong>Couples (married)</strong>
+        <span class="muted">$55 / month</span>
+      </div>
+    </label>
+
+    <label class="plan">
+      <input type="radio" name="plan" value="Family|65">
+      <div class="plan-body">
+        <strong>Family</strong>
+        <span class="muted">$65 / month</span>
+        <span class="muted" style="font-size:12px">Includes spouse + 1 child · $10 / add’l child</span>
+      </div>
+    </label>
+
+    <label class="plan">
+      <input type="radio" name="plan" value="Senior (65+)|25">
+      <div class="plan-body">
+        <strong>Senior (65+)</strong>
+        <span class="muted">$25 / month</span>
+      </div>
+    </label>
+
+    <label class="plan">
+      <input type="radio" name="plan" value="Student|30">
+      <div class="plan-body">
+        <strong>Student</strong>
+        <span class="muted">$30 / month</span>
+      </div>
+    </label>
+
+    <label class="plan">
+      <input type="radio" name="plan" value="Daily Rate|5">
+      <div class="plan-body">
+        <strong>Daily Rate</strong>
+        <span class="muted">$5 / day</span>
+      </div>
+    </label>
+  </div>
+</fieldset>
+
+
+        <!-- Waiver -->
+        <fieldset class="fieldset">
+          <legend>Membership Agreement & Liability Waiver</legend>
+
+          <div class="waiver">
+            <p>
+              I acknowledge that participation in fitness activities involves inherent risks, including the risk of injury.
+              I agree to follow all posted rules and staff instructions. I certify that I am physically able to participate,
+              and I assume full responsibility for any risk of injury, illness, damage, or loss that may result from use of
+              the facilities at Andalusia Health &amp; Fitness. I release and hold harmless Andalusia Health &amp; Fitness,
+              its owners, employees, and agents from any and all liability arising from my participation, except in cases of
+              gross negligence or willful misconduct.
+            </p>
+            <p>
+              I understand memberships may renew monthly unless cancelled per policy. I agree to the terms of payment for my
+              selected membership and any additional services. I consent to receive membership communications at the phone and
+              email provided.
+            </p>
+            <p class="muted">
+              By checking the box and signing below, I acknowledge I have read and agree to this waiver and the membership terms.
+            </p>
+          </div>
+
+          <label class="agree">
+            <input type="checkbox" id="agree" required />
+            <span>I have read and agree to the Membership Agreement & Liability Waiver.</span>
+          </label>
+        </fieldset>
+
+        <!-- Signature -->
+        <fieldset class="fieldset">
+          <legend>Signature</legend>
+
+          <div class="sig-wrap">
+            <canvas id="sigpad" width="700" height="180" aria-label="Signature pad"></canvas>
+            <div class="sig-actions">
+              <button type="button" id="sigClear" class="btn btn-ghost">Clear</button>
+              <button type="button" id="sigUndo" class="btn btn-ghost">Undo</button>
+            </div>
+            <p class="muted">Sign with your finger (mobile) or mouse (desktop). Your signature is saved securely with your submission.</p>
+          </div>
+        </fieldset>
+
+        <!-- Submit -->
+        <div class="form-actions">
+          <button class="pill-cta" type="submit">Submit Membership</button>
+          <a class="btn btn-ghost" href="pricing.html">Back to Pricing</a>
+        </div>
+      </form>
+
+    </div>
+  </main>
+
+  <footer class="sitefoot">
+    © <span id="y"></span> Andalusia Health &amp; Fitness · 205 Church St, Andalusia, AL 36420 · (334) 582-2000
+  </footer>
+
+  <script>
+  document.getElementById('y').textContent = new Date().getFullYear();
+
+  // ===== Simple Signature Pad (no external lib) =====
+  (function(){
+    const canvas = document.getElementById('sigpad');
+    const ctx = canvas.getContext('2d');
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    const sigPngInput = document.getElementById('signature_png');
+    const signedAtInput = document.getElementById('signed_at_iso');
+    const clearBtn = document.getElementById('sigClear');
+    const undoBtn  = document.getElementById('sigUndo');
+    const strokes = [];
+    let drawing = false, currentStroke = [];
+
+    // HiDPI scale
+    function resizeCanvas(){
+      const cssW = canvas.clientWidth || canvas.width;
+      const cssH = canvas.clientHeight || canvas.height;
+      canvas.width  = cssW * ratio;
+      canvas.height = cssH * ratio;
+      canvas.style.width  = cssW + 'px';
+      canvas.style.height = cssH + 'px';
+      ctx.scale(ratio, ratio);
+      redraw();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function getPos(e){
+      const r = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      return {x, y};
+    }
+
+    function start(e){
+      e.preventDefault();
+      drawing = true;
+      currentStroke = [];
+      const p = getPos(e);
+      currentStroke.push(p);
+      redraw();
+    }
+    function move(e){
+      if(!drawing) return;
+      const p = getPos(e);
+      currentStroke.push(p);
+      redraw();
+    }
+    function end(e){
+      if(!drawing) return;
+      drawing = false;
+      if(currentStroke.length) strokes.push(currentStroke);
+      currentStroke = [];
+      redraw();
+    }
+
+    function redraw(){
+      ctx.save();
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.restore();
+
+      // white bg
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const w = canvas.width/ratio, h = canvas.height/ratio, r = 14;
+      ctx.moveTo(r,0); ctx.arcTo(w,0,w,h,r); ctx.arcTo(w,h,0,h,r); ctx.arcTo(0,h,0,0,r); ctx.arcTo(0,0,w,0,r);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 2.2;
+
+      function drawStroke(s){
+        if(s.length<2) return;
+        ctx.beginPath();
+        ctx.moveTo(s[0].x, s[0].y);
+        for(let i=1;i<s.length;i++){ ctx.lineTo(s[i].x, s[i].y); }
+        ctx.stroke();
+      }
+      strokes.forEach(drawStroke);
+      if(currentStroke.length) drawStroke(currentStroke);
+    }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start, {passive:false});
+    canvas.addEventListener('touchmove', move, {passive:false});
+    canvas.addEventListener('touchend', end);
+
+    clearBtn.addEventListener('click', function(){
+      strokes.length = 0; currentStroke = []; redraw();
+    });
+    undoBtn.addEventListener('click', function(){
+      strokes.pop(); redraw();
+    });
+
+    // ===== Submit handler =====
+    document.getElementById('membershipForm').addEventListener('submit', function(e){
+      const agreed = document.getElementById('agree').checked;
+      const hasSignature = strokes.length > 0;
+      if(!agreed){
+        e.preventDefault();
+        alert('Please agree to the Membership Agreement & Liability Waiver.');
+        return;
+      }
+      if(!hasSignature){
+        e.preventDefault();
+        alert('Please add your signature.');
+        return;
+      }
+
+      // Export PNG (data URL)
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = canvas.width;
+      exportCanvas.height = canvas.height;
+      const ex = exportCanvas.getContext('2d');
+      ex.fillStyle = '#fff';
+      ex.fillRect(0,0,exportCanvas.width,exportCanvas.height);
+      ex.drawImage(canvas,0,0);
+      sigPngInput.value = exportCanvas.toDataURL('image/png');
+      signedAtInput.value = new Date().toISOString();
+
+      // Phone validation
+      const phone = (this.phone.value||'').replace(/[^\d]/g,'');
+      if(phone.length < 10){
+        e.preventDefault();
+        alert('Please enter a valid phone number.');
+        return;
+      }
+
+     // >>> Save details for payments.html
+const selectedPlan = this.querySelector('input[name="plan"]:checked');
+const [plan_name, plan_amount] = selectedPlan ? selectedPlan.value.split('|') : ['',''];
+
+const payload = {
+  first_name: this.first_name.value,
+  last_name:  this.last_name.value,
+  email:      this.email.value,
+  phone:      this.phone.value,
+  address1:   this.address1.value,
+  address2:   this.address2.value,
+  city:       this.city.value,
+  state:      this.state.value,
+  zip:        this.zip.value,
+  plan_name,              // <-- NEW
+  plan_amount,            // numeric string, e.g. "35"
+  signed_at:  signedAtInput.value
+};
+sessionStorage.setItem('ahfSignup', JSON.stringify(payload));
+
+// >>> Redirect to payments page
+e.preventDefault();
+window.location.href = 'payments.html';
+
+    });
+  })();
+</script>
+</body>
+</html>

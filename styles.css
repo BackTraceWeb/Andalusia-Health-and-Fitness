@@ -349,3 +349,115 @@ img{ max-width:100% !important; height:auto; display:block; }
 @media (min-width:769px){
   .hero .shell .hero-copy{ padding-top:140px !important; }
 }
+
+/* Intro blurb under hero */
+/* Intro spacing fix for pricing page */
+.section--intro{
+  background:#0a0b0d;
+  padding:140px 0 32px;   /* increased top padding so it clears nav/pills */
+  text-align:center;
+}
+.section--intro .lead{
+  font-size:18px;
+  color:#f1f5f9;
+  max-width:800px;
+  margin:0 auto;
+  line-height:1.5;
+}
+
+
+/* Bottom CTA pill */
+.bottom-cta{
+  background:#0a0b0d;
+  text-align:center;
+  padding:40px 0 60px;
+}
+.bottom-cta .pill-cta{
+  font-size:18px;
+  padding:14px 28px;
+}
+
+/* ===== Membership form ===== */
+.form-card{
+  background:#fff;
+  border:1px solid var(--card-border);
+  border-radius:16px;
+  padding:24px;
+  margin: 0 auto 48px;
+  max-width: 960px;
+}
+.fieldset{ border:0; padding:0; margin:0 0 22px }
+.fieldset > legend{
+  font-weight:800; font-size:18px; margin-bottom:12px;
+}
+.field{ display:flex; flex-direction:column; gap:8px }
+.field span{ font-weight:600; color:#0b0b0b }
+.field input, .field textarea, .field select{
+  font-size:16px; padding:12px 14px; border:1px solid #e5e7eb; border-radius:12px;
+  background:#fff; color:#0b0b0b;
+}
+.grid-2{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px }
+.grid-3{ display:grid; grid-template-columns:2fr 1fr 1fr; gap:14px }
+
+.waiver{
+  background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; color:#111;
+}
+.agree{ display:flex; gap:10px; align-items:flex-start; margin-top:12px }
+.agree input{ width:18px; height:18px; margin-top:2px }
+
+.sig-wrap{
+  background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; padding:14px;
+}
+#sigpad{ width:100%; height:180px; background:#fff; border-radius:10px; display:block }
+.sig-actions{ display:flex; gap:10px; margin-top:10px }
+
+.form-actions{
+  display:flex; gap:12px; align-items:center; justify-content:flex-start; margin-top:8px;
+}
+
+/* Responsive */
+@media (max-width: 768px){
+  .grid-2{ grid-template-columns:1fr }
+  .grid-3{ grid-template-columns:1fr 1fr; }
+  .form-actions{ flex-direction:column; align-items:stretch }
+}
+
+/* ===== Plan picker ===== */
+.plan-grid{ gap:14px }
+.plan{
+  position: relative;
+  display: block;
+  border:1px solid var(--card-border);
+  border-radius:14px;
+  background:#fff;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.plan input{
+  position:absolute; inset:0; opacity:0; pointer-events:none;
+}
+.plan-body{
+  padding:14px;
+  display:flex; flex-direction:column; gap:4px;
+}
+.plan:hover{
+  transform: translateY(-2px);
+  box-shadow:0 8px 18px rgba(0,0,0,.08);
+}
+.plan input:checked + .plan-body{
+  border-radius:12px;
+  outline:3px solid rgba(216,27,96,.35);
+  outline-offset:-3px;
+}
+
+/* ===== Payments summary card tweaks ===== */
+#summaryCard h2{ margin:0 0 6px 0 }
+#summaryText{ line-height:1.5 }
+
+/* Make the bottom actions feel strong on mobile */
+#payBtn.pill-cta{ font-size:18px; padding:14px 22px }
+
+/* Responsive adjustments */
+@media (max-width:768px){
+  .plan-grid{ grid-template-columns:1fr !important }
+}

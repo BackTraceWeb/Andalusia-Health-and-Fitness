@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Secure Payment — Andalusia Health & Fitness</title>
+  <link rel="icon" href="assets/images/favicon.png"/>
+  <link rel="stylesheet" href="assets/css/styles.css"/>
+</head>
+<body>
+
+  <!-- Topbar (same as other pages) -->
+  <div class="topbar">
+    <div class="shell">
+      <div class="brand-pill">
+        <a href="index.html"><img src="AHFlogo.png" alt="Andalusia Health & Fitness"></a>
+      </div>
+      <nav class="mainnav">
+        <a href="index.html">Home</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
+      </nav>
+    </div>
+  </div>
+
+  <section class="hero hero--compact">
+    <div class="shell">
+      <div class="hero-copy">
+        <h1>Secure Payment</h1>
+        <p class="lede">Review your information and continue to our secure payment portal.</p>
+      </div>
+    </div>
+  </section>
+
+  <main class="section">
+    <div class="shell">
+      <div class="form-card" id="summaryCard">
+        <h2 style="margin-top:0">Your Details</h2>
+        <p id="summaryText" class="muted"></p>
+        <div style="margin-top:16px">
+          <a id="payBtn" class="pill-cta" href="#" target="_blank" rel="noopener">Proceed to Payment</a>
+          <a class="btn btn-ghost" href="membership.html">Back to Edit</a>
+        </div>
+        <p class="muted" style="margin-top:10px">Payments are processed securely by our provider.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="sitefoot">
+    © <span id="y"></span> Andalusia Health &amp; Fitness · 205 Church St, Andalusia, AL 36420 · (334) 582-2000
+  </footer>
+
+  <script>
+  document.getElementById('y').textContent = new Date().getFullYear();
+
+  const data = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+
+  // Summary text
+  const lines = [];
+  if (data.first_name || data.last_name) lines.push(`<strong>Name:</strong> ${[data.first_name, data.last_name].filter(Boolean).join(' ')}`);
+  if (data.email)  lines.push(`<strong>Email:</strong> ${data.email}`);
+  if (data.phone)  lines.push(`<strong>Phone:</strong> ${data.phone}`);
+  const addr = [data.address1, data.address2, data.city, data.state, data.zip].filter(Boolean).join(', ');
+  if (addr) lines.push(`<strong>Address:</strong> ${addr}`);
+  if (data.plan_name) lines.push(`<strong>Plan:</strong> ${data.plan_name} — $${data.plan_amount}${data.plan_name === 'Daily Rate' ? '' : '/mo'}`);
+  if (data.signed_at) lines.push(`<strong>Waiver Signed:</strong> ${new Date(data.signed_at).toLocaleString()}`);
+  document.getElementById('summaryText').innerHTML = lines.join('<br/>') || 'No details found.';
+
+  // Build provider URL with prefill (update to your actual processor URL)
+  // Example shows query params; adjust names to what your provider expects
+  const PAYMENT_BASE = 'https://your-payment-provider.example.com/checkout'; // TODO: replace
+  const qp = new URLSearchParams({
+    name: [data.first_name, data.last_name].filter(Boolean).join(' '),
+    email: data.email || '',
+    phone: data.phone || '',
+    plan: data.plan_name || '',
+    amount: data.plan_amount || ''   // e.g. "35"
+  });
+  document.getElementById('payBtn').href = `${PAYMENT_BASE}?${qp.toString()}`;
+</script>
+</body>
+</html>
