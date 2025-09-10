@@ -6,16 +6,38 @@
   <title>Join Today — Andalusia Health & Fitness</title>
   <link rel="icon" href="assets/images/favicon.png" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .calc { background:#0f1520;border:1px solid #283248;border-radius:12px;padding:12px;margin-top:10px }
+    .calc .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+    .calc input[type="number"] { width:90px }
+    .totals { display:grid; gap:6px; margin-top:8px }
+    .totals .line { display:flex; justify-content:space-between }
+    .totals .big { font-weight:700 }
+    .muted-sm { color:#aab3c2; font-size:12px }
+    .help { font-size:12px; color:#9aa6bf }
+
+    .wizard { display:none; background:#0b0f19; border:1px solid #283248; border-radius:12px; padding:14px; margin-top:12px }
+    .wizard.active { display:block }
+    .sigpad { width:100%; max-width:720px; height:180px; background:#fff; border:1px solid #e5e7eb; border-radius:10px }
+    .sig-actions { display:flex; gap:8px; margin-top:6px }
+    .pill-ghost { background:#151c2a; border:1px solid #2a3346; color:#e8e9ee; border-radius:999px; padding:8px 12px }
+
+    .pfp { display:flex; align-items:center; gap:12px; margin-top:8px }
+    .pfp img { width:84px; height:84px; object-fit:cover; border-radius:10px; border:1px solid #2a3346 }
+
+    .grid-3.plan-grid .plan-body .muted small { font-size:12px; display:block }
+    .toggle { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none }
+    .toggle input { width:18px; height:18px }
+  </style>
 </head>
 <body>
 
-  <!-- === HEADER (Topbar) === -->
+  <!-- Topbar -->
   <div class="topbar">
     <div class="shell">
       <div class="brand-pill">
         <a href="index.html"><img src="AHFlogo.png" alt="Andalusia Health & Fitness"></a>
       </div>
-
       <nav class="mainnav">
         <a href="index.html">Home</a>
         <a href="pricing.html">Pricing</a>
@@ -24,12 +46,11 @@
     </div>
   </div>
 
-  <!-- CTA pills over hero (optional — remove if you don’t want them on this page) -->
   <section class="hero hero--compact">
     <div class="shell">
       <div class="hero-copy">
         <h1>Join Today</h1>
-        <p class="lede">Fill out the form below to start your membership. You’ll get 24/7 access. Seniors and students save with valid ID.</p>
+        <p class="lede">24/7 access and sauna included. Seniors & students save with valid ID.</p>
       </div>
     </div>
   </section>
@@ -37,119 +58,185 @@
   <main class="section">
     <div class="shell">
 
-      <!-- ===== Membership Form ===== -->
-      <!-- If you want to use Formspree or a backend, replace action with that URL -->
-      <form id="membershipForm" class="form-card" method="POST" action="#">
-        <!-- Hidden inputs populated before submit -->
-        <input type="hidden" name="signature_png" id="signature_png" />
-        <input type="hidden" name="signed_at_iso" id="signed_at_iso" />
+      <form id="membershipForm" class="form-card" method="GET" action="payments.html">
+        <!-- hidden fields populated before submit -->
+        <input type="hidden" id="signed_at_iso" />
 
-        <!-- Person -->
+        <!-- Plans -->
         <fieldset class="fieldset">
-  <legend>Choose Your Membership</legend>
+          <legend>Choose Your Membership</legend>
 
-  <div class="grid-3 plan-grid">
-    <label class="plan">
-      <input type="radio" name="plan" value="Single|35" required>
-      <div class="plan-body">
-        <strong>Single</strong>
-        <span class="muted">$35 / month</span>
-      </div>
-    </label>
+          <div class="grid-3 plan-grid">
+            <label class="plan">
+              <input type="radio" name="plan" value="Single|35" required>
+              <div class="plan-body"><strong>Single</strong><span class="muted">$35.00 / month</span></div>
+            </label>
 
-    <label class="plan">
-      <input type="radio" name="plan" value="Couples (married)|55">
-      <div class="plan-body">
-        <strong>Couples (married)</strong>
-        <span class="muted">$55 / month</span>
-      </div>
-    </label>
+            <label class="plan">
+              <input type="radio" name="plan" value="Couples (married)|55">
+              <div class="plan-body"><strong>Couples (married)</strong><span class="muted">$55.00 / month</span></div>
+            </label>
 
-    <label class="plan">
-      <input type="radio" name="plan" value="Family|65">
-      <div class="plan-body">
-        <strong>Family</strong>
-        <span class="muted">$65 / month</span>
-        <span class="muted" style="font-size:12px">Includes spouse + 1 child · $10 / add’l child</span>
-      </div>
-    </label>
+            <label class="plan">
+              <input type="radio" name="plan" value="Family|65">
+              <div class="plan-body">
+                <strong>Family</strong><span class="muted">$65.00 / month</span>
+                <span class="muted"><small>Includes spouse + 1 child · $10.00 per additional child</small></span>
+              </div>
+            </label>
 
-    <label class="plan">
-      <input type="radio" name="plan" value="Senior (65+)|25">
-      <div class="plan-body">
-        <strong>Senior (65+)</strong>
-        <span class="muted">$25 / month</span>
-      </div>
-    </label>
+            <label class="plan">
+              <input type="radio" name="plan" value="Senior (65+)|25">
+              <div class="plan-body"><strong>Senior (65+)</strong><span class="muted">$25.00 / month</span></div>
+            </label>
 
-    <label class="plan">
-      <input type="radio" name="plan" value="Student|30">
-      <div class="plan-body">
-        <strong>Student</strong>
-        <span class="muted">$30 / month</span>
-      </div>
-    </label>
+            <label class="plan">
+              <input type="radio" name="plan" value="Student|30">
+              <div class="plan-body">
+                <strong>Student</strong><span class="muted">$30.00 / month</span>
+                <span class="muted"><small>Full-time HS/College · proof required</small></span>
+              </div>
+            </label>
 
-    <label class="plan">
-      <input type="radio" name="plan" value="Daily Rate|5">
-      <div class="plan-body">
-        <strong>Daily Rate</strong>
-        <span class="muted">$5 / day</span>
-      </div>
-    </label>
-  </div>
-</fieldset>
-
-
-        <!-- Waiver -->
-        <fieldset class="fieldset">
-          <legend>Membership Agreement & Liability Waiver</legend>
-
-          <div class="waiver">
-            <p>
-              I acknowledge that participation in fitness activities involves inherent risks, including the risk of injury.
-              I agree to follow all posted rules and staff instructions. I certify that I am physically able to participate,
-              and I assume full responsibility for any risk of injury, illness, damage, or loss that may result from use of
-              the facilities at Andalusia Health &amp; Fitness. I release and hold harmless Andalusia Health &amp; Fitness,
-              its owners, employees, and agents from any and all liability arising from my participation, except in cases of
-              gross negligence or willful misconduct.
-            </p>
-            <p>
-              I understand memberships may renew monthly unless cancelled per policy. I agree to the terms of payment for my
-              selected membership and any additional services. I consent to receive membership communications at the phone and
-              email provided.
-            </p>
-            <p class="muted">
-              By checking the box and signing below, I acknowledge I have read and agree to this waiver and the membership terms.
-            </p>
+            <label class="plan">
+              <input type="radio" name="plan" value="Daily Rate|5">
+              <div class="plan-body"><strong>Daily Rate</strong><span class="muted">$5.00 / day</span></div>
+            </label>
           </div>
 
-          <label class="agree">
-            <input type="checkbox" id="agree" required />
-            <span>I have read and agree to the Membership Agreement & Liability Waiver.</span>
-          </label>
+          <!-- Calculator / counts -->
+          <div class="calc" id="calcBox">
+            <div class="row">
+              <label class="toggle">
+                <input type="checkbox" id="addTanning">
+                <span>Add Tanning (member add-on) — $35.00 / month</span>
+              </label>
+            </div>
+
+            <div class="row">
+              <label>Adults
+                <input type="number" id="adultCount" min="1" step="1" value="1">
+              </label>
+              <label>Children (under 18)
+                <input type="number" id="childCount" min="0" step="1" value="0">
+              </label>
+              <span class="help">Family includes spouse + 1 child · $10/mo per additional child</span>
+            </div>
+
+            <div class="row">
+              <label>24/7 Access Keys (fobs) @ $15.00 each
+                <input type="number" id="fobCount" min="0" step="1" value="1">
+              </label>
+              <label class="toggle">
+                <input type="checkbox" id="waiveInitiation">
+                <span>Waive $20.00 initiation fee (draft signup)</span>
+              </label>
+            </div>
+
+            <div class="row">
+              <label>Waivers needed
+                <input type="number" id="waiverCount" min="1" step="1" value="1">
+              </label>
+              <button type="button" id="launchWizard" class="pill-ghost">Fill Waivers Now</button>
+              <span class="help" id="waiverStatus">0 / 1 completed</span>
+            </div>
+
+            <div class="totals">
+              <div class="line"><span>Monthly dues (plan)</span><span id="monthlyPlan">$0.00</span></div>
+              <div class="line"><span>Monthly add-ons</span><span id="monthlyAddons">$0.00</span></div>
+              <div class="line"><span>Initiation fee</span><span id="initiationLine">$20.00</span></div>
+              <div class="line"><span>24/7 key(s)</span><span id="fobsLine">$15.00</span></div>
+              <div class="line big"><span>Today’s total (one-time)</span><span id="todayTotal">$35.00</span></div>
+              <div class="muted-sm">Today = initiation + keys only. First monthly draft = plan + add-ons.</div>
+            </div>
+          </div>
         </fieldset>
 
-        <!-- Signature -->
+        <!-- Primary Member -->
         <fieldset class="fieldset">
-          <legend>Signature</legend>
-
-          <div class="sig-wrap">
-            <canvas id="sigpad" width="700" height="180" aria-label="Signature pad"></canvas>
-            <div class="sig-actions">
-              <button type="button" id="sigClear" class="btn btn-ghost">Clear</button>
-              <button type="button" id="sigUndo" class="btn btn-ghost">Undo</button>
-            </div>
-            <p class="muted">Sign with your finger (mobile) or mouse (desktop). Your signature is saved securely with your submission.</p>
+          <legend>Primary Member</legend>
+          <div class="grid-3">
+            <label>First Name <input required name="first_name" autocomplete="given-name"></label>
+            <label>Last Name <input required name="last_name" autocomplete="family-name"></label>
+            <label>Phone <input required name="phone" inputmode="tel" autocomplete="tel"></label>
+            <label>Email <input required type="email" name="email" autocomplete="email"></label>
+            <label>Address 1 <input name="address1" autocomplete="address-line1"></label>
+            <label>Address 2 <input name="address2" autocomplete="address-line2"></label>
+            <label>City <input name="city" autocomplete="address-level2"></label>
+            <label>State <input name="state" autocomplete="address-level1"></label>
+            <label>ZIP <input name="zip" autocomplete="postal-code"></label>
           </div>
+
+          <div class="pfp">
+            <div>
+              <label>Upload a photo (primary member)
+                <input id="photoInput" type="file" accept="image/*" />
+              </label>
+              <div class="muted-sm">Helps staff recognize you at pickup. Optional but recommended.</div>
+            </div>
+            <img id="photoPreview" alt="Photo preview" src="" style="display:none">
+          </div>
+        </fieldset>
+
+        <!-- Waiver summary + agree -->
+        <fieldset class="fieldset">
+          <legend>Membership Agreement & Liability Waiver (Online)</legend>
+          <p class="muted-sm">Each adult must sign their own waiver. Minors require a guardian’s signature. Text based on the club’s official document. :contentReference[oaicite:1]{index=1}</p>
+          <label class="agree">
+            <input type="checkbox" id="agree" required />
+            <span>I confirm all required waivers will be signed and are accurate.</span>
+          </label>
         </fieldset>
 
         <!-- Submit -->
         <div class="form-actions">
-          <button class="pill-cta" type="submit">Submit Membership</button>
+          <button class="pill-cta" type="submit">Continue to Payment</button>
           <a class="btn btn-ghost" href="pricing.html">Back to Pricing</a>
         </div>
       </form>
+
+      <!-- Waiver Wizard -->
+      <div id="waiverWizard" class="wizard" aria-live="polite">
+        <h3>Waiver <span id="wizStep">1</span> of <span id="wizTotal">1</span></h3>
+
+        <div class="grid-3">
+          <label>Signer’s Full Name
+            <input id="wizName" placeholder="First Last">
+          </label>
+          <label>Adult or Minor?
+            <select id="wizType">
+              <option value="adult">Adult</option>
+              <option value="minor">Minor (guardian signing)</option>
+            </select>
+          </label>
+          <label>Signer’s Email (optional)
+            <input id="wizEmail" type="email" placeholder="for a copy">
+          </label>
+        </div>
+
+        <div class="waiver-box" style="margin:10px 0; background:#0f1520;border:1px solid #283248;border-radius:10px; padding:12px; max-height:260px; overflow:auto">
+          <p><strong>ANDALUSIA HEALTH AND FITNESS LLC</strong> — WAIVER, RELEASE OF LIABILITY AND COVENANT-NOT-TO-SUE</p>
+          <p>I UNDERSTAND AND AGREE that Andalusia Health and Fitness LLC is not responsible for injury or loss of property while any person participates in activities at the facility, including ordinary negligence by Andalusia Health and Fitness LLC or its agents.</p>
+          <p>I understand the facility may be unsupervised during non-staff hours; I use it at my own risk and will not allow non-members to enter. Enforcement may include electronic surveillance and fees or termination for violations.</p>
+          <p>I agree to consult a physician and understand the Club bears no responsibility for my physical health. In consideration of access, I agree not to sue and release the Club from any and all claims arising from participation, including ordinary negligence.</p>
+          <p>I acknowledge risks associated with weight training, equipment use, and actions of other participants, and agree to use safety equipment properly. This waiver is intended to be as broad and inclusive as permitted by Alabama law. Full terms of the Membership Agreement apply.</p>
+          <p class="muted-sm">See the full waiver and rules posted by the Club for complete language. :contentReference[oaicite:2]{index=2}</p>
+        </div>
+
+        <canvas id="wizCanvas" class="sigpad" aria-label="Signature pad"></canvas>
+        <div class="sig-actions">
+          <button type="button" id="wizClear" class="pill-ghost">Clear</button>
+          <button type="button" id="wizUndo" class="pill-ghost">Undo</button>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:10px">
+          <button type="button" id="wizCancel" class="pill-ghost">Cancel</button>
+          <span style="flex:1"></span>
+          <button type="button" id="wizPrev" class="pill-ghost">Prev</button>
+          <button type="button" id="wizNext" class="pill-cta">Save & Next</button>
+          <button type="button" id="wizDone" class="pill-cta" style="display:none">All Waivers Complete</button>
+        </div>
+      </div>
 
     </div>
   </main>
@@ -159,196 +246,288 @@
   </footer>
 
   <script>
-  // Year in footer
-  document.getElementById('y').textContent = new Date().getFullYear();
+    // Footer year
+    document.getElementById('y').textContent = new Date().getFullYear();
 
-  // ===== Simple Signature Pad (no external lib) =====
-  (function () {
-    const form = document.getElementById('membershipForm');
+    (function(){
+      // === Pricing constants
+      const INIT_FEE = 20.00;
+      const FOB_FEE  = 15.00;
+      const TANNING  = 35.00;   // member monthly add-on
+      const EXTRA_CHILD_FEE = 10.00; // per extra child beyond first (Family plan rule)
 
-    // Ensure the form actually navigates
-    form.action = 'payments.html';
-    form.method = 'get';
+      // === Form refs
+      const form = document.getElementById('membershipForm');
 
-    const canvas = document.getElementById('sigpad');
-    const ctx = canvas.getContext('2d');
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const addTanningEl  = document.getElementById('addTanning');
+      const adultEl       = document.getElementById('adultCount');
+      const childEl       = document.getElementById('childCount');
 
-    const sigPngInput = document.getElementById('signature_png');
-    const signedAtInput = document.getElementById('signed_at_iso');
-    const clearBtn = document.getElementById('sigClear');
-    const undoBtn  = document.getElementById('sigUndo');
+      const monthlyPlanEl = document.getElementById('monthlyPlan');
+      const monthlyAddEl  = document.getElementById('monthlyAddons');
+      const initiationEl  = document.getElementById('initiationLine');
+      const fobsLineEl    = document.getElementById('fobsLine');
+      const todayTotalEl  = document.getElementById('todayTotal');
 
-    const strokes = [];
-    let drawing = false, currentStroke = [];
+      const waiveInitEl   = document.getElementById('waiveInitiation');
+      const fobCountEl    = document.getElementById('fobCount');
 
-    // HiDPI scale
-    function resizeCanvas() {
-      // Get current CSS size (fallback to attr if no CSS width)
-      const cssW = canvas.clientWidth || canvas.width;
-      const cssH = canvas.clientHeight || canvas.height;
+      const waiverCountEl = document.getElementById('waiverCount');
+      const launchWizardBtn = document.getElementById('launchWizard');
+      const waiverStatus  = document.getElementById('waiverStatus');
 
-      // Reset transform before resizing to avoid scale compounding
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const photoInput = document.getElementById('photoInput');
+      const photoPreview = document.getElementById('photoPreview');
+      let photoDataUrl = '';
 
-      canvas.width = cssW * ratio;
-      canvas.height = cssH * ratio;
-      canvas.style.width = cssW + 'px';
-      canvas.style.height = cssH + 'px';
+      function money(n){ return '$' + (n||0).toFixed(2); }
 
-      ctx.scale(ratio, ratio);
-      redraw();
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    function getPos(e) {
-      const r = canvas.getBoundingClientRect();
-      const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
-      const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
-      return { x, y };
-    }
-
-    function start(e) {
-      e.preventDefault();
-      drawing = true;
-      currentStroke = [];
-      currentStroke.push(getPos(e));
-      redraw();
-    }
-    function move(e) {
-      if (!drawing) return;
-      currentStroke.push(getPos(e));
-      redraw();
-    }
-    function end() {
-      if (!drawing) return;
-      drawing = false;
-      if (currentStroke.length) strokes.push(currentStroke);
-      currentStroke = [];
-      redraw();
-    }
-
-    function redraw() {
-      // Clear full pixel buffer
-      ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.restore();
-
-      // White background with subtle border in CSS pixels
-      const w = canvas.width / ratio, h = canvas.height / ratio, rad = 14;
-
-      ctx.fillStyle = '#fff';
-      ctx.strokeStyle = '#e5e7eb';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(rad, 0);
-      ctx.arcTo(w, 0, w, h, rad);
-      ctx.arcTo(w, h, 0, h, rad);
-      ctx.arcTo(0, h, 0, 0, rad);
-      ctx.arcTo(0, 0, w, 0, rad);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Ink
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#111';
-      ctx.lineWidth = 2.2;
-
-      function drawStroke(s) {
-        if (s.length < 2) return;
-        ctx.beginPath();
-        ctx.moveTo(s[0].x, s[0].y);
-        for (let i = 1; i < s.length; i++) ctx.lineTo(s[i].x, s[i].y);
-        ctx.stroke();
-      }
-      strokes.forEach(drawStroke);
-      if (currentStroke.length) drawStroke(currentStroke);
-    }
-
-    // Pointer/touch events
-    canvas.addEventListener('mousedown', start);
-    canvas.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', end);
-    canvas.addEventListener('touchstart', start, { passive: false });
-    canvas.addEventListener('touchmove', move, { passive: false });
-    canvas.addEventListener('touchend', end);
-
-    // Clear/Undo
-    clearBtn.addEventListener('click', function () {
-      strokes.length = 0; currentStroke = []; redraw();
-    });
-    undoBtn.addEventListener('click', function () {
-      strokes.pop(); redraw();
-    });
-
-    // ===== Submit handler =====
-    form.addEventListener('submit', function (e) {
-      // Waiver & signature checks (block submit if invalid)
-      const agreed = document.getElementById('agree').checked;
-      const hasSignature = strokes.length > 0;
-
-      if (!agreed) {
-        e.preventDefault();
-        alert('Please agree to the Membership Agreement & Liability Waiver.');
-        return;
-      }
-      if (!hasSignature) {
-        e.preventDefault();
-        alert('Please add your signature.');
-        return;
+      function parsePlan(){
+        const sel = form.querySelector('input[name="plan"]:checked');
+        if(!sel) return {name:'', amount:0};
+        const [name, amt] = sel.value.split('|');
+        return {name, amount: parseFloat(amt || '0')};
       }
 
-      // Basic phone validation
-      const phoneRaw = (this.phone?.value || '').replace(/[^\d]/g, '');
-      if (phoneRaw.length < 10) {
-        e.preventDefault();
-        alert('Please enter a valid phone number.');
-        return;
+      function suggestByPlan(){
+        const p = (parsePlan().name||'').toLowerCase();
+        if (p.includes('family')) {
+          if (+adultEl.value < 2) adultEl.value = 2;
+          if (+childEl.value < 1) childEl.value = 1;
+          if (+fobCountEl.value < 2) fobCountEl.value = 2;
+          if (+waiverCountEl.value < 2) waiverCountEl.value = 2;
+        } else if (p.includes('couples')) {
+          if (+adultEl.value < 2) adultEl.value = 2;
+          if (+childEl.value < 0) childEl.value = 0;
+          if (+fobCountEl.value < 2) fobCountEl.value = 2;
+          if (+waiverCountEl.value < 2) waiverCountEl.value = 2;
+        } else {
+          if (+adultEl.value < 1) adultEl.value = 1;
+          if (+childEl.value < 0) childEl.value = 0;
+          if (+fobCountEl.value < 1) fobCountEl.value = 1;
+          if (+waiverCountEl.value < 1) waiverCountEl.value = 1;
+        }
       }
 
-      // Export signature PNG (with white background)
-      const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = canvas.width;
-      exportCanvas.height = canvas.height;
-      const ex = exportCanvas.getContext('2d');
-      ex.fillStyle = '#fff';
-      ex.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-      ex.drawImage(canvas, 0, 0);
-      sigPngInput.value = exportCanvas.toDataURL('image/png');
-      signedAtInput.value = new Date().toISOString();
+      function recalc(){
+        suggestByPlan();
+        const plan = parsePlan();
 
-      // Gather plan
-      const selectedPlan = this.querySelector('input[name="plan"]:checked');
-      const [plan_name, plan_amount] = selectedPlan ? selectedPlan.value.split('|') : ['', ''];
+        // Monthly add-ons:
+        // - Tanning (if checked): +$35/month
+        // - Extra children beyond first for Family: +$10 each/month
+        let addons = 0;
+        if (addTanningEl.checked) addons += TANNING;
 
-      // Gather person/address fields (assumes inputs exist in your form)
-      const payload = {
-        first_name: this.first_name?.value || '',
-        last_name:  this.last_name?.value || '',
-        email:      this.email?.value || '',
-        phone:      this.phone?.value || '',
-        address1:   this.address1?.value || '',
-        address2:   this.address2?.value || '',
-        city:       this.city?.value || '',
-        state:      this.state?.value || '',
-        zip:        this.zip?.value || '',
-        plan_name,
-        plan_amount, // numeric string, e.g., "35"
-        signed_at:  signedAtInput.value
+        let extraChildMonthly = 0;
+        const isFamily = (plan.name||'').toLowerCase().includes('family');
+        const childCount = Math.max(0, parseInt(childEl.value||'0',10));
+        if (isFamily && childCount > 1) {
+          extraChildMonthly = (childCount - 1) * EXTRA_CHILD_FEE;
+          addons += extraChildMonthly;
+        }
+
+        // One-time today:
+        const fobs = Math.max(0, parseInt(fobCountEl.value||'0',10));
+        const init = waiveInitEl.checked ? 0 : INIT_FEE;
+        const today = init + (fobs * FOB_FEE);
+
+        monthlyPlanEl.textContent = money(plan.amount);
+        monthlyAddEl.textContent  = money(addons);
+        initiationEl.textContent  = money(init);
+        fobsLineEl.textContent    = money(fobs * FOB_FEE);
+        todayTotalEl.textContent  = money(today);
+
+        updateStatus();
+      }
+
+      // photo upload preview & dataURL
+      photoInput.addEventListener('change', async (e)=>{
+        const file = e.target.files && e.target.files[0];
+        if (!file) { photoPreview.style.display='none'; photoPreview.src=''; photoDataUrl=''; return; }
+        const reader = new FileReader();
+        reader.onload = () => {
+          photoDataUrl = reader.result;
+          photoPreview.src = photoDataUrl;
+          photoPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // ===== Waiver wizard state =====
+      const wiz = {
+        index: 0,
+        total: parseInt(waiverCountEl.value,10)||1,
+        entries: [] // {name,type,email,signature_png,signed_at}
       };
 
-      // Save for payments.html
-      sessionStorage.setItem('ahfSignup', JSON.stringify(payload));
+      const wizEl = document.getElementById('waiverWizard');
+      const wizName = document.getElementById('wizName');
+      const wizType = document.getElementById('wizType');
+      const wizEmail= document.getElementById('wizEmail');
+      const wizStep = document.getElementById('wizStep');
+      const wizTotal= document.getElementById('wizTotal');
 
-      // IMPORTANT: Do NOT preventDefault here.
-      // Let the browser follow the form action to payments.html
-      // (We already set form.action/method at the top.)
-    });
-  })();
-</script>
+      const can = document.getElementById('wizCanvas');
+      const ctx = can.getContext('2d');
+      const ratio = Math.max(window.devicePixelRatio||1,1);
+
+      let strokes = [], current = [];
+      function resizeCanvas(){
+        const cssW = can.clientWidth || 720, cssH = 180;
+        ctx.setTransform(1,0,0,1,0,0);
+        can.width  = cssW * ratio;
+        can.height = cssH * ratio;
+        can.style.width = cssW+'px';
+        can.style.height= cssH+'px';
+        ctx.scale(ratio, ratio);
+        redraw();
+      }
+      function redraw(){
+        ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,can.width,can.height); ctx.restore();
+        const w = can.width/ratio, h = can.height/ratio, r = 12;
+        ctx.fillStyle='#fff'; ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(r,0); ctx.arcTo(w,0,w,h,r); ctx.arcTo(w,h,0,h,r); ctx.arcTo(0,h,0,0,r); ctx.arcTo(0,0,w,0,r);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#111'; ctx.lineWidth=2.2;
+        function draw(s){ if(s.length<2) return; ctx.beginPath(); ctx.moveTo(s[0].x,s[0].y); for(let i=1;i<s.length;i++) ctx.lineTo(s[i].x,s[i].y); ctx.stroke(); }
+        strokes.forEach(draw);
+        if(current.length) draw(current);
+      }
+      function pos(e){ const r = can.getBoundingClientRect(); const x = (e.touches?e.touches[0].clientX:e.clientX)-r.left; const y = (e.touches?e.touches[0].clientY:e.clientY)-r.top; return {x,y}; }
+      function start(e){ e.preventDefault(); current=[]; current.push(pos(e)); redraw(); }
+      function move(e){ if(!current) return; if(current.length===0) return; current.push(pos(e)); redraw(); }
+      function end(){ if(current.length) { strokes.push(current); current=[]; redraw(); } }
+
+      can.addEventListener('mousedown', start);
+      can.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', end);
+      can.addEventListener('touchstart', start, {passive:false});
+      can.addEventListener('touchmove', move, {passive:false});
+      can.addEventListener('touchend', end);
+      window.addEventListener('resize', resizeCanvas);
+
+      document.getElementById('wizClear').onclick = ()=>{ strokes=[]; current=[]; redraw(); };
+      document.getElementById('wizUndo').onclick  = ()=>{ strokes.pop(); redraw(); };
+
+      function openWizard(){
+        wiz.total = Math.max(1, parseInt(waiverCountEl.value||'1',10));
+        wizEl.classList.add('active');
+        loadStep(0);
+      }
+      function closeWizard(){ wizEl.classList.remove('active'); updateStatus(); }
+
+      function loadStep(i){
+        wiz.index = i;
+        wizTotal.textContent = wiz.total;
+        wizStep.textContent  = (i+1);
+        const existing = wiz.entries[i];
+        document.getElementById('wizPrev').style.display = (i>0) ? 'inline-block' : 'none';
+        document.getElementById('wizNext').style.display = (i < wiz.total-1) ? 'inline-block' : 'none';
+        document.getElementById('wizDone').style.display = (i === wiz.total-1) ? 'inline-block' : 'none';
+        strokes=[]; current=[]; redraw();
+        document.getElementById('wizName').value  = existing?.name || '';
+        document.getElementById('wizType').value  = existing?.type || 'adult';
+        document.getElementById('wizEmail').value = existing?.email || '';
+      }
+
+      function exportSignature(){
+        const ex = document.createElement('canvas');
+        ex.width = can.width; ex.height = can.height;
+        const ec = ex.getContext('2d');
+        ec.fillStyle='#fff'; ec.fillRect(0,0,ex.width,ex.height);
+        ec.drawImage(can,0,0);
+        return ex.toDataURL('image/png');
+      }
+
+      function saveCurrent(stepForward){
+        const name = wizName.value.trim();
+        if(!name){ alert('Please enter the signer’s full name.'); return; }
+        if (strokes.length === 0){ alert('Please add the signature.'); return; }
+        wiz.entries[wiz.index] = {
+          name,
+          type: wizType.value,
+          email: wizEmail.value.trim(),
+          signature_png: exportSignature(),
+          signed_at: new Date().toISOString()
+        };
+        if (stepForward && wiz.index < wiz.total-1) loadStep(wiz.index+1);
+        if (!stepForward && wiz.index > 0)          loadStep(wiz.index-1);
+        updateStatus();
+      }
+
+      function updateStatus(){
+        waiverStatus.textContent = `${(wiz.entries||[]).filter(Boolean).length} / ${Math.max(1, parseInt(waiverCountEl.value||'1',10))} completed`;
+      }
+
+      document.getElementById('launchWizard').onclick = openWizard;
+      document.getElementById('wizCancel').onclick = closeWizard;
+      document.getElementById('wizPrev').onclick = ()=> saveCurrent(false);
+      document.getElementById('wizNext').onclick = ()=> saveCurrent(true);
+      document.getElementById('wizDone').onclick = ()=>{
+        saveCurrent(true);
+        const need = Math.max(1, parseInt(waiverCountEl.value||'1',10));
+        const have = (wiz.entries||[]).filter(Boolean).length;
+        if (have < need) { alert('Please complete all waivers.'); return; }
+        closeWizard();
+      };
+
+      // recompute on input changes
+      ['change','input'].forEach(ev => form.addEventListener(ev, recalc, true));
+      recalc(); resizeCanvas();
+
+      // submit
+      form.addEventListener('submit', function(e){
+        if (!document.getElementById('agree').checked) { e.preventDefault(); alert('Please confirm agreement to the waiver.'); return; }
+        const phoneDigits = (this.phone.value||'').replace(/[^\d]/g,'');
+        if (phoneDigits.length < 10){ e.preventDefault(); alert('Please enter a valid phone number.'); return; }
+        const need = Math.max(1, parseInt(waiverCountEl.value||'1',10));
+        const have = (wiz.entries||[]).filter(Boolean).length;
+        if (have < need) { e.preventDefault(); alert(`You indicated ${need} waiver(s) but completed ${have}. Click "Fill Waivers Now".`); return; }
+
+        // Pricing snapshot
+        const plan = parsePlan();
+        const fobs = Math.max(0, parseInt(fobCountEl.value||'0',10));
+        const init = waiveInitEl.checked ? 0 : INIT_FEE;
+        const today = init + (fobs * FOB_FEE);
+
+        const monthlyAddons = (addTanningEl.checked ? TANNING : 0) +
+          (((plan.name||'').toLowerCase().includes('family') && Math.max(0, parseInt(childEl.value||'0',10)) > 1)
+             ? (Math.max(0, parseInt(childEl.value||'0',10)) - 1) * 10 : 0);
+
+        const payload = {
+          // contact
+          first_name: this.first_name.value, last_name: this.last_name.value,
+          email: this.email.value, phone: this.phone.value,
+          address1: this.address1.value, address2: this.address2.value,
+          city: this.city.value, state: this.state.value, zip: this.zip.value,
+
+          // plan & counts
+          plan_name: plan.name, plan_amount: plan.amount,
+          add_tanning: !!addTanningEl.checked, tanning_amount: addTanningEl.checked ? TANNING : 0,
+          adult_count: Math.max(1, parseInt(adultEl.value||'1',10)),
+          child_count: Math.max(0, parseInt(childEl.value||'0',10)),
+          extra_child_fee_each: 10, // for info
+          monthly_addons: monthlyAddons,
+
+          // one-time
+          fob_count: fobs, fob_fee_each: 15,
+          initiation_fee: init,
+          today_total: today,
+
+          // waivers
+          waiver_count: need,
+          waivers: wiz.entries,
+
+          // photo (data URL)
+          primary_photo_dataurl: photoDataUrl || '',
+
+          signed_at: new Date().toISOString()
+        };
+        sessionStorage.setItem('ahfSignup', JSON.stringify(payload));
+        // continue to payments.html
+      });
+    })();
+  </script>
 </body>
 </html>
