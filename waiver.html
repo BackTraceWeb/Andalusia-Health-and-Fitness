@@ -1,71 +1,210 @@
-<!-- Waiver & Membership Agreement — Andalusia Health & Fitness -->
-<section class="waiver-content" style="color:#fff">
-  <h3 style="margin:0 0 .5rem 0;">ANDALUSIA HEALTH AND FITNESS LLC</h3>
-  <div>205 CHURCH STREET · ANDALUSIA, AL 36420</div>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Waiver — Andalusia Health & Fitness</title>
+  <style>
+    :root{--bg:#0b0f19;--card:#0f1520;--line:#283248;--ink:#fff;--muted:rgba(255,255,255,.75);--accent:#e81e63}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
+    .wrap{max-width:900px;margin:28px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+    .grid{display:grid;gap:12px;grid-template-columns:1fr 1fr 1fr}
+    .grid label{display:flex;flex-direction:column;gap:6px}
+    @media (max-width: 860px){.grid{grid-template-columns:1fr}}
+    input,select{background:#0b1220;border:1px solid #2a3346;color:#fff;border-radius:10px;padding:10px}
+    .sigpad{width:100%;height:200px;background:#eee;border-radius:12px;border:1px solid #e5e7eb;opacity:.5;pointer-events:none}
+    .sigpad.enabled{background:#fff;opacity:1;pointer-events:auto}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{border-radius:999px;padding:10px 14px;border:1px solid #2a3346;cursor:pointer}
+    .btn-ghost{background:#151c2a;color:#e8e9ee}
+    .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .muted{color:var(--muted);font-size:12px}
+    .err{background:#220b12;border:1px solid #6f1634;padding:10px;border-radius:10px;margin-top:10px;display:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Membership Waiver</h1>
+    <div class="muted" id="stepInfo">Loading…</div>
 
-  <h4 style="margin:1rem 0 .5rem;">WAIVER, RELEASE OF LIABILITY AND COVENANT-NOT-TO-SUE</h4>
-  <p>
-    I UNDERSTAND AND AGREE that Andalusia Health and Fitness LLC is not responsible to any person for any
-    injury or loss of property while that person is practicing, taking class, competing, participating in
-    open gym, or otherwise involved in activities at Andalusia Health and Fitness LLC for any reason
-    whatsoever, including ordinary negligence on the part of Andalusia Health and Fitness LLC, its owners,
-    board of directors, officers, agents, employees, or trainers (“Andalusia Health and Fitness”).
-  </p>
-  <p>
-    I understand the facility is available 24 hours a day and, during non-staff hours, is an unsupervised
-    facility. I use this facility at my own risk and will supply my own spotters. I am prohibited from
-    allowing any non-member to use the facility or my membership. If I breach this agreement, Andalusia
-    Health and Fitness may charge a fee per unauthorized person and may terminate my membership. I
-    understand that electronic surveillance and other means may be used to enforce this policy.
-  </p>
-  <p>
-    I understand it is my responsibility to consult my physician before using the facilities and that
-    Andalusia Health and Fitness bears no responsibility for my physical health.
-  </p>
-  <p>
-    In consideration of access to the facilities, I agree not to sue and release Andalusia Health and Fitness
-    from any and all past, present, or future claims for property damage, personal injury, or wrongful death
-    arising out of my participation in weight-lifting, weight-training, exercise routines, or related
-    activities, including ordinary negligence.
-  </p>
-  <p>
-    I recognize that weight-training and related activities involve certain risks, including but not limited
-    to serious injury or death. Equipment, safety devices, and spotting may reduce but cannot eliminate these
-    risks. I agree to use all safety equipment properly and understand risks may also arise from the actions
-    of other participants.
-  </p>
-  <p>
-    This waiver and covenant-not-to-sue is intended to be as broad and inclusive as permitted by Alabama
-    law. If any portion is held invalid, the remainder shall continue in full force and effect. Jurisdiction
-    and venue for any proceedings arising out of this agreement will be within the State of Alabama, County
-    of Covington.
-  </p>
-  <p>
-    I affirm I am of legal age and am freely signing this agreement. I have read and understand that by
-    signing I am giving up legal rights and/or remedies which may be available for the ordinary negligence of
-    Andalusia Health and Fitness.
-  </p>
+    <!-- Signer info -->
+    <div class="card">
+      <div class="grid">
+        <label>Signer’s Full Name
+          <input id="name" placeholder="First Last" autocomplete="name">
+        </label>
+        <label>Adult or Minor?
+          <select id="sigType">
+            <option value="adult">Adult</option>
+            <option value="minor">Minor (guardian signing)</option>
+          </select>
+        </label>
+        <label>Email (optional, for a copy)
+          <input id="email" type="email" placeholder="name@example.com" autocomplete="email">
+        </label>
+      </div>
+    </div>
 
-  <h4 style="margin:1rem 0 .5rem;">MEMBERSHIP AGREEMENT (SUMMARY)</h4>
-  <ol style="padding-left:1.25rem; margin:0;">
-    <li>Monthly dues are owed per the type of membership selected; dues continue until cancelled per policy.</li>
-    <li>Initiation fees are non-refundable; memberships are non-transferable and non-voting.</li>
-    <li>Members may bring guests per club rules and are responsible for guest conduct and charges.</li>
-    <li>Termination requires proper notice to the business office; otherwise, membership renews month-to-month and dues remain owed until 30 days after written notice is received.</li>
-    <li>Management may suspend or cancel membership for violations; rules may be updated from time to time.</li>
-    <li>Member accepts the inherent risks of using club facilities and services.</li>
-  </ol>
+    <!-- Full waiver text -->
+    <div class="card" id="waiverBox" style="max-height:280px;overflow:auto">
+      <h3>ANDALUSIA HEALTH AND FITNESS LLC</h3>
+      <div>205 CHURCH STREET · ANDALUSIA, AL 36420</div>
 
-  <h4 style="margin:1rem 0 .5rem;">GENERAL RULES (EXCERPT)</h4>
-  <ul style="padding-left:1.25rem; margin:0;">
-    <li>Wear proper gym attire (athletic shoes; no jeans, sandals, boots, or open-toe shoes).</li>
-    <li>Re-rack weights and return benches to their area; wipe down equipment and cardio after use.</li>
-    <li>No profanity; be considerate and limit cardio use to 30 minutes when others are waiting.</li>
-    <li>Guests must sign a guest waiver; guest fee is $5.</li>
-    <li>Locker/shower rooms: do not leave personal items; the club is not responsible for lost items.</li>
-  </ul>
+      <h4>WAIVER, RELEASE OF LIABILITY AND COVENANT-NOT-TO-SUE</h4>
+      <p>
+        I UNDERSTAND AND AGREE that Andalusia Health and Fitness LLC is not responsible to any person for
+        any injury or loss of property while that person is practicing, taking class, competing,
+        participating in open gym, or otherwise involved in activities at Andalusia Health and Fitness LLC
+        for any reason whatsoever, including ordinary negligence on the part of Andalusia Health and
+        Fitness LLC, its owners, board of directors, officers, agents, employees, or trainers.
+      </p>
+      <p>
+        I understand the facility is available 24 hours a day and, during non-staff hours, is an
+        unsupervised facility. I use this facility at my own risk and will supply my own spotters.
+        I am prohibited from allowing any non-member to use the facility or my membership. If I breach
+        this agreement, Andalusia Health and Fitness may charge a fee per unauthorized person and may
+        terminate my membership. I understand that electronic surveillance and other means may be used
+        to enforce this policy.
+      </p>
+      <p>
+        I understand it is my responsibility to consult my physician before using the facilities and that
+        Andalusia Health and Fitness bears no responsibility for my physical health.
+      </p>
+      <p>
+        In consideration of access to the facilities, I agree not to sue and release Andalusia Health and
+        Fitness from any and all past, present, or future claims for property damage, personal injury,
+        or wrongful death arising out of my participation in weight-lifting, weight-training, exercise
+        routines, or related activities, including ordinary negligence.
+      </p>
+      <p>
+        I recognize that weight-training and related activities involve certain risks, including but not
+        limited to serious injury or death. Equipment, safety devices, and spotting may reduce but cannot
+        eliminate these risks. I agree to use all safety equipment properly and understand risks may also
+        arise from the actions of other participants.
+      </p>
+      <p>
+        This waiver and covenant-not-to-sue is intended to be as broad and inclusive as permitted by
+        Alabama law. If any portion is held invalid, the remainder shall continue in full force and effect.
+        Jurisdiction and venue for any proceedings arising out of this agreement will be within the State
+        of Alabama, County of Covington.
+      </p>
+      <p>
+        I affirm I am of legal age and am freely signing this agreement. I have read and understand that
+        by signing I am giving up legal rights and/or remedies which may be available for the ordinary
+        negligence of Andalusia Health and Fitness.
+      </p>
 
-  <p style="margin-top:1rem;" class="muted-sm">
-    Full language of the Waiver, Membership Agreement, and Rules is maintained by the Club and available on request.
-  </p>
-</section>
+      <h4>MEMBERSHIP AGREEMENT</h4>
+      <ol>
+        <li>Monthly dues are owed per membership selected and continue until cancelled per policy.</li>
+        <li>Initiation fees are non-refundable; memberships are non-transferable and non-voting.</li>
+        <li>Members may bring guests per rules and are responsible for guest conduct and charges.</li>
+        <li>Termination requires proper notice; otherwise dues remain owed until 30 days after notice.</li>
+        <li>Management may suspend or cancel membership for violations; rules may be updated.</li>
+        <li>Member accepts the inherent risks of using club facilities and services.</li>
+      </ol>
+
+      <h4>GENERAL RULES</h4>
+      <ul>
+        <li>Wear proper gym attire (athletic shoes; no jeans, sandals, boots, or open-toe shoes).</li>
+        <li>Re-rack weights and return benches to their area; wipe down equipment after use.</li>
+        <li>No profanity; limit cardio to 30 minutes when others are waiting.</li>
+        <li>Guests must sign a waiver; guest fee is $5.</li>
+        <li>Do not leave items in locker/shower rooms; club not responsible for lost items.</li>
+      </ul>
+    </div>
+
+    <!-- Signature LAST -->
+    <div class="card">
+      <h3>Sign Below</h3>
+      <canvas id="pad" class="sigpad" aria-label="Signature pad"></canvas>
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn-ghost" id="clearBtn" type="button">Clear</button>
+        <button class="btn btn-ghost" id="undoBtn" type="button">Undo</button>
+        <span class="muted">Scroll through waiver to enable signing.</span>
+      </div>
+      <div id="errorBox" class="err"></div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="row" style="margin-top:14px">
+      <a class="btn btn-ghost" href="javascript:window.close()">Cancel</a>
+      <span style="flex:1"></span>
+      <button class="btn btn-primary" id="submitBtn" type="button">Submit Waiver</button>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const params = new URLSearchParams(location.search);
+    const idx   = parseInt(params.get('i')||'0',10);
+    const total = parseInt(params.get('total')||'1',10);
+    document.getElementById('stepInfo').textContent = `Waiver ${idx+1} of ${total}`;
+    const errorBox = document.getElementById('errorBox');
+
+    // Signature pad
+    const can = document.getElementById('pad');
+    const ctx = can.getContext('2d');
+    const ratio = Math.max(window.devicePixelRatio||1,1);
+    let strokes = [], current = [];
+    let enabled = false;
+
+    function resize(){ const cssW=can.clientWidth||860,cssH=200;
+      ctx.setTransform(1,0,0,1,0,0);
+      can.width=cssW*ratio; can.height=cssH*ratio;
+      can.style.width=cssW+'px'; can.style.height=cssH+'px';
+      ctx.scale(ratio,ratio); redraw(); }
+    function pos(e){const r=can.getBoundingClientRect();return{x:(e.touches?e.touches[0].clientX:e.clientX)-r.left,y:(e.touches?e.touches[0].clientY:e.clientY)-r.top};}
+    function start(e){ if(!enabled) return; e.preventDefault(); current=[pos(e)]; redraw(); }
+    function move(e){ if(!enabled||!current.length) return; current.push(pos(e)); redraw(); }
+    function end(){ if(!enabled) return; if(current.length){strokes.push(current); current=[]; redraw();} }
+    function redraw(){ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,can.width,can.height);ctx.restore();
+      const w=can.width/ratio,h=can.height/ratio,r=12;
+      ctx.fillStyle='#fff';ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(r,0);ctx.arcTo(w,0,w,h,r);ctx.arcTo(w,h,0,h,r);ctx.arcTo(0,h,0,0,r);ctx.arcTo(0,0,w,0,r);
+      ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#111';ctx.lineWidth=2.2;
+      const draw=s=>{if(s.length<2)return;ctx.beginPath();ctx.moveTo(s[0].x,s[0].y);for(let i=1;i<s.length;i++)ctx.lineTo(s[i].x,s[i].y);ctx.stroke();};
+      strokes.forEach(draw);if(current.length)draw(current);}
+    window.addEventListener('resize',resize,{passive:true});
+    can.addEventListener('mousedown',start);
+    can.addEventListener('mousemove',move);
+    window.addEventListener('mouseup',end);
+    can.addEventListener('touchstart',start,{passive:false});
+    can.addEventListener('touchmove',move,{passive:false});
+    can.addEventListener('touchend',end);
+    resize();
+
+    document.getElementById('clearBtn').onclick=()=>{strokes=[];current=[];redraw();};
+    document.getElementById('undoBtn').onclick=()=>{strokes.pop();redraw();};
+
+    // Scroll-to-bottom to enable
+    const waiverBox=document.getElementById('waiverBox');
+    waiverBox.addEventListener('scroll',()=>{
+      if(waiverBox.scrollTop+waiverBox.clientHeight>=waiverBox.scrollHeight-10){
+        can.classList.add('enabled'); enabled=true;
+      }
+    });
+
+    // Submit
+    document.getElementById('submitBtn').onclick=()=>{
+      const name=(document.getElementById('name').value||'').trim();
+      if(!name){showError('Please enter the signer’s full name.');return;}
+      if(!enabled){showError('Scroll through waiver to enable signing.');return;}
+      if(strokes.length===0){showError('Please add the signature.');return;}
+      const type=document.getElementById('sigType').value;
+      const email=(document.getElementById('email').value||'').trim();
+      const ex=document.createElement('canvas');ex.width=can.width;ex.height=can.height;
+      const ec=ex.getContext('2d');ec.fillStyle='#fff';ec.fillRect(0,0,ex.width,ex.height);ec.drawImage(can,0,0);
+      const dataUrl=ex.toDataURL('image/png');
+      try{if(!window.opener)throw new Error('No opener');
+        window.opener.postMessage({type:'AHF_WAIVER',index:idx,total:total,entry:{name,type,email,signature_png:dataUrl,signed_at:new Date().toISOString()}},window.location.origin);
+        window.close();}catch(err){showError('Could not return waiver. Please keep membership tab open.');console.error(err);}
+    };
+
+    function showError(msg){errorBox.textContent=msg;errorBox.style.display='block';}
+  });
+  </script>
+</body>
+</html>
