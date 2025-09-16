@@ -794,7 +794,7 @@ label, .hint {
 
 .btn-primary:hover,
 .btn-primary:focus {
-  background-color: #c72e3a;   /* darker red on hover */
+  background-color: #d81b60;   /* darker red on hover */
   color: #fff;
   transform: translateY(-1px);
 }
