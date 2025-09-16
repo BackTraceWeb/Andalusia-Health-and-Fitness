@@ -362,3 +362,57 @@ img, svg, video, canvas{
     z-index:50;
   }
 }
+
+/* ====== MOBILE OVERFLOW CLAMP (drop at end of file) ====== */
+
+/* Global guard so flex/grid children can actually shrink */
+* { min-width: 0; }
+
+/* Never let core blocks exceed the viewport on phones */
+@media (max-width: 768px){
+  /* Add safe side padding for sections that might not be inside .shell */
+  .section--intro,
+  .features,
+  .form-card,
+  .calc,
+  .plan-grid {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Clamp widths so nothing can run off-screen */
+  .plan-grid,
+  .plan,
+  .plan-body,
+  .card,
+  .form-card,
+  .calc {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+    overflow-x: clip;   /* hide any tiny sub-pixel spill */
+  }
+
+  /* Single-column plans on mobile, no extra margins */
+  .plan-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .plan { margin: 0 !important; }
+}
+
+/* Extra safety for ultra-small devices */
+@media (max-width: 380px){
+  .section--intro,
+  .features,
+  .form-card,
+  .calc,
+  .plan-grid { padding-left: 14px; padding-right: 14px; }
+}
+
+/* Brand CTAs stay pink */
+.btn-primary,
+.pill-cta { background: var(--brand); color: var(--ink); }
+.btn-primary:hover,
+.pill-cta:hover,
+.btn-primary:focus,
+.pill-cta:focus { background: var(--brand-dark); color: var(--ink); }
