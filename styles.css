@@ -780,3 +780,21 @@ label, .hint {
   .ahf-waivers{ grid-area: waive; }
   .ahf-actions{ grid-area: acts; }
 }
+
+/* Make membership button match Quick Pay style */
+.btn-primary {
+  background-color: #e63946;   /* same red as Quick Pay */
+  color: #fff;
+  border-radius: 999px;        /* pill shape */
+  font-weight: 600;
+  padding: 0.9rem 1.4rem;
+  border: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #c72e3a;   /* darker red on hover */
+  color: #fff;
+  transform: translateY(-1px);
+}
