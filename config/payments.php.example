@@ -1,0 +1,12 @@
+<?php
+// Example config (do NOT use in prod). Real secrets live in config/payments.php (ignored).
+return [
+  "db" => ["host"=>"127.0.0.1","name"=>"ahf","user"=>"ahf_app","pass"=>"REPLACE_ME","charset"=>"utf8mb4"],
+  "epn" => [
+    "account"=>"REPLACE_EPN_ACCOUNT","restrict_key"=>"REPLACE_RESTRICT_KEY",
+    "approved_url"=>"https://andalusiahealthandfitness.com/quickpay/return-approved.html",
+    "declined_url"=>"https://andalusiahealthandfitness.com/quickpay/return-declined.html"
+  ],
+  "axtrax" => ["base_url"=>"https://YOUR-AXTRAX-API","api_key"=>"REPLACE_ME","site_id"=>"MAIN","timeout_s"=>8],
+  "site" => ["base_url"=>"https://andalusiahealthandfitness.com"]
+];

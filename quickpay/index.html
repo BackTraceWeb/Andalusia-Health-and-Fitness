@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>QuickPay • Andalusia Health & Fitness</title>
+<style>
+:root{--bg:#0b0e14;--card:#131722;--muted:#8ea0b3;--text:#e8eef6;--accent:#6ee7b7}
+*{box-sizing:border-box} body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;color:var(--text);background:var(--bg)}
+.wrap{max-width:860px;margin:32px auto;padding:0 16px}
+.card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.02)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media (max-width:720px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:.9rem;color:var(--muted);margin:6px 0 6px}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid #263043;background:#0e1220;color:var(--text)}
+button{padding:12px 16px;border-radius:10px;border:0;color:#06121e;background:var(--accent);font-weight:700;cursor:pointer}
+.hidden{display:none!important} .muted{color:var(--muted)} .money{font-variant-numeric:tabular-nums;font-weight:700}
+.row{display:flex;gap:12px;align-items:center;justify-content:space-between}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="step-lookup">
+      <h2>Find Your Account</h2>
+      <p class="muted">Enter your name (ZIP optional) to look up your current dues.</p>
+      <div class="grid">
+        <div><label>First name</label><input id="first" autocomplete="given-name"></div>
+        <div><label>Last name</label><input id="last"  autocomplete="family-name"></div>
+        <div><label>ZIP (last 4 ok)</label><input id="zip"   inputmode="numeric" maxlength="10" placeholder="e.g., 36420 or 3420"></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <span id="lookup-msg" class="muted"></span>
+        <button id="btn-lookup">Find My Balance</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="step-pay">
+      <h2>Amount Due</h2>
+      <div class="row"><div id="member-name" class="muted"></div><div class="money" id="amount-due">$0.00</div></div>
+
+      <!-- Hosted start form (posts to our server, which auto-redirects to ePN hosted page) -->
+      <form id="hostedStart" action="/api/payments/hosted-start.php" method="post" style="margin-top:16px">
+        <input type="hidden" name="memberId"  id="memberId">
+        <input type="hidden" name="invoiceId" id="invoiceId">
+        <button type="submit">Pay Securely</button>
+      </form>
+
+      <div style="margin-top:8px" class="muted">You’ll be sent to our secure processor to enter your card.</div>
+      <div class="row" style="margin-top:12px"><button type="button" id="btn-back">Find another account</button></div>
+    </div>
+  </div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = c => `$${(c/100).toFixed(2)}`;
+let current = { memberId:null, invoiceId:null, amount_cents:0 };
+
+function show(id){ ['step-lookup','step-pay'].forEach(x=>$(x).classList.add('hidden')); $(id).classList.remove('hidden'); }
+function msg(el,t){ el.textContent=t||''; }
+
+async function lookup(){
+  msg($('lookup-msg'),'Looking up…');
+  const qs = new URLSearchParams({ first: $('first').value.trim(), last: $('last').value.trim(), zip: $('zip').value.trim() });
+  let data;
+  try { const r=await fetch(`/api/quickpay/lookup.php?${qs}`, {credentials:'same-origin'}); data=await r.json(); }
+  catch(e){ data={ok:false,error:'network'}; }
+  if(!data?.ok){ msg($('lookup-msg'), data?.error==='not_found'?'No match found. Check your name or try ZIP.':`Error: ${data?.error||'lookup'}`); return; }
+  current.memberId = data.member.id; current.invoiceId = data.invoice.id; current.amount_cents = data.invoice.amount_cents;
+  $('member-name').textContent = `${data.member.first_name} ${data.member.last_name}`;
+  $('amount-due').textContent  = fmt(current.amount_cents);
+  $('memberId').value = current.memberId;
+  $('invoiceId').value = current.invoiceId;
+  msg($('lookup-msg'),''); show('step-pay');
+}
+$('btn-lookup').addEventListener('click', lookup);
+$('btn-back').addEventListener('click', ()=>show('step-lookup'));
+</script>
+</body>
+</html>

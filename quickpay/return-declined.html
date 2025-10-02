@@ -1,0 +1,14 @@
+<!doctype html><meta charset="utf-8"><title>Payment Declined</title>
+<style>body{font-family:system-ui;background:#0b0e14;color:#e8eef6;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+.box{background:#131722;padding:24px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:560px}</style>
+<div class="box">
+  <h2>Payment not completed</h2>
+  <p>We’re checking the final status. If this was an error, you can try again from the QuickPay page.</p>
+  <p id="s" style="opacity:.8"></p>
+</div>
+<script>
+const id=new URLSearchParams(location.search).get('invoiceId');
+async function poll(){try{const r=await fetch(`/api/payments/status.php?invoiceId=${id}`);const j=await r.json();
+if(j.ok&&j.invoice){if(j.invoice.status==='paid'){s.textContent='Paid — thank you!';return}
+if(j.invoice.status==='failed'){s.textContent='Declined.';return}}}catch(e){} setTimeout(poll,1000)} poll();
+</script>

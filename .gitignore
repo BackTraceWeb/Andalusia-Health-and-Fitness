@@ -1,0 +1,14 @@
+# --- AHF QuickPay ---
+# Secrets
+config/payments.php
+
+# Build/vendor
+/vendor/
+
+# Logs & temp
+logs/
+tmp/
+*.log
+_cache/
+_session/
+_attic/
