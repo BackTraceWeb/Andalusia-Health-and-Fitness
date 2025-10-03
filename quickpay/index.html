@@ -1,78 +1,159 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>QuickPay • Andalusia Health & Fitness</title>
-<style>
-:root{--bg:#0b0e14;--card:#131722;--muted:#8ea0b3;--text:#e8eef6;--accent:#6ee7b7}
-*{box-sizing:border-box} body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;color:var(--text);background:var(--bg)}
-.wrap{max-width:860px;margin:32px auto;padding:0 16px}
-.card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.02)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media (max-width:720px){.grid{grid-template-columns:1fr}}
-label{display:block;font-size:.9rem;color:var(--muted);margin:6px 0 6px}
-input{width:100%;padding:12px;border-radius:10px;border:1px solid #263043;background:#0e1220;color:var(--text)}
-button{padding:12px 16px;border-radius:10px;border:0;color:#06121e;background:var(--accent);font-weight:700;cursor:pointer}
-.hidden{display:none!important} .muted{color:var(--muted)} .money{font-variant-numeric:tabular-nums;font-weight:700}
-.row{display:flex;gap:12px;align-items:center;justify-content:space-between}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHF QuickPay</title>
+
+  <!-- Use your sitewide stylesheet -->
+  <link rel="stylesheet" href="/styles.css">
+
+  <style>
+    /* Light, additive styles so it blends with your theme */
+    .qp-container { max-width: 720px; margin: 2rem auto; padding: 1.5rem; }
+    .qp-card { border: 1px solid rgba(0,0,0,.08); border-radius: 12px; padding: 1.25rem; }
+    .qp-row { display: grid; gap: .75rem; grid-template-columns: 1fr 1fr; }
+    .qp-row + .qp-row { margin-top: .75rem; }
+    .qp-actions { display: flex; gap: .75rem; margin-top: 1rem; align-items: center; }
+    .qp-hint { font-size: .9rem; color: #666; }
+    .qp-status { margin-top: 1rem; padding: .75rem 1rem; border-radius: 10px; background: #f7f7f9; }
+    .qp-status.ok { background: #f0fff4; }
+    .qp-status.warn { background: #fff7ed; }
+    .qp-status.err { background: #fff5f5; }
+    .qp-amount { font-weight: 600; }
+    .qp-muted { opacity: .7; }
+    button[disabled] { opacity:.6; cursor:not-allowed; }
+    @media (max-width: 640px) { .qp-row { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card" id="step-lookup">
-      <h2>Find Your Account</h2>
-      <p class="muted">Enter your name (ZIP optional) to look up your current dues.</p>
-      <div class="grid">
-        <div><label>First name</label><input id="first" autocomplete="given-name"></div>
-        <div><label>Last name</label><input id="last"  autocomplete="family-name"></div>
-        <div><label>ZIP (last 4 ok)</label><input id="zip"   inputmode="numeric" maxlength="10" placeholder="e.g., 36420 or 3420"></div>
-      </div>
-      <div class="row" style="margin-top:12px">
-        <span id="lookup-msg" class="muted"></span>
-        <button id="btn-lookup">Find My Balance</button>
-      </div>
-    </div>
+  <main class="qp-container">
+    <h1>QuickPay</h1>
+    <p class="qp-hint">Enter your name to look up your membership and pay securely.</p>
 
-    <div class="card hidden" id="step-pay">
-      <h2>Amount Due</h2>
-      <div class="row"><div id="member-name" class="muted"></div><div class="money" id="amount-due">$0.00</div></div>
+    <section class="qp-card">
+      <form id="lookupForm" onsubmit="return false;">
+        <div class="qp-row">
+          <div>
+            <label for="first">First name</label>
+            <input id="first" name="first" type="text" autocomplete="given-name" required />
+          </div>
+          <div>
+            <label for="last">Last name</label>
+            <input id="last" name="last" type="text" autocomplete="family-name" required />
+          </div>
+        </div>
 
-      <!-- Hosted start form (posts to our server, which auto-redirects to ePN hosted page) -->
-      <form id="hostedStart" action="/api/payments/hosted-start.php" method="post" style="margin-top:16px">
-        <input type="hidden" name="memberId"  id="memberId">
-        <input type="hidden" name="invoiceId" id="invoiceId">
-        <button type="submit">Pay Securely</button>
+        <div class="qp-actions">
+          <button id="lookupBtn" type="button">Find my invoice</button>
+          <span id="lookupSpin" class="qp-muted" style="display:none">Looking up…</span>
+        </div>
+
+        <div id="resultBox" class="qp-status" style="display:none"></div>
+
+        <!-- Payment form: enabled only when a due invoice is found -->
+        <form id="payForm" action="/api/payments/hosted-start.php" method="post" style="margin-top:1rem;">
+          <input type="hidden" name="memberId" id="memberId">
+          <input type="hidden" name="invoiceId" id="invoiceId">
+          <button id="payBtn" type="submit" disabled>Pay securely</button>
+          <span class="qp-hint qp-muted">You’ll be redirected to our secure payment page.</span>
+        </form>
       </form>
+    </section>
 
-      <div style="margin-top:8px" class="muted">You’ll be sent to our secure processor to enter your card.</div>
-      <div class="row" style="margin-top:12px"><button type="button" id="btn-back">Find another account</button></div>
-    </div>
-  </div>
+    <p class="qp-hint" style="margin-top:1rem;">
+      Having trouble? Call or visit the front desk and we’ll help you out.
+    </p>
+  </main>
 
-<script>
-const $ = id => document.getElementById(id);
-const fmt = c => `$${(c/100).toFixed(2)}`;
-let current = { memberId:null, invoiceId:null, amount_cents:0 };
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    const elFirst = $('#first');
+    const elLast  = $('#last');
+    const elLookupBtn = $('#lookupBtn');
+    const elSpin = $('#lookupSpin');
+    const elBox  = $('#resultBox');
+    const elPayBtn = $('#payBtn');
+    const elMemberId = $('#memberId');
+    const elInvoiceId = $('#invoiceId');
 
-function show(id){ ['step-lookup','step-pay'].forEach(x=>$(x).classList.add('hidden')); $(id).classList.remove('hidden'); }
-function msg(el,t){ el.textContent=t||''; }
+    let lastLookup = null;
 
-async function lookup(){
-  msg($('lookup-msg'),'Looking up…');
-  const qs = new URLSearchParams({ first: $('first').value.trim(), last: $('last').value.trim(), zip: $('zip').value.trim() });
-  let data;
-  try { const r=await fetch(`/api/quickpay/lookup.php?${qs}`, {credentials:'same-origin'}); data=await r.json(); }
-  catch(e){ data={ok:false,error:'network'}; }
-  if(!data?.ok){ msg($('lookup-msg'), data?.error==='not_found'?'No match found. Check your name or try ZIP.':`Error: ${data?.error||'lookup'}`); return; }
-  current.memberId = data.member.id; current.invoiceId = data.invoice.id; current.amount_cents = data.invoice.amount_cents;
-  $('member-name').textContent = `${data.member.first_name} ${data.member.last_name}`;
-  $('amount-due').textContent  = fmt(current.amount_cents);
-  $('memberId').value = current.memberId;
-  $('invoiceId').value = current.invoiceId;
-  msg($('lookup-msg'),''); show('step-pay');
-}
-$('btn-lookup').addEventListener('click', lookup);
-$('btn-back').addEventListener('click', ()=>show('step-lookup'));
-</script>
+    function setStatus({ html, tone='info' }) {
+      elBox.style.display = 'block';
+      elBox.className = 'qp-status ' + (tone === 'ok' ? 'ok' : tone === 'warn' ? 'warn' : tone === 'err' ? 'err' : '');
+      elBox.innerHTML = html;
+    }
+
+    async function doLookup() {
+      const first = (elFirst.value || '').trim();
+      const last  = (elLast.value || '').trim();
+      if (!first || !last) {
+        setStatus({ html: 'Please enter both first and last name.', tone: 'warn' });
+        return;
+      }
+
+      // UI state
+      elLookupBtn.disabled = true;
+      elPayBtn.disabled = true;
+      elSpin.style.display = 'inline';
+      setStatus({ html: 'Looking up your account…' });
+
+      try {
+        const qs = new URLSearchParams({ first, last });
+        const res = await fetch('/api/quickpay/lookup.php?' + qs.toString(), { credentials: 'same-origin' });
+
+        if (!res.ok) {
+          throw new Error('Lookup failed (HTTP ' + res.status + ').');
+        }
+        const data = await res.json();
+        lastLookup = data;
+
+        if (data.status === 'not_found' || !data.member) {
+          setStatus({ html: 'We couldn’t find a matching account. Please check your spelling or contact the front desk.', tone: 'warn' });
+          elPayBtn.disabled = true;
+          return;
+        }
+
+        const m = data.member;
+        if (data.status === 'due' && data.invoice) {
+          const cents = parseInt(data.invoice.amount_cents, 10);
+          const amount = isFinite(cents) ? ('$' + (cents / 100).toFixed(2)) : '';
+          setStatus({
+            html: `
+              <div><strong>${m.first_name} ${m.last_name}</strong> found.</div>
+              <div class="qp-amount">${amount}</div>
+              <div class="qp-muted">Period: ${data.invoice.period_start ?? ''} – ${data.invoice.period_end ?? ''}</div>
+            `,
+            tone: 'ok'
+          });
+          // Enable payment
+          elMemberId.value = m.id;
+          elInvoiceId.value = data.invoice.id;
+          elPayBtn.disabled = false;
+        } else {
+          setStatus({
+            html: `<div><strong>${m.first_name} ${m.last_name}</strong> found.</div><div>No payment is due right now.</div>`,
+            tone: 'ok'
+          });
+          elPayBtn.disabled = true;
+        }
+      } catch (err) {
+        setStatus({ html: 'Sorry, something went wrong. Please try again in a moment.', tone: 'err' });
+        console.error(err);
+        elPayBtn.disabled = true;
+      } finally {
+        elLookupBtn.disabled = false;
+        elSpin.style.display = 'none';
+      }
+    }
+
+    elLookupBtn.addEventListener('click', doLookup);
+
+    // Optional: trigger lookup when pressing Enter in last name
+    elLast.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); doLookup(); }
+    });
+  </script>
 </body>
 </html>
