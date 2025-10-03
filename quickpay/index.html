@@ -1,48 +1,43 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>QuickPay • Andalusia Health & Fitness</title>
-  <link rel="stylesheet" href="/styles.css">
-  <link rel="icon" href="/ahflogo.png" />
-  <style>
-    /* Tiny layout helpers only. All colors/typography come from styles.css */
-    .qp-wrap { max-width: 960px; margin: 2rem auto; }
-    .qp-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media (max-width: 640px){ .qp-grid{ grid-template-columns: 1fr; } }
-    .qp-status{ margin-top:1rem; padding:.75rem 1rem; border-radius:12px; }
-    .qp-ok{ background: rgba(0,200,0,.08); }
-    .qp-warn{ background: rgba(200,150,0,.08); }
-    .qp-err{ background: rgba(200,0,0,.08); }
-    button[disabled]{ opacity:.6; cursor:not-allowed; }
-    header.site-header img.brand { height: 48px; display:block; }
-    header.site-header { padding: 1rem 0; }
-    header.site-header .shell { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
-    header.site-header nav a { margin-left: 1rem; }
-    main section.card { padding: 1.25rem; border-radius: 16px; }
-  </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Andalusia Health & Fitness — Get fit & healthy</title>
+  <link rel="stylesheet" href="/styles.css"/>
+<style>
+/* make intro text visible on the dark theme */
+.page-quickpay .qp-intro{
+  display:block;
+  color:#fff;            /* force light text */
+  margin:0 0 1rem;
+  font-weight:500;
+}
+</style>
+
+<meta name="description" content="Andalusia Health & Fitness — 24/7 gym in Andalusia, AL. Join online.">
 </head>
-<body class="page-quickpay">
-  <!-- Site header (logo + nav) -->
-  <header class="site-header">
-    <div class="shell">
-      <a href="/" aria-label="Andalusia Health & Fitness">
-        <img src="/logo.png" alt="Andalusia Health & Fitness" class="brand">
-      </a>
-      <nav class="site-nav">
-        <a href="/pricing.html">Pricing</a>
-        <a href="/membership.html">Membership</a>
-        <a href="/waiver.html">Waiver</a>
-        <a href="/quickpay/" class="pill-cta">Quick Pay</a>
-      </nav>
+<body class="theme-andalusia">
+ <!-- Topbar -->
+<div class="topbar">
+  <div class="shell">
+    <div class="brand-pill">
+      <a href="index.html"><img src="/AHFlogo.png" alt="Andalusia Health & Fitness"></a>
     </div>
-  </header>
+
+    <nav class="mainnav">
+      <a href="index.html" class="active">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
+    </nav>
+  </div>
+</div>
+
 
   <main class="shell qp-wrap">
     <h1>QuickPay</h1>
-    <p>Enter your name to look up your membership and pay securely.</p>
-
+    <p class="qp-intro">Enter your name to look up your membership and pay securely.</p>
+  
     <section class="card">
       <form id="lookupForm" onsubmit="return false;" class="stack">
         <div class="qp-grid">
@@ -64,21 +59,21 @@
         <div id="resultBox" class="qp-status" style="display:none"></div>
 
         <!-- Enabled only when a due invoice is found -->
-        <form id="payForm" action="/api/payments/hosted-start.php" method="post" style="margin-top:1rem;">
-          <input type="hidden" name="memberId" id="memberId">
-          <input type="hidden" name="invoiceId" id="invoiceId">
-          <button id="payBtn" type="submit" class="pill-cta" disabled>Pay securely</button>
-          <small>You’ll be redirected to our secure payment page.</small>
-        </form>
+        <div id="payFormWrap" style="margin-top:1rem;">
+            <form id="payForm" action="/api/payments/hosted-start.php" method="post"></form>
+            <input type="hidden" name="memberId" id="memberId">
+            <input type="hidden" name="invoiceId" id="invoiceId">
+            <button id="payBtn" type="submit" class="pill-cta" disabled>Pay securely</button>
+            <small>You’ll be redirected to our secure payment page.</small>
+            <div style="margin-top:0.5rem; color:#888; font-size:0.95em;">
+              For issues with QuickPay, please call <a href="tel:3345822000" style="color:inherit;text-decoration:underline;">334&nbsp;582&nbsp;2000</a>.
+            </div>
+            </form></div>
+        </div>
       </form>
     </section>
 
-    <div class="ctabar" style="margin-top:2rem;">
-      <div class="shell">
-        <a href="/quickpay/" class="pill-cta">Quick Pay</a>
-        <a href="tel:+13345822000" class="pill-cta">Call • (334) 582-2000</a>
-      </div>
-    </div>
+   
   </main>
 
   <!-- Optional: site footer could be copied from your other pages -->
