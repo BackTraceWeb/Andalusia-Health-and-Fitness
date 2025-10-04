@@ -28,7 +28,7 @@ try {
   $candidates = $stmt->fetchAll();
 
   if (!$candidates) {
-    echo json_encode(['status'=>'not_found','member'=>null,'invoice'=>null]);
+    echo json_encode(['status'=>'not_found','member'=>null,'invoice'=>null,'last_paid'=>null]);
     exit;
   }
 
@@ -36,7 +36,7 @@ try {
 
   // Latest due invoice
   $inv = $pdo->prepare("
-    SELECT id, member_id, period_start, period_end, amount_cents, currency, status
+    SELECT id, member_id, period_start, period_end, amount_cents, currency, status, updated_at
     FROM dues
     WHERE member_id = :mid AND status = 'due'
     ORDER BY period_end DESC, id DESC
@@ -45,12 +45,23 @@ try {
   $inv->execute([':mid'=>$member['id']]);
   $invoice = $inv->fetch();
 
-  // If no invoice, show member’s monthly_fee as the default amount
+  // Last paid invoice
+  $paid = $pdo->prepare("
+    SELECT id, member_id, period_start, period_end, amount_cents, currency, status, updated_at
+    FROM dues
+    WHERE member_id = :mid AND status = 'paid'
+    ORDER BY period_end DESC, id DESC
+    LIMIT 1
+  ");
+  $paid->execute([':mid'=>$member['id']]);
+  $lastPaid = $paid->fetch();
+
+  // Determine active amount
   $amountCents = $invoice ? (int)$invoice['amount_cents'] : (int)($member['monthly_fee'] * 100);
 
   echo json_encode([
-    'status'  => $invoice ? 'due' : 'clear',
-    'member'  => [
+    'status'    => $invoice ? 'due' : 'clear',
+    'member'    => [
       'id'             => (int)$member['id'],
       'first_name'     => $member['first_name'],
       'last_name'      => $member['last_name'],
@@ -64,7 +75,8 @@ try {
       'active_amount'  => $amountCents / 100,  // dollars
       'updated_at'     => $member['updated_at'],
     ],
-    'invoice' => $invoice ?: null
+    'invoice'   => $invoice ?: null,
+    'last_paid' => $lastPaid ?: null
   ]);
 } catch (Throwable $e) {
   http_response_code(500);
