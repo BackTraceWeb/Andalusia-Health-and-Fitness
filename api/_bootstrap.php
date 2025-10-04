@@ -1,6 +1,8 @@
 <?php
-error_log("BOOTSTRAP LOADED: " . __FILE__);
-error_log("DB_USER resolved as: " . (getenv('DB_USER') ?: 'ahf_web'));
+error_log("BOOTSTRAP LOADED from: " . __FILE__);
+error_log("Resolved DB_USER: " . (getenv('DB_USER') ?: 'ahf_web'));
+error_log("Resolved DB_PASS: " . (getenv('DB_PASS') ?: 'AhfWeb@2024!'));
+
 
 // /api/_bootstrap.php
 
