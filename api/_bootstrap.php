@@ -1,25 +1,38 @@
 <?php
+// /api/_bootstrap.php
 declare(strict_types=1);
 
-function pdo(): PDO {
-  static $pdo;
-  if ($pdo) return $pdo;
-$dsn  = "mysql:host=127.0.0.1;dbname=ahf;charset=utf8mb4";
-$user = "ahf_app";
-$pass = "AhfApp@2024!";
-
-  $pdo = new PDO($dsn, $user, $pass, [
-    PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,
-  ]);
-  return $pdo;
+if (!defined('AHF_BOOTSTRAP')) {
+  define('AHF_BOOTSTRAP', true);
 }
 
-function respond(array $arr, int $code=200): void {
-  http_response_code($code);
-  header("Content-Type: application/json");
-  echo json_encode($arr);
+// Load config
+$config = [
+  'db' => [
+    'dsn'  => getenv('DB_DSN')  ?: 'mysql:host=127.0.0.1;dbname=ahf;charset=utf8mb4',
+    'user' => getenv('DB_USER') ?: 'ahf_app',
+    'pass' => getenv('DB_PASS') ?: 'AhfApp@2024!', // update to your real password
+  ]
+];
+
+// Create PDO connection globally
+try {
+  $pdo = new PDO(
+    $config['db']['dsn'],
+    $config['db']['user'],
+    $config['db']['pass'],
+    [
+      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+      PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+      PDO::ATTR_EMULATE_PREPARES => false,
+    ]
+  );
+} catch (Throwable $e) {
+  http_response_code(500);
+  echo json_encode(['error'=>'db_connect_failed','detail'=>$e->getMessage()]);
   exit;
 }
 
-function now_utc(): string { return gmdate("c"); }
+// Make PDO available to other includes
+return ['pdo' => $pdo];
+
