@@ -1,7 +1,7 @@
 <?php
+<?php
 require __DIR__ . '/../_bootstrap.php';
 header('Content-Type: application/json');
-ini_set('display_errors', 0);
 
 function norm($s) { return preg_replace('/\s+/', ' ', strtolower(trim($s ?? ''))); }
 
