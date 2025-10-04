@@ -25,7 +25,7 @@ try {
            COALESCE(valid_from,'') AS valid_from,
            COALESCE(valid_until,'') AS valid_until,
            COALESCE(monthly_fee,0) AS monthly_fee
-    FROM members
+    FROM ahf.members
     WHERE LOWER(TRIM(first_name)) = :fn
       AND LOWER(TRIM(last_name))  = :ln
     ORDER BY COALESCE(updated_at,'1970-01-01') DESC, id DESC
