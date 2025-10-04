@@ -1,4 +1,7 @@
 <?php
+error_log("BOOTSTRAP LOADED: " . __FILE__);
+error_log("DB_USER resolved as: " . (getenv('DB_USER') ?: 'ahf_web'));
+
 // /api/_bootstrap.php
 
 error_reporting(E_ALL);
