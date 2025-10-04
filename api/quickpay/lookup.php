@@ -16,7 +16,8 @@ try {
 
   // Exact match first/last; pick most recently updated
   $stmt = $pdo->prepare("
-    SELECT id, first_name, last_name, email, zip, updated_at
+    SELECT id, first_name, last_name, email, zip, updated_at,
+           department_name, card_number, valid_from, valid_until, monthly_fee
     FROM members
     WHERE LOWER(TRIM(first_name)) = :fn
       AND LOWER(TRIM(last_name))  = :ln
@@ -47,12 +48,17 @@ try {
   echo json_encode([
     'status'  => $invoice ? 'due' : 'clear',
     'member'  => [
-      'id'         => (int)$member['id'],
-      'first_name' => $member['first_name'],
-      'last_name'  => $member['last_name'],
-      'email'      => $member['email'],
-      'zip'        => $member['zip'],
-      'updated_at' => $member['updated_at'],
+      'id'             => (int)$member['id'],
+      'first_name'     => $member['first_name'],
+      'last_name'      => $member['last_name'],
+      'email'          => $member['email'],
+      'zip'            => $member['zip'],
+      'department'     => $member['department_name'],
+      'card_number'    => $member['card_number'],
+      'valid_from'     => $member['valid_from'],
+      'valid_until'    => $member['valid_until'],
+      'monthly_fee'    => $member['monthly_fee'],
+      'updated_at'     => $member['updated_at'],
     ],
     'invoice' => $invoice ?: null
   ]);
