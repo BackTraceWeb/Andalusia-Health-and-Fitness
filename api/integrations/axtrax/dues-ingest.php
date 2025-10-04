@@ -85,15 +85,23 @@ try {
     $mid = (int)($d['member_id'] ?? 0);
     $ps  = $d['period_start'] ?? $periodStart;
     $pe  = $d['period_end']   ?? $periodEnd;
-    $amt = $d['amount_cents'] ?? null;
     $cur = $d['currency']     ?? 'USD';
     $st  = $d['status']       ?? 'due';
 
-    if ($mid <= 0 || !$ps || !$pe || !is_numeric($amt)) { $skipped++; continue; }
+    if ($mid <= 0 || !$ps || !$pe) { 
+      $skipped++; 
+      continue; 
+    }
+
+    // 🔹 Always fetch the member's monthly_fee
+    $stmtFee = $pdo->prepare("SELECT monthly_fee FROM members WHERE id = :mid LIMIT 1");
+    $stmtFee->execute([':mid' => $mid]);
+    $feeRow = $stmtFee->fetch();
+    $amt = $feeRow ? intval($feeRow['monthly_fee'] * 100) : 0; // fallback to 0 if not found
 
     $up->execute([
       ':mid'=>$mid, ':ps'=>$ps, ':pe'=>$pe,
-      ':amt'=>(int)$amt, ':cur'=>$cur, ':st'=>$st
+      ':amt'=>$amt, ':cur'=>$cur, ':st'=>$st
     ]);
     $ok += $up->rowCount();
   }
@@ -105,6 +113,7 @@ try {
   http_response_code(500);
   echo json_encode(['error'=>'server_error']);
 }
+
 
 
 
