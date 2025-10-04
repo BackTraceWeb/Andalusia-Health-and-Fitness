@@ -11,7 +11,7 @@ $config = [
   'db' => [
     'dsn'  => getenv('DB_DSN')  ?: 'mysql:host=127.0.0.1;dbname=ahf;charset=utf8mb4',
     'user' => getenv('DB_USER') ?: 'ahf_app',
-    'pass' => getenv('DB_PASS') ?: 'AhfApp@2024!', // update to your real password
+    'pass' => getenv('DB_PASS') ?: '*116B825C596B0DD18D3A6F7D5DF0E66BF3A250AE', // update to your real password
   ]
 ];
 
