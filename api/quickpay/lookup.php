@@ -1,5 +1,7 @@
 <?php
 require __DIR__ . '/../_bootstrap.php';
+$pdo = pdo(); // ✅ this line actually initializes the connection
+
 header('Content-Type: application/json');
 ini_set('display_errors', 0);
 
