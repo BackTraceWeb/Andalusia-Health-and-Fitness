@@ -1,38 +1,29 @@
 <?php
 // /api/_bootstrap.php
-declare(strict_types=1);
 
-if (!defined('AHF_BOOTSTRAP')) {
-  define('AHF_BOOTSTRAP', true);
-}
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Load config
-$config = [
-  'db' => [
-    'dsn'  => getenv('DB_DSN')  ?: 'mysql:host=127.0.0.1;dbname=ahf;charset=utf8mb4',
-    'user' => getenv('DB_USER') ?: 'ahf_app',
-    'pass' => getenv('DB_PASS') ?: '*116B825C596B0DD18D3A6F7D5DF0E66BF3A250AE', // update to your real password
-  ]
-];
+function pdo(): PDO {
+  static $pdo;
+  if ($pdo) return $pdo;
 
-// Create PDO connection globally
-try {
-  $pdo = new PDO(
-    $config['db']['dsn'],
-    $config['db']['user'],
-    $config['db']['pass'],
-    [
+  $dsn  = getenv('DB_DSN') ?: 'mysql:host=127.0.0.1;dbname=ahf;charset=utf8mb4';
+  $user = getenv('DB_USER') ?: 'ahf_app';
+  $pass = getenv('DB_PASS') ?: 'AhfApp@2024!'; // ✅ ensure this matches your MariaDB password exactly
+
+  try {
+    $pdo = new PDO($dsn, $user, $pass, [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-      PDO::ATTR_EMULATE_PREPARES => false,
-    ]
-  );
-} catch (Throwable $e) {
-  http_response_code(500);
-  echo json_encode(['error'=>'db_connect_failed','detail'=>$e->getMessage()]);
-  exit;
-}
+    ]);
+  } catch (PDOException $e) {
+    // 🔍 Add debug to a local log file so we can confirm what PHP is using
+    $log = __DIR__ . '/../../logs/db-connect-debug.log';
+    file_put_contents($log, date('c') . " - DB connect failed\nUser: $user\nPass: $pass\nDSN: $dsn\nError: " . $e->getMessage() . "\n\n", FILE_APPEND);
+    throw $e;
+  }
 
-// Make PDO available to other includes
-return ['pdo' => $pdo];
+  return $pdo;
+}
 
