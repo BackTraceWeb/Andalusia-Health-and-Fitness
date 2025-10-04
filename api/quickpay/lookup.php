@@ -9,6 +9,9 @@ function norm($s){
 }
 
 try {
+  $dbName = $pdo->query("SELECT DATABASE()")->fetchColumn();
+echo json_encode(['debug_db' => $dbName]); exit;
+
   $first = norm($_GET['first'] ?? '');
   $last  = norm($_GET['last'] ?? '');
   if ($first === '' || $last === '') {
