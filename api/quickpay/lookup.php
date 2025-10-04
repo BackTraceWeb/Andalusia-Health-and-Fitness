@@ -45,6 +45,9 @@ try {
   $inv->execute([':mid'=>$member['id']]);
   $invoice = $inv->fetch();
 
+  // If no invoice, show member’s monthly_fee as the default amount
+  $amountCents = $invoice ? (int)$invoice['amount_cents'] : (int)($member['monthly_fee'] * 100);
+
   echo json_encode([
     'status'  => $invoice ? 'due' : 'clear',
     'member'  => [
@@ -58,6 +61,7 @@ try {
       'valid_from'     => $member['valid_from'],
       'valid_until'    => $member['valid_until'],
       'monthly_fee'    => $member['monthly_fee'],
+      'active_amount'  => $amountCents / 100,  // dollars
       'updated_at'     => $member['updated_at'],
     ],
     'invoice' => $invoice ?: null
