@@ -1,6 +1,9 @@
 <?php
 require __DIR__ . '/../_bootstrap.php';
-$pdo = pdo(); // ✅ this line actually initializes the connection
+$pdo = pdo();
+ $dbName = $pdo->query("SELECT DATABASE()")->fetchColumn();
+echo json_encode(['debug_db' => $dbName]); exit;
+
 
 header('Content-Type: application/json');
 ini_set('display_errors', 0);
