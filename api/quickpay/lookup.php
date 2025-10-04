@@ -1,4 +1,6 @@
 <?php
+echo json_encode(['debug'=>'lookup.php reached']); exit;
+
 require __DIR__ . '/../../_bootstrap.php';
 header('Content-Type: application/json');
 ini_set('display_errors', 0);
