@@ -9,8 +9,10 @@ function norm($s){
 }
 
 try {
-  $dbName = $pdo->query("SELECT DATABASE()")->fetchColumn();
-echo json_encode(['debug_db' => $dbName]); exit;
+
+  if (!isset($pdo) || !$pdo instanceof PDO) {
+    throw new Exception('Database connection not initialized');
+  }
 
   $first = norm($_GET['first'] ?? '');
   $last  = norm($_GET['last'] ?? '');
@@ -22,18 +24,16 @@ echo json_encode(['debug_db' => $dbName]); exit;
 
   // --- Member lookup ---
   $stmt = $pdo->prepare("
-    SELECT id, first_name, last_name, email, zip, updated_at,
-           COALESCE(department_name,'') AS department_name,
-           COALESCE(card_number,'') AS card_number,
-           COALESCE(valid_from,'') AS valid_from,
-           COALESCE(valid_until,'') AS valid_until,
-           COALESCE(monthly_fee,0) AS monthly_fee
-    FROM ahf.members
-    WHERE LOWER(TRIM(first_name)) = :fn
-      AND LOWER(TRIM(last_name))  = :ln
-    ORDER BY COALESCE(updated_at,'1970-01-01') DESC, id DESC
-    LIMIT 5
-  ");
+  SELECT id, first_name, last_name, email, zip,
+         department_name, card_number, valid_from, valid_until, monthly_fee,
+         updated_at
+  FROM ahf.members
+  WHERE LOWER(TRIM(first_name)) = :fn
+    AND LOWER(TRIM(last_name))  = :ln
+  ORDER BY updated_at DESC, id DESC
+  LIMIT 5
+");
+
   $stmt->execute([':fn'=>$first, ':ln'=>$last]);
   $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
