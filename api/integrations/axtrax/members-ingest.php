@@ -17,7 +17,7 @@ if ($hdr !== ($config['bridge']['shared_key'] ?? '')) {
 }
 
 /* --- Parse Payload --- */
-$raw = file_get_contents('php://input');
+$raw  = file_get_contents('php://input');
 $body = json_decode($raw, true);
 
 if (!is_array($body) || !isset($body['members']) || !is_array($body['members'])) {
@@ -26,17 +26,35 @@ if (!is_array($body) || !isset($body['members']) || !is_array($body['members']))
   exit;
 }
 
-/* --- Prepare Insert/Update --- */
+/* --- Prep date helper for dues status --- */
+$today = new DateTimeImmutable('today');
+
+/**
+ * Decide member status:
+ *   - "current" if valid_until >= today
+ *   - "due"     if valid_until < today OR empty
+ */
+function getStatus(?string $validUntil, DateTimeImmutable $today): string {
+  if (!$validUntil) return 'due';
+  try {
+    $until = new DateTimeImmutable($validUntil);
+    return ($until >= $today) ? 'current' : 'due';
+  } catch (Throwable $e) {
+    return 'due';
+  }
+}
+
+/* --- Upsert members with status --- */
 $pdo->beginTransaction();
 try {
   $up = $pdo->prepare("
     INSERT INTO members (
       id, first_name, last_name, middle_name,
       department_id, department_name, card_number,
-      valid_from, valid_until, updated_at
+      valid_from, valid_until, status, updated_at
     ) VALUES (
       :id, :fn, :ln, :mn, :dept_id, :dept_name,
-      :card, :vfrom, :vuntil, :upd
+      :card, :vfrom, :vuntil, :status, :upd
     )
     ON DUPLICATE KEY UPDATE
       first_name = VALUES(first_name),
@@ -47,6 +65,7 @@ try {
       card_number = VALUES(card_number),
       valid_from = VALUES(valid_from),
       valid_until = VALUES(valid_until),
+      status = VALUES(status),
       updated_at = VALUES(updated_at)
   ");
 
@@ -62,7 +81,9 @@ try {
     $vfrom     = $m['valid_from']  ?? null;
     $vuntil    = $m['valid_until'] ?? null;
     $upd       = $m['updated_at']  ?? date('Y-m-d H:i:s');
+    $status    = getStatus($vuntil, $today);
 
+    // Skip incomplete entries (but allow companies with just first_name)
     if ($id <= 0 || ($fn === '' && $ln === '')) {
       $skipped++;
       continue;
@@ -78,6 +99,7 @@ try {
       ':card'      => $card ?: null,
       ':vfrom'     => $vfrom ?: null,
       ':vuntil'    => $vuntil ?: null,
+      ':status'    => $status,
       ':upd'       => $upd,
     ]);
     $ok++;
