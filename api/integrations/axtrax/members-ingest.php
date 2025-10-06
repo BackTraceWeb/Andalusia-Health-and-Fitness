@@ -2,7 +2,7 @@
 require __DIR__ . '/../../_bootstrap.php';
 header('Content-Type: application/json');
 
-/* Auth: same shared key as dues-ingest (reads config/bridge.key if not in payments.php) */
+/* --- Auth (same shared key) --- */
 if (!isset($config['bridge']['shared_key'])) {
   $kf = dirname(__DIR__, 3) . '/config/bridge.key';
   if (is_readable($kf)) {
@@ -12,53 +12,75 @@ if (!isset($config['bridge']['shared_key'])) {
 $hdr = $_SERVER['HTTP_X_AHF_BRIDGE_KEY'] ?? '';
 if ($hdr !== ($config['bridge']['shared_key'] ?? '')) {
   http_response_code(401);
-  echo '{"error":"unauthorized"}';
+  echo json_encode(['error' => 'unauthorized']);
   exit;
 }
 
-/* Parse payload */
+/* --- Parse Payload --- */
 $raw = file_get_contents('php://input');
 $body = json_decode($raw, true);
+
 if (!is_array($body) || !isset($body['members']) || !is_array($body['members'])) {
   http_response_code(400);
-  echo '{"error":"bad_payload"}';
+  echo json_encode(['error' => 'bad_payload']);
   exit;
 }
 
-/* Upsert members */
+/* --- Prepare Insert/Update --- */
 $pdo->beginTransaction();
 try {
   $up = $pdo->prepare("
-    INSERT INTO members (id, first_name, last_name, email, zip, updated_at)
-    VALUES (:id, :fn, :ln, :em, :zip, :upd)
+    INSERT INTO members (
+      id, first_name, last_name, middle_name,
+      department_id, department_name, card_number,
+      valid_from, valid_until, updated_at
+    ) VALUES (
+      :id, :fn, :ln, :mn, :dept_id, :dept_name,
+      :card, :vfrom, :vuntil, :upd
+    )
     ON DUPLICATE KEY UPDATE
       first_name = VALUES(first_name),
-      last_name  = VALUES(last_name),
-      email      = VALUES(email),
-      zip        = VALUES(zip),
+      last_name = VALUES(last_name),
+      middle_name = VALUES(middle_name),
+      department_id = VALUES(department_id),
+      department_name = VALUES(department_name),
+      card_number = VALUES(card_number),
+      valid_from = VALUES(valid_from),
+      valid_until = VALUES(valid_until),
       updated_at = VALUES(updated_at)
   ");
 
   $ok = 0; $skipped = 0;
   foreach ($body['members'] as $m) {
-    $id  = isset($m['id']) ? (int)$m['id'] : 0;
-    $fn  = trim($m['first_name'] ?? '');
-    $ln  = trim($m['last_name']  ?? '');
-    $em  = (string)($m['email'] ?? '');
-    $zip = isset($m['zip']) ? (string)$m['zip'] : null;
-    $upd = $m['updated_at'] ?? date('Y-m-d H:i:s');
+    $id   = isset($m['user_id']) ? (int)$m['user_id'] : 0;
+    $fn   = trim($m['first_name'] ?? '');
+    $ln   = trim($m['last_name'] ?? '');
+    $mn   = trim($m['middle_name'] ?? '');
+    $dept_id   = isset($m['department_id']) ? (int)$m['department_id'] : null;
+    $dept_name = trim($m['department_name'] ?? '');
+    $card      = trim($m['card_number'] ?? '');
+    $vfrom     = $m['valid_from']  ?? null;
+    $vuntil    = $m['valid_until'] ?? null;
+    $upd       = $m['updated_at']  ?? date('Y-m-d H:i:s');
 
-    if ($id <= 0 || $fn === '' || $ln === '') { $skipped++; continue; }
+    if ($id <= 0 || ($fn === '' && $ln === '')) {
+      $skipped++;
+      continue;
+    }
 
     $up->execute([
-      ':id'  => $id,
-      ':fn'  => $fn,
-      ':ln'  => $ln,
-      ':em'  => $em,
-      ':zip' => ($zip !== '') ? $zip : null,
-      ':upd' => $upd,
+      ':id'        => $id,
+      ':fn'        => $fn,
+      ':ln'        => $ln,
+      ':mn'        => $mn,
+      ':dept_id'   => $dept_id,
+      ':dept_name' => $dept_name,
+      ':card'      => $card ?: null,
+      ':vfrom'     => $vfrom ?: null,
+      ':vuntil'    => $vuntil ?: null,
+      ':upd'       => $upd,
     ]);
-    $ok += $up->rowCount();
+    $ok++;
   }
 
   $pdo->commit();
@@ -66,5 +88,5 @@ try {
 } catch (Throwable $e) {
   $pdo->rollBack();
   http_response_code(500);
-  echo json_encode(['error' => 'server_error']);
+  echo json_encode(['error' => 'server_error', 'detail' => $e->getMessage()]);
 }
