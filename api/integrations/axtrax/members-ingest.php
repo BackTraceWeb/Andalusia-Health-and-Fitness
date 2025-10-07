@@ -4,7 +4,7 @@ ini_set('log_errors', 1);
 error_reporting(E_ALL);
 error_log("members-ingest.php triggered at " . date('c'));
 
-require __DIR__ . '/../../_bootstrap.php';
+require __DIR__ . '/../../../_bootstrap.php';
 header('Content-Type: application/json');
 
 /* --- Auth (shared bridge key) --- */
