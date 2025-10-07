@@ -1,248 +1,252 @@
 <?php
-session_start();
-if (empty($_SESSION['logged_in'])) {
-  header('Location: index.php');
-  exit;
-}
-
-require 'config.php';
-
-// pull all active members within 6 months or draft
-$q = "
-  SELECT id, first_name, last_name, company_name, department_name, payment_type,
-         valid_until, status
-  FROM members
-  WHERE (valid_until >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-         OR payment_type = 'draft')
-  ORDER BY department_name, last_name
-";
-$result = $conn->query($q);
-$members = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+require __DIR__ . '/../_bootstrap.php';
+header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>AHF Admin Dashboard</title>
-  <link rel="stylesheet" href="admin.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Andalusia Health & Fitness — Admin CRM</title>
   <style>
     :root {
-      --pink:#e91e63;
-      --dark:#0b0b0b;
-      --gray:#1b1b1b;
-      --text:#fff;
-      --green:#2ecc71;
-      --red:#e74c3c;
-      --yellow:#f1c40f;
+      --brand:#d81b60;
+      --bg:#111;
+      --text:#f2f2f2;
+      --gray:#999;
+      --card:#1c1c1c;
+      --hover:#e33d7d;
     }
+    * { box-sizing:border-box; font-family: 'Segoe UI', sans-serif; }
     body {
-      background:var(--dark);
-      color:var(--text);
-      font-family:'Inter',sans-serif;
-      margin:0;
-      padding:2rem;
+      margin:0; display:flex; height:100vh; color:var(--text);
+      background:var(--bg); overflow:hidden;
     }
-    header{
+
+    /* Left main section */
+    .main {
+      flex:2.2; display:flex; flex-direction:column;
+      padding:1.5rem 2rem; overflow:hidden;
+    }
+
+    h1 {
+      color:var(--brand);
+      font-size:1.6rem;
       text-align:center;
+      margin:0.3rem 0 1rem;
+    }
+    p.subtitle {
+      text-align:center; color:var(--gray);
       margin-bottom:1.5rem;
     }
-    h2{color:var(--pink);margin-bottom:.25rem;}
-    .stats{
-      display:flex;justify-content:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap;
+
+    /* Stat cards */
+    .stats {
+      display:flex; justify-content:center; gap:1rem; flex-wrap:wrap;
     }
-    .stat{
-      background:var(--gray);padding:.8rem 1.2rem;border-radius:10px;
-      font-weight:600;box-shadow:0 0 10px rgba(233,30,99,.2);
+    .stat {
+      background:var(--card);
+      padding:0.75rem 1.25rem;
+      border-radius:12px;
+      text-align:center;
+      box-shadow:0 0 12px rgba(216,27,96,0.25);
+      transition:transform 0.2s;
     }
-    .stat span{display:block;font-size:.9rem;color:#bbb;}
-    .toolbar{
-      display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
-      gap:.5rem;margin-bottom:1rem;
+    .stat:hover { transform:scale(1.05); }
+    .stat h3 { margin:0; font-size:1rem; color:var(--gray); }
+    .stat p { margin:0.2rem 0 0; font-size:1.3rem; color:var(--text); }
+
+    /* Filters */
+    .filters {
+      margin:1.5rem 0 1rem;
+      display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem;
     }
-    .filters{
-      display:flex;gap:.5rem;flex-wrap:wrap;
+    .filters button {
+      border:none; padding:0.4rem 0.9rem;
+      border-radius:8px; background:#222; color:var(--text);
+      cursor:pointer; transition:background 0.2s, transform 0.1s;
     }
-    .filter{
-      background:var(--gray);padding:.4rem .9rem;border-radius:8px;
-      cursor:pointer;transition:background .2s ease;font-size:.9rem;
+    .filters button.active {
+      background:var(--brand);
     }
-    .filter.active,.filter:hover{background:var(--pink);}
-    .view-toggle{
-      display:flex;gap:.3rem;
+    .filters button:hover { background:var(--hover); }
+
+    /* Search */
+    .searchbar {
+      display:flex; justify-content:center; margin-bottom:1rem;
     }
-    .toggle-btn{
-      background:var(--gray);border:none;color:var(--text);
-      padding:.4rem .7rem;border-radius:6px;cursor:pointer;font-weight:600;
+    .searchbar input {
+      width:70%; max-width:450px;
+      padding:0.5rem 0.9rem;
+      border:none; border-radius:6px;
+      background:#222; color:var(--text);
+      outline:none;
     }
-    .toggle-btn.active{background:var(--pink);}
-    .searchbar{
-      flex:1;display:flex;justify-content:flex-end;
+
+    /* Member table */
+    .table {
+      flex:1; overflow-y:auto; border-radius:12px;
+      border:1px solid #222; background:#0d0d0d;
     }
-    .searchbar input{
-      width:100%;max-width:300px;padding:.5rem .8rem;
-      border:none;border-radius:8px;background:var(--gray);color:#fff;
+    table {
+      width:100%; border-collapse:collapse;
+      color:var(--text); font-size:0.9rem;
     }
-    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;}
-    .card{
-      background:#111;border-radius:10px;padding:1rem;
-      box-shadow:0 0 15px rgba(233,30,99,.15);
-      transition:transform .2s ease;
+    th, td {
+      padding:0.65rem 0.9rem;
+      border-bottom:1px solid #222;
+      text-align:left;
     }
-    .card:hover{transform:translateY(-3px);}
-    .card h3{margin:0;font-size:1.1rem;}
-    .card small{color:#aaa;}
-    .badge{
-      display:inline-block;padding:.25rem .6rem;border-radius:6px;font-size:.8rem;font-weight:600;
+    th {
+      background:var(--brand);
+      color:#fff; text-transform:uppercase;
+      font-size:0.75rem;
+      position:sticky; top:0;
     }
-    .badge.current{background:var(--green);}
-    .badge.due{background:var(--red);}
-    .badge.draft{background:var(--yellow);color:#000;}
-    table{
-      width:100%;border-collapse:collapse;background:#111;border-radius:10px;
-      overflow:hidden;margin-top:1rem;
+    tr:hover td { background:#1a1a1a; cursor:pointer; }
+
+    /* Right detail panel */
+    .detail {
+      flex:1; border-left:2px solid #222; background:#0b0b0b;
+      display:flex; flex-direction:column; padding:1rem;
+      overflow-y:auto; transition:transform 0.3s ease;
     }
-    th,td{padding:.6rem;text-align:left;}
-    th{background:var(--pink);}
-    tr:nth-child(even){background:#151515;}
-    tr:hover{background:#1e1e1e;}
-    .drawer{
-      position:fixed;top:0;right:-400px;width:400px;height:100%;background:#111;
-      box-shadow:-2px 0 10px rgba(0,0,0,.5);transition:right .3s ease;
-      padding:1rem;overflow-y:auto;z-index:100;
+    .detail.hidden { transform:translateX(100%); opacity:0; }
+    .detail.visible { transform:translateX(0); opacity:1; }
+
+    .detail h2 { color:var(--brand); font-size:1.1rem; margin-top:0; }
+    .close-btn {
+      position:absolute; top:15px; right:25px;
+      background:none; border:none; color:var(--text);
+      font-size:1.4rem; cursor:pointer;
     }
-    .drawer.open{right:0;}
-    .drawer h3{margin-top:0;color:var(--pink);}
-    .close-drawer{background:none;border:none;color:#fff;font-size:1.5rem;float:right;cursor:pointer;}
   </style>
 </head>
 <body>
-  <header>
-    <h2>Andalusia Health & Fitness — Admin CRM</h2>
-    <p style="color:#aaa;">Manage members, track dues, and view renewals</p>
-  </header>
+  <div class="main">
+    <h1>Andalusia Health & Fitness — Admin CRM</h1>
+    <p class="subtitle">Manage members, track dues, and view renewals</p>
 
-  <div class="stats">
-    <?php
-      $total = count($members);
-      $current = count(array_filter($members, fn($m)=>$m['status']==='current'));
-      $due = count(array_filter($members, fn($m)=>$m['status']==='due'));
-      $draft = count(array_filter($members, fn($m)=>$m['payment_type']==='draft'));
-    ?>
-    <div class="stat"><span>Current</span><?= $current ?></div>
-    <div class="stat"><span>Due</span><?= $due ?></div>
-    <div class="stat"><span>Draft</span><?= $draft ?></div>
-    <div class="stat"><span>Total</span><?= $total ?></div>
-  </div>
+    <div class="stats">
+      <div class="stat"><h3>Current</h3><p id="stat-current">0</p></div>
+      <div class="stat"><h3>Due</h3><p id="stat-due">0</p></div>
+      <div class="stat"><h3>Draft</h3><p id="stat-draft">0</p></div>
+      <div class="stat"><h3>Total</h3><p id="stat-total">0</p></div>
+    </div>
 
-  <div class="toolbar">
     <div class="filters">
-      <div class="filter active" data-filter="all">All</div>
-      <div class="filter" data-filter="current">Current</div>
-      <div class="filter" data-filter="due">Due</div>
-      <div class="filter" data-filter="draft">Draft</div>
+      <button class="active" data-filter="all">All</button>
+      <button data-filter="current">Current</button>
+      <button data-filter="due">Due</button>
+      <button data-filter="draft">Draft</button>
+      <button data-filter="cards">Cards</button>
     </div>
-    <div class="view-toggle">
-      <button class="toggle-btn active" data-view="cards">Cards</button>
-      <button class="toggle-btn" data-view="table">List</button>
-    </div>
+
     <div class="searchbar">
-      <input type="text" id="searchInput" placeholder="Search members...">
+      <input id="search" type="text" placeholder="Search by name, card, or department..." />
+    </div>
+
+    <div class="table">
+      <table id="members-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th><th>Department</th><th>Payment</th><th>Status</th><th>Valid Until</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="6" style="text-align:center;color:#777;">Loading members...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div id="cardsView" class="cards">
-    <?php foreach ($members as $m): ?>
-      <?php
-        $name = $m['company_name'] ?: trim($m['first_name'].' '.$m['last_name']);
-        $badge = $m['status']==='current' ? 'current' : ($m['payment_type']==='draft' ? 'draft' : 'due');
-      ?>
-      <div class="card" data-status="<?= $m['status'] ?>" data-payment="<?= $m['payment_type'] ?>">
-        <h3><?= htmlspecialchars($name) ?></h3>
-        <small><?= htmlspecialchars($m['department_name'] ?? '') ?></small><br>
-        <span class="badge <?= $badge ?>"><?= ucfirst($badge) ?></span><br><br>
-        <small>Valid Until: <?= htmlspecialchars($m['valid_until'] ?? '—') ?></small><br>
-        <button onclick="openDrawer(<?= $m['id'] ?>)" class="toggle-btn" style="margin-top:.5rem;">View</button>
-      </div>
-    <?php endforeach; ?>
-  </div>
-
-  <table id="tableView" style="display:none;">
-    <thead>
-      <tr><th>ID</th><th>Name</th><th>Department</th><th>Valid Until</th><th>Payment</th><th>Status</th></tr>
-    </thead>
-    <tbody>
-      <?php foreach ($members as $m): ?>
-        <?php $name = $m['company_name'] ?: trim($m['first_name'].' '.$m['last_name']); ?>
-        <tr data-status="<?= $m['status'] ?>" data-payment="<?= $m['payment_type'] ?>">
-          <td><?= $m['id'] ?></td>
-          <td><?= htmlspecialchars($name) ?></td>
-          <td><?= htmlspecialchars($m['department_name']) ?></td>
-          <td><?= htmlspecialchars($m['valid_until'] ?? '—') ?></td>
-          <td><?= ucfirst($m['payment_type']) ?></td>
-          <td><?= ucfirst($m['status']) ?></td>
-        </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
-
-  <div class="drawer" id="drawer">
-    <button class="close-drawer" onclick="closeDrawer()">&times;</button>
-    <h3>Member Details</h3>
-    <div id="drawerContent" style="color:#ddd;font-size:.95rem;">
-      Loading...
-    </div>
+  <div class="detail hidden" id="member-detail">
+    <button class="close-btn" onclick="closeDetail()">×</button>
+    <h2>Member Details</h2>
+    <div id="detail-content" style="color:var(--text); font-size:0.9rem;">Select a member to view details</div>
   </div>
 
   <script>
-    const filters=document.querySelectorAll('.filter');
-    const cards=document.querySelectorAll('.card');
-    const rows=document.querySelectorAll('tbody tr');
-    const search=document.getElementById('searchInput');
-    const viewBtns=document.querySelectorAll('.toggle-btn');
-    const cardsView=document.getElementById('cardsView');
-    const tableView=document.getElementById('tableView');
+  const tableBody = document.querySelector('#members-table tbody');
+  const detailPanel = document.getElementById('member-detail');
+  const detailContent = document.getElementById('detail-content');
+  const searchInput = document.getElementById('search');
 
-    // filtering
-    filters.forEach(f=>{
-      f.addEventListener('click',()=>{
-        filters.forEach(x=>x.classList.remove('active'));
-        f.classList.add('active');
-        const val=f.dataset.filter;
-        cards.forEach(c=>{c.style.display=(val==='all'||c.dataset.status===val||c.dataset.payment===val)?'block':'none';});
-        rows.forEach(r=>{r.style.display=(val==='all'||r.dataset.status===val||r.dataset.payment===val)?'':'none';});
-      });
-    });
+  async function loadMembers() {
+    const res = await fetch('/api/members-list.php'); // you can make this endpoint
+    const data = await res.json().catch(()=>({members:[]}));
+    const members = data.members || [];
 
-    // search filter
-    search.addEventListener('input',()=>{
-      const q=search.value.toLowerCase();
-      [cards,rows].forEach(list=>{
-        list.forEach(el=>{
-          const text=el.textContent.toLowerCase();
-          el.style.display=text.includes(q)?(el.tagName==='TR'?'':'block'):'none';
-        });
-      });
-    });
+    document.getElementById('stat-current').textContent = members.filter(m=>m.status==='current').length;
+    document.getElementById('stat-due').textContent = members.filter(m=>m.status==='due').length;
+    document.getElementById('stat-draft').textContent = members.filter(m=>m.payment_type==='draft').length;
+    document.getElementById('stat-total').textContent = members.length;
 
-    // view toggle
-    viewBtns.forEach(b=>{
-      b.addEventListener('click',()=>{
-        viewBtns.forEach(x=>x.classList.remove('active'));
-        b.classList.add('active');
-        const view=b.dataset.view;
-        cardsView.style.display=view==='cards'?'grid':'none';
-        tableView.style.display=view==='table'?'table':'none';
-      });
-    });
+    renderMembers(members);
+    window._members = members;
+  }
 
-    // drawer
-    function openDrawer(id){
-      const dr=document.getElementById('drawer');
-      const content=document.getElementById('drawerContent');
-      dr.classList.add('open');
-      fetch(`../api/member-detail.php?id=${id}`).then(r=>r.text()).then(t=>content.innerHTML=t).catch(()=>content.innerHTML='Error loading member.');
+  function renderMembers(list) {
+    if (!list.length) {
+      tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#777;">No members found.</td></tr>`;
+      return;
     }
-    function closeDrawer(){document.getElementById('drawer').classList.remove('open');}
+    tableBody.innerHTML = list.map(m=>`
+      <tr onclick="openDetail(${m.id})">
+        <td>${m.id}</td>
+        <td>${m.first_name} ${m.last_name}</td>
+        <td>${m.department_name||'-'}</td>
+        <td>${m.payment_type||'-'}</td>
+        <td>${m.status||'-'}</td>
+        <td>${m.valid_until||'-'}</td>
+      </tr>`).join('');
+  }
+
+  function filterMembers(type) {
+    document.querySelectorAll('.filters button').forEach(b=>b.classList.remove('active'));
+    document.querySelector(`.filters button[data-filter="${type}"]`).classList.add('active');
+    const base = window._members || [];
+    let filtered = base;
+    if (type==='current') filtered = base.filter(m=>m.status==='current');
+    else if (type==='due') filtered = base.filter(m=>m.status==='due');
+    else if (type==='draft') filtered = base.filter(m=>m.payment_type==='draft');
+    renderMembers(filtered);
+  }
+
+  function searchMembers() {
+    const term = searchInput.value.toLowerCase();
+    const base = window._members || [];
+    const filtered = base.filter(m =>
+      `${m.first_name} ${m.last_name}`.toLowerCase().includes(term) ||
+      (m.department_name||'').toLowerCase().includes(term) ||
+      (m.card_number||'').includes(term)
+    );
+    renderMembers(filtered);
+  }
+
+  async function openDetail(id) {
+    detailPanel.classList.remove('hidden');
+    detailPanel.classList.add('visible');
+    detailContent.innerHTML = '<p style="color:#888;">Loading...</p>';
+    try {
+      const res = await fetch(`/api/member-detail.php?id=${id}`);
+      const html = await res.text();
+      detailContent.innerHTML = html;
+    } catch(e){
+      detailContent.innerHTML = '<p style="color:#f66;">Failed to load member details.</p>';
+    }
+  }
+
+  function closeDetail(){
+    detailPanel.classList.add('hidden');
+    detailPanel.classList.remove('visible');
+  }
+
+  document.querySelectorAll('.filters button').forEach(b=>{
+    b.addEventListener('click', ()=>filterMembers(b.dataset.filter));
+  });
+  searchInput.addEventListener('input', searchMembers);
+  loadMembers();
   </script>
 </body>
 </html>
