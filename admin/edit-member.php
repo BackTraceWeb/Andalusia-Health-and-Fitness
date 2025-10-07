@@ -184,7 +184,7 @@ document.getElementById('editForm').addEventListener('submit', async (e)=>{
   const msgErr=document.getElementById('msg-error');
   msgOk.style.display=msgErr.style.display='none';
   try {
-    const res = await fetch('/api/member-update.php', {
+    const res = await fetch('/api/member-save.php', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify(data)
