@@ -3,7 +3,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-require __DIR__ . '/../_bootstrap.php';
+require __DIR__ . '/../api/_bootstrap.php';
 header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
