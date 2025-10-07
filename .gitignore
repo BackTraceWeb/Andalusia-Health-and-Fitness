@@ -13,3 +13,4 @@ _cache/
 _session/
 _attic/
 config/.env.php
+_bootstrap.php
