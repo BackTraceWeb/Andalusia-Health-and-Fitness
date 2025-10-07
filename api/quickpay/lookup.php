@@ -1,4 +1,4 @@
-<?php
+<<?php
 require __DIR__ . '/../_bootstrap.php';
 $pdo = pdo(); // ensure DB initialized
 
@@ -17,23 +17,31 @@ try {
 
   $first = norm($_GET['first'] ?? '');
   $last  = norm($_GET['last'] ?? '');
-  if ($first === '' || $last === '') {
+  if ($first === '' && $last === '') {
     http_response_code(400);
-    echo json_encode(['error'=>'first_last_required']);
+    echo json_encode(['error' => 'first_or_last_required']);
     exit;
   }
 
-  // 🔍 Member lookup
+  // 🔍 Flexible lookup: match company OR first+last name
   $stmt = $pdo->prepare("
-    SELECT id, first_name, last_name, email, zip,
-           department_name, card_number, valid_from, valid_until, monthly_fee
+    SELECT id, first_name, last_name, company_name,
+           department_name, card_number, valid_from, valid_until,
+           monthly_fee, payment_type, status
     FROM members
-    WHERE LOWER(TRIM(first_name)) = :fn
-      AND LOWER(TRIM(last_name))  = :ln
+    WHERE (
+        (LOWER(TRIM(first_name)) = :fn AND LOWER(TRIM(last_name)) = :ln)
+        OR LOWER(TRIM(company_name)) = :company
+    )
     ORDER BY id DESC
     LIMIT 1
   ");
-  $stmt->execute([':fn'=>$first, ':ln'=>$last]);
+  $stmt->execute([
+    ':fn'      => $first,
+    ':ln'      => $last,
+    ':company' => "$first $last"
+  ]);
+
   $member = $stmt->fetch();
 
   if (!$member) {
@@ -44,24 +52,38 @@ try {
 
   file_put_contents($logFile, "Found member ID {$member['id']}\n", FILE_APPEND);
 
-  // 🧾 Invoice lookup
-  $inv = $pdo->prepare("
-    SELECT id, member_id, period_start, period_end, amount_cents, currency, status
-    FROM dues
-    WHERE member_id = :mid AND status = 'due'
-    ORDER BY period_end DESC, id DESC
-    LIMIT 1
-  ");
-  $inv->execute([':mid'=>$member['id']]);
-  $invoice = $inv->fetch();
+  // 🧾 Determine dues / payment status
+  $today = new DateTimeImmutable('today');
+  $validUntil = $member['valid_until'] ? new DateTimeImmutable($member['valid_until']) : null;
+  $isCurrent = ($validUntil && $validUntil >= $today);
+
+  // Override if explicitly on draft (always considered current)
+  if ($member['payment_type'] === 'draft') {
+    $isCurrent = true;
+  }
+
+  // 🧾 Invoice lookup (for those not on draft)
+  $invoice = null;
+  if (!$isCurrent) {
+    $inv = $pdo->prepare("
+      SELECT id, member_id, period_start, period_end, amount_cents, currency, status
+      FROM dues
+      WHERE member_id = :mid AND status = 'due'
+      ORDER BY period_end DESC, id DESC
+      LIMIT 1
+    ");
+    $inv->execute([':mid' => $member['id']]);
+    $invoice = $inv->fetch();
+  }
 
   $amountCents = $invoice ? (int)$invoice['amount_cents'] : (int)($member['monthly_fee'] * 100);
 
   echo json_encode([
-    'status'  => $invoice ? 'due' : 'clear',
+    'status'  => $isCurrent ? 'current' : 'due',
     'member'  => $member,
     'invoice' => $invoice,
-    'amount'  => $amountCents / 100
+    'amount'  => $amountCents / 100,
+    'valid_until' => $member['valid_until']
   ]);
 
   file_put_contents($logFile, "Returning member {$member['id']} OK\n", FILE_APPEND);
@@ -71,4 +93,3 @@ try {
   http_response_code(500);
   echo json_encode(['error'=>'server_error','detail'=>$e->getMessage()]);
 }
-
