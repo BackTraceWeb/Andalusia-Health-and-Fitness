@@ -1,17 +1,20 @@
-<<?php
-require __DIR__ . '/../_bootstrap.php';
-$pdo = pdo(); // ensure DB initialized
-
-header('Content-Type: application/json');
+<?php
+require __DIR__ . '/../_bootstrap.php'; // fixed path
+header('Content-Type: application/json; charset=utf-8');
 ini_set('display_errors', 0);
 
-function norm($s){ return preg_replace('/\s+/', ' ', strtolower(trim($s ?? ''))); }
+function norm($s) { return preg_replace('/\s+/', ' ', strtolower(trim($s ?? ''))); }
 
 $logFile = __DIR__ . '/../../logs/lookup-debug.log';
 if (!is_dir(dirname($logFile))) mkdir(dirname($logFile), 0775, true);
 file_put_contents($logFile, date('c') . " --- Lookup start ---\n", FILE_APPEND);
 
 try {
+  // ✅ ensure PDO is initialized properly
+  if (!isset($pdo) || !$pdo instanceof PDO) {
+    $pdo = pdo();
+  }
+
   $dbName = $pdo->query("SELECT DATABASE()")->fetchColumn();
   file_put_contents($logFile, "Connected to DB: {$dbName}\n", FILE_APPEND);
 
@@ -23,7 +26,7 @@ try {
     exit;
   }
 
-  // 🔍 Flexible lookup: match company OR first+last name
+  // 🔍 Flexible lookup: name or company
   $stmt = $pdo->prepare("
     SELECT id, first_name, last_name, company_name,
            department_name, card_number, valid_from, valid_until,
@@ -42,27 +45,27 @@ try {
     ':company' => "$first $last"
   ]);
 
-  $member = $stmt->fetch();
+  $member = $stmt->fetch(PDO::FETCH_ASSOC);
 
   if (!$member) {
     file_put_contents($logFile, "No members found\n", FILE_APPEND);
-    echo json_encode(['status'=>'not_found']);
+    echo json_encode(['status' => 'not_found']);
     exit;
   }
 
   file_put_contents($logFile, "Found member ID {$member['id']}\n", FILE_APPEND);
 
-  // 🧾 Determine dues / payment status
+  // 🧾 Determine dues/payment
   $today = new DateTimeImmutable('today');
   $validUntil = $member['valid_until'] ? new DateTimeImmutable($member['valid_until']) : null;
   $isCurrent = ($validUntil && $validUntil >= $today);
 
-  // Override if explicitly on draft (always considered current)
+  // If on draft, always current
   if ($member['payment_type'] === 'draft') {
     $isCurrent = true;
   }
 
-  // 🧾 Invoice lookup (for those not on draft)
+  // 🧾 Invoice lookup if due
   $invoice = null;
   if (!$isCurrent) {
     $inv = $pdo->prepare("
@@ -73,17 +76,17 @@ try {
       LIMIT 1
     ");
     $inv->execute([':mid' => $member['id']]);
-    $invoice = $inv->fetch();
+    $invoice = $inv->fetch(PDO::FETCH_ASSOC);
   }
 
   $amountCents = $invoice ? (int)$invoice['amount_cents'] : (int)($member['monthly_fee'] * 100);
 
   echo json_encode([
-    'status'  => $isCurrent ? 'current' : 'due',
-    'member'  => $member,
-    'invoice' => $invoice,
-    'amount'  => $amountCents / 100,
-    'valid_until' => $member['valid_until']
+    'status'       => $isCurrent ? 'current' : 'due',
+    'member'       => $member,
+    'invoice'      => $invoice,
+    'amount'       => $amountCents / 100,
+    'valid_until'  => $member['valid_until']
   ]);
 
   file_put_contents($logFile, "Returning member {$member['id']} OK\n", FILE_APPEND);
@@ -91,5 +94,5 @@ try {
 } catch (Throwable $e) {
   file_put_contents($logFile, "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
   http_response_code(500);
-  echo json_encode(['error'=>'server_error','detail'=>$e->getMessage()]);
+  echo json_encode(['error' => 'server_error', 'detail' => $e->getMessage()]);
 }
