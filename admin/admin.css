@@ -1,0 +1,189 @@
+/* =========================================================
+   Andalusia Health & Fitness Admin Panel
+   Style matches front site: black background, white cards,
+   magenta accent buttons, soft rounded edges.
+========================================================= */
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #000;
+  margin: 0;
+  color: #fff;
+}
+
+/* ---------- Topbar ---------- */
+.topbar {
+  background: #111;
+  color: #fff;
+  padding: 15px 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 10px rgba(255,255,255,0.1);
+}
+
+.topbar h1 {
+  font-size: 20px;
+  margin: 0;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.topbar a {
+  color: #ff1e78;
+  background: #fff;
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.topbar a:hover {
+  background: #ff1e78;
+  color: #fff;
+}
+
+/* ---------- Content Area ---------- */
+.content {
+  max-width: 1200px;
+  margin: 40px auto;
+  background: #111;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 0 25px rgba(255,255,255,0.05);
+}
+
+.content h2 {
+  text-align: center;
+  color: #fff;
+  font-size: 24px;
+  margin-bottom: 25px;
+}
+
+/* ---------- Search ---------- */
+.search-box {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.search-box input {
+  padding: 10px;
+  width: 300px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #222;
+  color: #fff;
+}
+
+.search-box button {
+  background: #ff1e78;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.search-box button:hover {
+  background: #e91e63;
+}
+
+/* ---------- Table ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  color: #000;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background: #ff1e78;
+  color: #fff;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+tr:hover td {
+  background: #f7f7f7;
+}
+
+/* ---------- Action Buttons ---------- */
+.actions a {
+  background: #ff1e78;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.actions a:hover {
+  background: #e91e63;
+}
+
+/* ---------- Login Box ---------- */
+.login-box {
+  width: 100%;
+  max-width: 400px;
+  margin: 120px auto;
+  background: #111;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 0 25px rgba(255,255,255,0.05);
+}
+
+.login-box h2 {
+  text-align: center;
+  color: #fff;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+  color: #ddd;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  margin-top: 5px;
+  background: #222;
+  color: #fff;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #ff1e78;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background: #e91e63;
+}
+
+/* ---------- Error Message ---------- */
+.error {
+  color: #ff1e78;
+  text-align: center;
+  margin-top: 10px;
+}

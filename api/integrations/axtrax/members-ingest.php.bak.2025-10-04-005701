@@ -1,0 +1,67 @@
+<?php
+header('Content-Type: application/json');
+function fail($code,$msg,$detail=null){ http_response_code($code); echo json_encode(['error'=>$msg,'detail'=>$detail]); exit; }
+
+try {
+  /* Auth via key file */
+  $keyfile = __DIR__ . '/../../../config/bridge.key';
+  if (!is_readable($keyfile)) fail(500,'missing_shared_key','key file not readable');
+  $shared = trim(file_get_contents($keyfile));
+  $hdr = $_SERVER['HTTP_X_AHF_BRIDGE_KEY'] ?? '';
+  if ($shared === '' || !hash_equals($shared, $hdr)) fail(401,'unauthorized','key mismatch');
+
+  /* Payload */
+  $raw = file_get_contents('php://input');
+  $data = json_decode($raw, true);
+  if (!is_array($data) || !isset($data['members']) || !is_array($data['members'])) fail(400,'bad_payload','members missing');
+
+  /* DB bootstrap */
+  require __DIR__ . '/../../_bootstrap.php';
+  if (!isset($pdo)) fail(500,'no_pdo','bootstrap did not set $pdo');
+
+  /* Ensure table */
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS members (
+      id INT UNSIGNED NOT NULL PRIMARY KEY,
+      first_name VARCHAR(100) NOT NULL,
+      last_name  VARCHAR(100) NOT NULL,
+      email      VARCHAR(255) DEFAULT '',
+      zip        VARCHAR(20)  DEFAULT NULL,
+      updated_at DATETIME NULL,
+      INDEX idx_members_name (first_name,last_name),
+      INDEX idx_members_zip (zip)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  ");
+
+  /* Upsert */
+  $pdo->beginTransaction();
+  $up = $pdo->prepare("
+    INSERT INTO members (id, first_name, last_name, email, zip, updated_at)
+    VALUES (:id,:fn,:ln,:em,:zip,:upd)
+    ON DUPLICATE KEY UPDATE
+      first_name=VALUES(first_name),
+      last_name =VALUES(last_name),
+      email     =VALUES(email),
+      zip       =VALUES(zip),
+      updated_at=VALUES(updated_at)
+  ");
+  $n=0;
+  foreach ($data['members'] as $m) {
+    $id = isset($m['id']) ? (int)$m['id'] : 0;
+    if ($id <= 0) continue;
+    $up->execute([
+      ':id'  => $id,
+      ':fn'  => (string)($m['first_name'] ?? ''),
+      ':ln'  => (string)($m['last_name']  ?? ''),
+      ':em'  => (string)($m['email']      ?? ''),
+      ':zip' => ($m['zip'] ?? null),
+      ':upd' => (string)($m['updated_at'] ?? date('c')),
+    ]);
+    $n++;
+  }
+  $pdo->commit();
+  http_response_code(204);
+} catch (Throwable $e) {
+  if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) { $pdo->rollBack(); }
+  fail(500,'server_error',$e->getMessage());
+}

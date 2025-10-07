@@ -1,0 +1,8 @@
+// /var/www/andalusiahealthandfitness/config/payments.php
+return [
+  'epn_account'  => getenv('EPN_ACCOUNT') ?: 'YOUR_EPN_ACCOUNT',
+  'endpoint'     => 'https://www.eprocessingnetwork.com/cgi-bin/tdbe/transact.pl',
+  'restrict_key' => getenv('EPN_RESTRICT_KEY') ?: null,
+  'from_email'   => 'noreply@andalusiahealthandfitness.com',
+  'admin_email'  => 'admin@andalusiahealthandfitness.com',
+];
