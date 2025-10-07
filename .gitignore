@@ -12,3 +12,4 @@ tmp/
 _cache/
 _session/
 _attic/
+config/.env.php
