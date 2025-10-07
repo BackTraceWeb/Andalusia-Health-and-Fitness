@@ -2,7 +2,7 @@
 require __DIR__ . '/../../_bootstrap.php';
 header('Content-Type: application/json');
 
-/* --- Auth (same shared key) --- */
+/* --- Auth (shared bridge key) --- */
 if (!isset($config['bridge']['shared_key'])) {
   $kf = dirname(__DIR__, 3) . '/config/bridge.key';
   if (is_readable($kf)) {
@@ -26,14 +26,8 @@ if (!is_array($body) || !isset($body['members']) || !is_array($body['members']))
   exit;
 }
 
-/* --- Prep date helper for dues status --- */
+/* --- Helper to calculate dues status --- */
 $today = new DateTimeImmutable('today');
-
-/**
- * Decide member status:
- *   - "current" if valid_until >= today
- *   - "due"     if valid_until < today OR empty
- */
 function getStatus(?string $validUntil, DateTimeImmutable $today): string {
   if (!$validUntil) return 'due';
   try {
@@ -44,22 +38,21 @@ function getStatus(?string $validUntil, DateTimeImmutable $today): string {
   }
 }
 
-/* --- Upsert members with status --- */
+/* --- Insert or update members with dues status --- */
 $pdo->beginTransaction();
 try {
   $up = $pdo->prepare("
     INSERT INTO members (
-      id, first_name, last_name, middle_name,
+      id, first_name, last_name,
       department_id, department_name, card_number,
       valid_from, valid_until, status, updated_at
     ) VALUES (
-      :id, :fn, :ln, :mn, :dept_id, :dept_name,
+      :id, :fn, :ln, :dept_id, :dept_name,
       :card, :vfrom, :vuntil, :status, :upd
     )
     ON DUPLICATE KEY UPDATE
       first_name = VALUES(first_name),
       last_name = VALUES(last_name),
-      middle_name = VALUES(middle_name),
       department_id = VALUES(department_id),
       department_name = VALUES(department_name),
       card_number = VALUES(card_number),
@@ -74,7 +67,6 @@ try {
     $id   = isset($m['user_id']) ? (int)$m['user_id'] : 0;
     $fn   = trim($m['first_name'] ?? '');
     $ln   = trim($m['last_name'] ?? '');
-    $mn   = trim($m['middle_name'] ?? '');
     $dept_id   = isset($m['department_id']) ? (int)$m['department_id'] : null;
     $dept_name = trim($m['department_name'] ?? '');
     $card      = trim($m['card_number'] ?? '');
@@ -83,7 +75,7 @@ try {
     $upd       = $m['updated_at']  ?? date('Y-m-d H:i:s');
     $status    = getStatus($vuntil, $today);
 
-    // Skip incomplete entries (but allow companies with just first_name)
+    // Skip invalid records (no ID or missing both first+last)
     if ($id <= 0 || ($fn === '' && $ln === '')) {
       $skipped++;
       continue;
@@ -93,7 +85,6 @@ try {
       ':id'        => $id,
       ':fn'        => $fn,
       ':ln'        => $ln,
-      ':mn'        => $mn,
       ':dept_id'   => $dept_id,
       ':dept_name' => $dept_name,
       ':card'      => $card ?: null,
