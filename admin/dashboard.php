@@ -44,26 +44,43 @@ $result = $conn->query($q);
   <style>
     .status-current { color:#2ecc71; font-weight:600; }
     .status-due { color:#e74c3c; font-weight:600; }
-    .searchbar {
-      margin-bottom: 1rem;
-      display:flex; gap:.5rem;
-      align-items:center;
-    }
-    .searchbar input {
-      flex:1;
-      padding:.5rem .75rem;
-      border:1px solid #ccc;
-      border-radius:.5rem;
-    }
-    .searchbar button {
-      padding:.5rem 1rem;
-      border:none;
-      border-radius:.5rem;
-      background:#222;
-      color:#fff;
-      cursor:pointer;
-      font-weight:600;
-    }
+   .searchbar {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.searchbar input[type="text"] {
+  flex: 1;
+  max-width: 400px;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: #1b1b1b;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.searchbar input[type="text"]::placeholder {
+  color: #999;
+}
+
+.searchbar button {
+  background: #e91e63;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.searchbar button:hover {
+  background: #ff4081;
+}
+
     .back-btn {
       display:inline-block;
       background:#444;
