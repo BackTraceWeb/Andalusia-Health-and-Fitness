@@ -1,74 +1,204 @@
 <?php
 require __DIR__ . '/../_bootstrap.php';
-$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+header('Content-Type: text/html; charset=UTF-8');
 
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id <= 0) {
-  die("<p style='color:#f66;'>Invalid member ID.</p>");
+  http_response_code(400);
+  echo "Invalid member ID";
+  exit;
 }
 
-$stmt = $pdo->prepare("SELECT * FROM members WHERE id = :id LIMIT 1");
-$stmt->execute([':id'=>$id]);
-$member = $stmt->fetch();
+// Fetch member record
+$stmt = $pdo->prepare("SELECT * FROM members WHERE id = ?");
+$stmt->execute([$id]);
+$member = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$member) {
+  http_response_code(404);
+  echo "Member not found.";
+  exit;
+}
 
-if (!$member) die("<p style='color:#f66;'>Member not found.</p>");
-
-$deps = $pdo->query("SELECT DISTINCT department_name FROM members WHERE department_name IS NOT NULL ORDER BY department_name")->fetchAll(PDO::FETCH_COLUMN);
+// Fetch departments for dropdown
+$depts = $pdo->query("SELECT DISTINCT department_name FROM members WHERE department_name IS NOT NULL ORDER BY department_name")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Edit Member — <?= htmlspecialchars($member['first_name'].' '.$member['last_name']) ?></title>
-<link rel="stylesheet" href="admin.css">
+<meta charset="UTF-8" />
+<title>Edit Member — <?=htmlspecialchars($member['first_name'].' '.$member['last_name'])?></title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
-body{background:#111;color:#fff;font-family:sans-serif;margin:0;padding:2em;}
-.card{background:#181818;border-radius:10px;padding:1.5em;max-width:600px;margin:auto;}
-label{display:block;margin-top:1em;color:#ccc;}
-input,select{width:100%;padding:.5em;border:none;border-radius:6px;margin-top:.3em;background:#222;color:#fff;}
-button{background:#d81b60;color:#fff;padding:.6em 1.2em;border:none;border-radius:6px;margin-top:1em;cursor:pointer;}
-button:hover{background:#e91e63;}
-a{color:#d81b60;text-decoration:none;}
+:root {
+  --brand:#d81b60;
+  --bg:#111;
+  --text:#f2f2f2;
+  --gray:#999;
+  --card:#1c1c1c;
+  --hover:#e33d7d;
+}
+* { box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  padding:2rem;
+}
+.container {
+  max-width:650px;
+  margin:0 auto;
+  background:var(--card);
+  padding:2rem;
+  border-radius:12px;
+  box-shadow:0 0 12px rgba(216,27,96,0.25);
+}
+h1 {
+  color:var(--brand);
+  text-align:center;
+  margin-top:0;
+}
+form {
+  display:flex;
+  flex-direction:column;
+  gap:1rem;
+  margin-top:1rem;
+}
+label {
+  font-size:0.9rem;
+  color:var(--gray);
+}
+input, select {
+  padding:0.5rem 0.75rem;
+  background:#222;
+  color:var(--text);
+  border:none;
+  border-radius:6px;
+  width:100%;
+}
+input:focus, select:focus { outline:1px solid var(--brand); }
+button {
+  background:var(--brand);
+  border:none;
+  color:#fff;
+  padding:0.7rem 1.4rem;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+  transition:background 0.2s;
+}
+button:hover { background:var(--hover); }
+.back {
+  display:inline-block;
+  background:#222;
+  color:var(--gray);
+  padding:0.6rem 1rem;
+  border-radius:6px;
+  text-decoration:none;
+  margin-top:1.5rem;
+}
+.back:hover { background:#333; color:#fff; }
+.success {
+  background:#155724;
+  color:#d4edda;
+  padding:0.6rem 1rem;
+  border-radius:6px;
+  text-align:center;
+  margin-top:1rem;
+  display:none;
+}
+.error {
+  background:#721c24;
+  color:#f8d7da;
+  padding:0.6rem 1rem;
+  border-radius:6px;
+  text-align:center;
+  margin-top:1rem;
+  display:none;
+}
 </style>
 </head>
 <body>
-<div class="card">
-  <h2>Edit Member</h2>
-  <form method="POST" action="/api/member-save.php">
-    <input type="hidden" name="id" value="<?= $member['id'] ?>">
+  <div class="container">
+    <h1>Edit Member</h1>
 
-    <label>First Name</label>
-    <input type="text" name="first_name" value="<?= htmlspecialchars($member['first_name']) ?>">
+    <form id="editForm">
+      <input type="hidden" name="id" value="<?=$member['id']?>">
 
-    <label>Last Name</label>
-    <input type="text" name="last_name" value="<?= htmlspecialchars($member['last_name']) ?>">
+      <div>
+        <label>First Name</label>
+        <input type="text" name="first_name" value="<?=htmlspecialchars($member['first_name'])?>">
+      </div>
+      <div>
+        <label>Last Name</label>
+        <input type="text" name="last_name" value="<?=htmlspecialchars($member['last_name'])?>">
+      </div>
+      <div>
+        <label>Department</label>
+        <select name="department_name">
+          <option value="">-- None --</option>
+          <?php foreach ($depts as $d): ?>
+            <option value="<?=htmlspecialchars($d)?>" <?=($member['department_name']===$d?'selected':'')?>>
+              <?=htmlspecialchars($d)?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div>
+        <label>Payment Type</label>
+        <select name="payment_type">
+          <?php
+          $types = ['card'=>'Card','draft'=>'Draft','cash'=>'Cash','other'=>'Other'];
+          foreach($types as $k=>$v): ?>
+            <option value="<?=$k?>" <?=($member['payment_type']===$k?'selected':'')?>><?=$v?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div>
+        <label>Monthly Fee ($)</label>
+        <input type="number" name="monthly_fee" step="0.01" value="<?=htmlspecialchars($member['monthly_fee'])?>">
+      </div>
+      <div>
+        <label>Valid From</label>
+        <input type="date" name="valid_from" value="<?=$member['valid_from']?>">
+      </div>
+      <div>
+        <label>Valid Until</label>
+        <input type="date" name="valid_until" value="<?=$member['valid_until']?>">
+      </div>
 
-    <label>Department</label>
-    <select name="department_name">
-      <?php foreach($deps as $dep): ?>
-        <option value="<?= htmlspecialchars($dep) ?>" <?= $dep == $member['department_name'] ? 'selected' : '' ?>><?= htmlspecialchars($dep) ?></option>
-      <?php endforeach; ?>
-    </select>
+      <button type="submit">💾 Save Changes</button>
+    </form>
 
-    <label>Payment Type</label>
-    <select name="payment_type">
-      <?php foreach(['card','draft','cash','other'] as $pt): ?>
-        <option value="<?= $pt ?>" <?= $pt == $member['payment_type'] ? 'selected' : '' ?>><?= ucfirst($pt) ?></option>
-      <?php endforeach; ?>
-    </select>
+    <a href="dashboard.php" class="back">← Back to Dashboard</a>
 
-    <label>Status</label>
-    <select name="status">
-      <?php foreach(['current','due','draft'] as $s): ?>
-        <option value="<?= $s ?>" <?= $s == $member['status'] ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
-      <?php endforeach; ?>
-    </select>
+    <div class="success" id="msg-success">✅ Saved successfully!</div>
+    <div class="error" id="msg-error">❌ Save failed.</div>
+  </div>
 
-    <label>Valid Until</label>
-    <input type="date" name="valid_until" value="<?= $member['valid_until'] ?>">
-
-    <button type="submit">💾 Save Changes</button>
-    <a href="dashboard.php">← Back to Dashboard</a>
-  </form>
-</div>
+<script>
+document.getElementById('editForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const form = e.target;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const msgOk=document.getElementById('msg-success');
+  const msgErr=document.getElementById('msg-error');
+  msgOk.style.display=msgErr.style.display='none';
+  try {
+    const res = await fetch('/api/member-update.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    const out = await res.json();
+    if(out.ok){
+      msgOk.style.display='block';
+    } else {
+      msgErr.style.display='block';
+    }
+  } catch(err){
+    msgErr.style.display='block';
+  }
+});
+</script>
 </body>
 </html>

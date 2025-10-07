@@ -10,6 +10,8 @@ try {
   $department     = trim($_POST['department_name'] ?? '');
   $payment_type   = trim($_POST['payment_type'] ?? 'card');
   $status         = trim($_POST['status'] ?? 'current');
+  $monthly_fee    = isset($_POST['monthly_fee']) ? (float)$_POST['monthly_fee'] : 0.00;
+  $valid_from     = trim($_POST['valid_from'] ?? '');
   $valid_until    = trim($_POST['valid_until'] ?? '');
 
   if ($id <= 0) {
@@ -34,6 +36,8 @@ try {
       department_name = :department_name,
       payment_type = :payment_type,
       status = :status,
+      monthly_fee = :monthly_fee,
+      valid_from = :valid_from,
       valid_until = :valid_until,
       updated_at = NOW()
     WHERE id = :id
@@ -45,6 +49,8 @@ try {
     ':department_name' => $department,
     ':payment_type'    => $payment_type,
     ':status'          => $status,
+    ':monthly_fee'     => $monthly_fee,
+    ':valid_from'      => $valid_from ?: null,
     ':valid_until'     => $valid_until ?: null,
     ':id'              => $id
   ]);
@@ -58,4 +64,3 @@ try {
     'error' => 'server_error',
     'detail' => $e->getMessage()
   ]);
-}
