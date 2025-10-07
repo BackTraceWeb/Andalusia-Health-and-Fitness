@@ -1,34 +1,35 @@
 <?php
-error_log("BOOTSTRAP LOADED from: " . __FILE__);
-error_log("Resolved DB_USER: " . (getenv('DB_USER') ?: 'ahf_web'));
-error_log("Resolved DB_PASS: " . (getenv('DB_PASS') ?: 'AhfWeb@2024!'));
-
-
-// /api/_bootstrap.php
+// _bootstrap.php
+// Central DB bootstrap for Andalusia Health & Fitness
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+/**
+ * Global PDO helper
+ */
 function pdo(): PDO {
-  static $pdo;
-  if ($pdo) return $pdo;
+    static $pdo;
+    if ($pdo) return $pdo;
 
-  $dsn  = getenv('DB_DSN') ?: 'mysql:host=127.0.0.1;dbname=ahf;charset=utf8mb4';
-  $user = getenv('DB_USER') ?: 'ahf_web';
-$pass = getenv('DB_PASS') ?: 'AhfWeb@2024!'; // ✅ ensure this matches your MariaDB password exactly
+    $dsn  = getenv('DB_DSN') ?: 'mysql:host=127.0.0.1;dbname=ahf;charset=utf8mb4';
+    $user = getenv('DB_USER') ?: 'ahf_web';
+    $pass = getenv('DB_PASS') ?: 'AhfWeb@2024!';
 
-  try {
-    $pdo = new PDO($dsn, $user, $pass, [
-      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-      PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-  } catch (PDOException $e) {
-    // 🔍 Add debug to a local log file so we can confirm what PHP is using
-    $log = __DIR__ . '/../../logs/db-connect-debug.log';
-    file_put_contents($log, date('c') . " - DB connect failed\nUser: $user\nPass: $pass\nDSN: $dsn\nError: " . $e->getMessage() . "\n\n", FILE_APPEND);
-    throw $e;
-  }
+    try {
+        $pdo = new PDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+    } catch (PDOException $e) {
+        error_log("DB connect failed: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(["error" => "db_connection_failed"]);
+        exit;
+    }
 
-  return $pdo;
+    return $pdo;
 }
 
+// Initialize and make $pdo globally available
+$pdo = pdo();
