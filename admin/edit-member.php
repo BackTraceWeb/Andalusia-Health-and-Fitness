@@ -179,26 +179,34 @@ button:hover { background:var(--hover); }
 document.getElementById('editForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const form = e.target;
-  const data = Object.fromEntries(new FormData(form).entries());
   const msgOk=document.getElementById('msg-success');
   const msgErr=document.getElementById('msg-error');
   msgOk.style.display=msgErr.style.display='none';
+
   try {
+    const formData = new FormData(form); // ← real HTML form post
     const res = await fetch('/api/member-save.php', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
+      method: 'POST',
+      body: formData
     });
+
     const out = await res.json();
-    if(out.ok){
-      msgOk.style.display='block';
+    console.log('member-save response:', out); // for debugging in console
+
+    if (out.ok === true) {
+      msgOk.textContent = '✅ Member saved successfully!';
+      msgOk.style.display = 'block';
     } else {
-      msgErr.style.display='block';
+      msgErr.textContent = '❌ ' + (out.error || out.message || 'Save failed.');
+      msgErr.style.display = 'block';
     }
-  } catch(err){
-    msgErr.style.display='block';
+  } catch (err) {
+    console.error('Save error:', err);
+    msgErr.textContent = '❌ Network or server error.';
+    msgErr.style.display = 'block';
   }
 });
 </script>
+
 </body>
 </html>
