@@ -20,7 +20,13 @@ if (!$member) {
 }
 
 // Fetch departments for dropdown
-$depts = $pdo->query("SELECT DISTINCT department_name FROM members WHERE department_name IS NOT NULL ORDER BY department_name")->fetchAll(PDO::FETCH_COLUMN);
+// Fetch departments for dropdown
+$depts = $pdo->query("
+  SELECT name
+  FROM departments
+  ORDER BY name
+")->fetchAll(PDO::FETCH_COLUMN);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
