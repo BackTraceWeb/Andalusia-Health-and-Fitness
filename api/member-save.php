@@ -7,7 +7,7 @@ ini_set('display_errors', 1);
 $pdo = pdo();
 $logFile = __DIR__ . '/../logs/member-save-debug.log';
 
-// Safe logger (won’t break if path missing)
+// Safe logger (no warnings if missing folder)
 function logDebug($msg) {
     global $logFile;
     @file_put_contents($logFile, date('c') . " - $msg\n", FILE_APPEND);
@@ -36,11 +36,10 @@ try {
         exit;
     }
 
-    // Allow blank name fields, only block if *both* empty
+    // Allow saving even if both names blank; just use empty strings
     if ($first_name === '' && $last_name === '') {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'error' => 'missing_name']);
-        exit;
+        $first_name = '';
+        $last_name  = '';
     }
 
     // Update SQL
@@ -62,19 +61,18 @@ try {
 
     $stmt = $pdo->prepare($sql);
 
-$params = [
-    ':first_name'      => $first_name,     // empty string okay
-    ':last_name'       => $last_name,      // empty string okay
-    ':company_name'    => $company_name ?: null,
-    ':department_name' => $department ?: null,
-    ':payment_type'    => $payment_type,
-    ':status'          => $status,
-    ':monthly_fee'     => $monthly_fee,
-    ':valid_from'      => $valid_from ?: null,
-    ':valid_until'     => $valid_until ?: null,
-    ':id'              => $id
-];
-
+    $params = [
+        ':first_name'      => $first_name, // never NULL
+        ':last_name'       => $last_name,  // never NULL
+        ':company_name'    => $company_name ?: null,
+        ':department_name' => $department ?: null,
+        ':payment_type'    => $payment_type,
+        ':status'          => $status,
+        ':monthly_fee'     => $monthly_fee,
+        ':valid_from'      => $valid_from ?: null,
+        ':valid_until'     => $valid_until ?: null,
+        ':id'              => $id
+    ];
 
     $stmt->execute($params);
 
