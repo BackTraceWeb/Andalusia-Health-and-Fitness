@@ -4,29 +4,41 @@ header('Content-Type: text/html; charset=utf-8');
 
 $pdo = pdo();
 
-// --- Ensure departments from members are mirrored into department_pricing ---
-$missingDepts = $pdo->query("
-  SELECT DISTINCT m.department_name
-  FROM members m
-  LEFT JOIN department_pricing d ON m.department_name = d.department_name
-  WHERE m.department_name IS NOT NULL
-    AND m.department_name <> ''
-    AND d.department_name IS NULL
-")->fetchAll(PDO::FETCH_COLUMN);
+/**
+ * Sync departments coming from AxTrax (members table)
+ * into department_pricing if they don't already exist
+ */
+try {
+  $missingDepts = $pdo->query("
+    SELECT DISTINCT m.department_name
+    FROM members m
+    LEFT JOIN department_pricing d ON m.department_name = d.department_name
+    WHERE m.department_name IS NOT NULL
+      AND m.department_name <> ''
+      AND d.department_name IS NULL
+  ")->fetchAll(PDO::FETCH_COLUMN);
 
-if ($missingDepts) {
-  $ins = $pdo->prepare("
-    INSERT INTO department_pricing (department_name, base_price, tanning_addon)
-    VALUES (:name, 0.00, 0.00)
-  ");
-  foreach ($missingDepts as $deptName) {
-    $ins->execute([':name' => $deptName]);
-    file_put_contents(
-      __DIR__ . '/../logs/axtrax-sync.log',
-      date('c') . " - Auto-added missing department from members: {$deptName}\n",
-      FILE_APPEND
-    );
+  if ($missingDepts) {
+    $ins = $pdo->prepare("
+      INSERT INTO department_pricing (department_name, base_price, tanning_price)
+      VALUES (:name, 0.00, 0.00)
+    ");
+
+    foreach ($missingDepts as $deptName) {
+      $ins->execute([':name' => $deptName]);
+      file_put_contents(
+        __DIR__ . '/../logs/axtrax-sync.log',
+        date('c') . " - Auto-added missing department from members: {$deptName}\n",
+        FILE_APPEND
+      );
+    }
   }
+} catch (Throwable $e) {
+  file_put_contents(
+    __DIR__ . '/../logs/axtrax-sync-error.log',
+    date('c') . " - Sync error: {$e->getMessage()}\n",
+    FILE_APPEND
+  );
 }
 ?>
 <!DOCTYPE html>
@@ -118,10 +130,15 @@ form.add-dept input { width:200px; }
 const tbody = document.querySelector('#dept-table tbody');
 const status = document.getElementById('status');
 
+// --- Load Departments from API ---
 async function loadDepartments(){
-  const res = await fetch('/api/departments-list.php');
-  const data = await res.json();
-  renderTable(data.departments || []);
+  try {
+    const res = await fetch('/api/departments-list.php');
+    const data = await res.json();
+    renderTable(data.departments || []);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#f66;">Failed to load departments.</td></tr>`;
+  }
 }
 
 function renderTable(list){
@@ -143,11 +160,13 @@ function renderTable(list){
   `).join('');
 }
 
+// --- Save Department ---
 async function saveDept(id, btn){
   const row = btn.closest('tr');
   const name = row.querySelector('td:nth-child(2) input').value;
   const base = row.querySelector('td:nth-child(3) input').value;
   const tan  = row.querySelector('td:nth-child(4) input').value;
+
   const res = await fetch('/api/department-save.php',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -159,6 +178,7 @@ async function saveDept(id, btn){
   loadDepartments();
 }
 
+// --- Apply Default Fee ---
 async function applyDefault(id, name){
   if(!confirm(`Apply default fee to all members in ${name}?`)) return;
   const res = await fetch('/api/department-apply-default.php',{
@@ -171,12 +191,14 @@ async function applyDefault(id, name){
   status.style.color = out.ok ? '#4caf50' : '#f44336';
 }
 
+// --- Add Department ---
 document.getElementById('addDeptForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const form = e.target;
   const data = Object.fromEntries(new FormData(form).entries());
   const res = await fetch('/api/department-save.php',{
-    method:'POST', headers:{'Content-Type':'application/json'},
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify(data)
   });
   const out = await res.json();
@@ -185,6 +207,7 @@ document.getElementById('addDeptForm').addEventListener('submit', async e=>{
   form.reset();
   loadDepartments();
 });
+
 loadDepartments();
 </script>
 </body>
