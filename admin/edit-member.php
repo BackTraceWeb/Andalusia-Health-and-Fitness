@@ -21,9 +21,7 @@ if (!$member) {
 
 // Fetch departments for dropdown
 $depts = $pdo->query("
-  SELECT name
-  FROM department_pricing
-  ORDER BY name
+SELECT department_name FROM department_pricing ORDER BY department_name
 ")->fetchAll(PDO::FETCH_COLUMN);
 
 
