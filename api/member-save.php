@@ -4,7 +4,10 @@ require __DIR__ . '/../_bootstrap.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$pdo = pdo();  // make sure this line exists
+$pdo = pdo();
+
+$logFile = __DIR__ . '/../../logs/member-save-debug.log';
+file_put_contents($logFile, date('c') . " - member-save invoked\n", FILE_APPEND);
 
 header('Content-Type: application/json; charset=utf-8');
 
