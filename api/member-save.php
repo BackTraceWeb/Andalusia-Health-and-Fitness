@@ -7,10 +7,10 @@ ini_set('display_errors', 1);
 $pdo = pdo();
 $logFile = __DIR__ . '/../logs/member-save-debug.log';
 
+// Safe logger (won’t break if path missing)
 function logDebug($msg) {
     global $logFile;
- $logFile = __DIR__ . '/../logs/member-save-debug.log';
-
+    @file_put_contents($logFile, date('c') . " - $msg\n", FILE_APPEND);
 }
 
 header('Content-Type: application/json; charset=utf-8');
@@ -36,13 +36,14 @@ try {
         exit;
     }
 
-    if ($first_name === '' || $last_name === '') {
+    // Allow blank name fields, only block if *both* empty
+    if ($first_name === '' && $last_name === '') {
         http_response_code(400);
         echo json_encode(['ok' => false, 'error' => 'missing_name']);
         exit;
     }
 
-    // Update
+    // Update SQL
     $sql = "
         UPDATE members
         SET
@@ -62,10 +63,10 @@ try {
     $stmt = $pdo->prepare($sql);
 
     $params = [
-        ':first_name'      => $first_name,
-        ':last_name'       => $last_name,
-        ':company_name'    => $company_name,
-        ':department_name' => $department,
+        ':first_name'      => $first_name ?: null,
+        ':last_name'       => $last_name ?: null,
+        ':company_name'    => $company_name ?: null,
+        ':department_name' => $department ?: null,
         ':payment_type'    => $payment_type,
         ':status'          => $status,
         ':monthly_fee'     => $monthly_fee,
@@ -88,4 +89,3 @@ try {
         'detail' => $e->getMessage()
     ]);
 }
-
