@@ -62,18 +62,19 @@ try {
 
     $stmt = $pdo->prepare($sql);
 
-    $params = [
-        ':first_name'      => $first_name ?: null,
-        ':last_name'       => $last_name ?: null,
-        ':company_name'    => $company_name ?: null,
-        ':department_name' => $department ?: null,
-        ':payment_type'    => $payment_type,
-        ':status'          => $status,
-        ':monthly_fee'     => $monthly_fee,
-        ':valid_from'      => $valid_from ?: null,
-        ':valid_until'     => $valid_until ?: null,
-        ':id'              => $id
-    ];
+$params = [
+    ':first_name'      => $first_name,     // empty string okay
+    ':last_name'       => $last_name,      // empty string okay
+    ':company_name'    => $company_name ?: null,
+    ':department_name' => $department ?: null,
+    ':payment_type'    => $payment_type,
+    ':status'          => $status,
+    ':monthly_fee'     => $monthly_fee,
+    ':valid_from'      => $valid_from ?: null,
+    ':valid_until'     => $valid_until ?: null,
+    ':id'              => $id
+];
+
 
     $stmt->execute($params);
 
