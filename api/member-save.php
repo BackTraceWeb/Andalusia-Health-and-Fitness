@@ -5,11 +5,12 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 $pdo = pdo();
-$logFile = __DIR__ . '/../../logs/member-save-debug.log';
+$logFile = __DIR__ . '/../logs/member-save-debug.log';
 
 function logDebug($msg) {
     global $logFile;
-    file_put_contents($logFile, date('c') . " - $msg\n", FILE_APPEND);
+ $logFile = __DIR__ . '/../logs/member-save-debug.log';
+
 }
 
 header('Content-Type: application/json; charset=utf-8');
