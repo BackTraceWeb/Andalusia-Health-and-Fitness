@@ -1,6 +1,13 @@
 <?php
 require __DIR__ . '/../_bootstrap.php';
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+$pdo = pdo();  // make sure this line exists
+
 header('Content-Type: application/json; charset=utf-8');
+
 
 try {
   // Sanitize and collect input
