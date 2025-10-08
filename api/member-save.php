@@ -7,7 +7,7 @@ ini_set('display_errors', 1);
 $pdo = pdo();
 $logFile = __DIR__ . '/../logs/member-save-debug.log';
 
-// Safe logger (no warnings if missing folder)
+// Safe logger
 function logDebug($msg) {
     global $logFile;
     @file_put_contents($logFile, date('c') . " - $msg\n", FILE_APPEND);
@@ -20,12 +20,12 @@ logDebug("member-save invoked with POST: " . json_encode($_POST));
 try {
     // Collect & sanitize
     $id             = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    $first_name     = trim($_POST['first_name'] ?? '');
-    $last_name      = trim($_POST['last_name'] ?? '');
-    $company_name   = trim($_POST['company_name'] ?? '');
-    $department     = trim($_POST['department_name'] ?? '');
-    $payment_type   = trim($_POST['payment_type'] ?? 'card');
-    $status         = trim($_POST['status'] ?? 'current');
+    $first_name     = isset($_POST['first_name']) ? trim($_POST['first_name']) : '';
+    $last_name      = isset($_POST['last_name']) ? trim($_POST['last_name']) : '';
+    $company_name   = isset($_POST['company_name']) ? trim($_POST['company_name']) : '';
+    $department     = isset($_POST['department_name']) ? trim($_POST['department_name']) : '';
+    $payment_type   = isset($_POST['payment_type']) ? trim($_POST['payment_type']) : 'card';
+    $status         = isset($_POST['status']) ? trim($_POST['status']) : 'current';
     $monthly_fee    = isset($_POST['monthly_fee']) ? (float)$_POST['monthly_fee'] : 0.00;
     $valid_from     = trim($_POST['valid_from'] ?? '');
     $valid_until    = trim($_POST['valid_until'] ?? '');
@@ -36,11 +36,9 @@ try {
         exit;
     }
 
-    // Allow saving even if both names blank; just use empty strings
-    if ($first_name === '' && $last_name === '') {
-        $first_name = '';
-        $last_name  = '';
-    }
+    // Explicitly ensure no nulls for name fields
+    if ($first_name === null || $first_name === 'null') $first_name = '';
+    if ($last_name === null || $last_name === 'null') $last_name = '';
 
     // Update SQL
     $sql = "
@@ -62,8 +60,8 @@ try {
     $stmt = $pdo->prepare($sql);
 
     $params = [
-        ':first_name'      => $first_name, // never NULL
-        ':last_name'       => $last_name,  // never NULL
+        ':first_name'      => (string)$first_name,
+        ':last_name'       => (string)$last_name,
         ':company_name'    => $company_name ?: null,
         ':department_name' => $department ?: null,
         ':payment_type'    => $payment_type,
