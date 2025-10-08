@@ -19,11 +19,15 @@ if (!$member) {
   exit;
 }
 
-// Fetch departments for dropdown
-$depts = $pdo->query("
-SELECT department_name FROM department_pricing ORDER BY department_name
-")->fetchAll(PDO::FETCH_COLUMN);
-
+// Fetch all unique department names (from both department_pricing and members)
+$stmt = $pdo->query("
+    SELECT department_name AS name FROM department_pricing
+    UNION
+    SELECT DISTINCT department_name AS name FROM members
+    WHERE department_name IS NOT NULL AND department_name <> ''
+    ORDER BY name
+");
+$depts = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 ?>
 <!DOCTYPE html>
