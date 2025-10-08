@@ -1,6 +1,33 @@
 <?php
 require __DIR__ . '/../_bootstrap.php';
 header('Content-Type: text/html; charset=utf-8');
+
+$pdo = pdo();
+
+// --- Ensure departments from members are mirrored into department_pricing ---
+$missingDepts = $pdo->query("
+  SELECT DISTINCT m.department_name
+  FROM members m
+  LEFT JOIN department_pricing d ON m.department_name = d.department_name
+  WHERE m.department_name IS NOT NULL
+    AND m.department_name <> ''
+    AND d.department_name IS NULL
+")->fetchAll(PDO::FETCH_COLUMN);
+
+if ($missingDepts) {
+  $ins = $pdo->prepare("
+    INSERT INTO department_pricing (department_name, base_price, tanning_addon)
+    VALUES (:name, 0.00, 0.00)
+  ");
+  foreach ($missingDepts as $deptName) {
+    $ins->execute([':name' => $deptName]);
+    file_put_contents(
+      __DIR__ . '/../logs/axtrax-sync.log',
+      date('c') . " - Auto-added missing department from members: {$deptName}\n",
+      FILE_APPEND
+    );
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
