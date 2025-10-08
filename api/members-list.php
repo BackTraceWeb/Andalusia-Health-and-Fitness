@@ -3,69 +3,60 @@ require __DIR__ . '/../_bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-  $stmt = $pdo->query("
-    SELECT 
-      id,
-      first_name,
-      last_name,
-      department_name,
-      card_number,
-      payment_type,
-      monthly_fee,
-      valid_from,
-      valid_until,
-      is_primary,
-      primary_member_id
-    FROM members
-    ORDER BY last_name, first_name
-  ");
-  $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $pdo = pdo();
 
-  $now = new DateTime('now');
-  $members = [];
+    // Fetch members with department name
+    $stmt = $pdo->query("
+        SELECT 
+            m.id,
+            m.first_name,
+            m.last_name,
+            m.department_name,
+            m.payment_type,
+            m.monthly_fee,
+            m.valid_from,
+            m.valid_until,
+            m.last_updated
+        FROM members m
+        ORDER BY m.id DESC
+    ");
+    $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-  foreach ($rows as $m) {
-    // Skip dependents for main table
-    if (!empty($m['primary_member_id'])) continue;
+    // --- Determine current/due status ---
+    $today = new DateTime('today');
 
-    $status = 'unknown';
-    $until = $m['valid_until'] ? new DateTime($m['valid_until']) : null;
+    foreach ($members as &$m) {
+        $validUntil = !empty($m['valid_until']) ? new DateTime($m['valid_until']) : null;
 
-    // 🔍 Smart status logic
-    if ($until) {
-      if ($until >= $now) {
-        $status = 'current';
-      } else {
-        $status = 'due';
-      }
-    } else {
-      $status = 'draft';
+        // Always current if payment type is draft
+        if (strtolower($m['payment_type']) === 'draft') {
+            $m['status'] = 'current';
+        }
+        // Otherwise current if still valid
+        elseif ($validUntil && $validUntil >= $today) {
+            $m['status'] = 'current';
+        }
+        // Otherwise due
+        else {
+            $m['status'] = 'due';
+        }
+
+        // Format display values for frontend
+        $m['monthly_fee'] = number_format((float)$m['monthly_fee'], 2);
+        $m['valid_until'] = $m['valid_until'] ?: '';
+        $m['valid_from'] = $m['valid_from'] ?: '';
     }
+    unset($m);
 
-    $members[] = [
-      'id' => (int)$m['id'],
-      'first_name' => $m['first_name'],
-      'last_name' => $m['last_name'],
-      'department_name' => $m['department_name'],
-      'card_number' => $m['card_number'],
-      'payment_type' => $m['payment_type'],
-      'monthly_fee' => (float)$m['monthly_fee'],
-      'valid_from' => $m['valid_from'],
-      'valid_until' => $m['valid_until'],
-      'status' => $status,
-    ];
-  }
-
-  echo json_encode([
-    'ok' => true,
-    'count' => count($members),
-    'members' => $members
-  ], JSON_PRETTY_PRINT);
+    echo json_encode([
+        'ok' => true,
+        'members' => $members
+    ], JSON_PRETTY_PRINT);
 
 } catch (Throwable $e) {
-  http_response_code(500);
-  echo json_encode([
-    'error' => 'server_error',
-    'detail' => $e->getMessage()
-  ]);
+    http_response_code(500);
+    echo json_encode([
+        'ok' => false,
+        'error' => $e->getMessage()
+    ]);
 }
