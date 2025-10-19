@@ -1,87 +1,59 @@
 <?php
-require __DIR__ . '/../_bootstrap.php';
-header('Content-Type: application/json; charset=utf-8');
+header('Content-Type: application/json');
+require_once __DIR__ . '/db.php'; // adjust if your DB include path differs
 
-$logFile = __DIR__ . '/../logs/member-detail-debug.log';
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 try {
-    $pdo = pdo();
+  if (!$search && !$id) {
+    echo json_encode(['ok' => false, 'error' => 'missing_parameter']);
+    exit;
+  }
 
-    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-    if ($id <= 0) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'error' => 'invalid_id']);
-        exit;
-    }
-
-    // Fetch main member info
+  if ($id > 0) {
     $stmt = $pdo->prepare("SELECT * FROM members WHERE id = ?");
     $stmt->execute([$id]);
-    $member = $stmt->fetch(PDO::FETCH_ASSOC);
+  } else {
+    // support searching by name
+    $stmt = $pdo->prepare("SELECT * FROM members WHERE first_name LIKE ? OR last_name LIKE ? LIMIT 1");
+    $stmt->execute(["%$search%", "%$search%"]);
+  }
 
-    if (!$member) {
-        http_response_code(404);
-        echo json_encode(['ok' => false, 'error' => 'member_not_found']);
-        exit;
-    }
+  $member = $stmt->fetch(PDO::FETCH_ASSOC);
+  if (!$member) {
+    echo json_encode(['ok' => false, 'error' => 'not_found']);
+    exit;
+  }
 
-    // Determine status (drafts always current)
-    $today = new DateTime('today');
-    $validUntil = !empty($member['valid_until']) ? new DateTime($member['valid_until']) : null;
+  // determine payment status
+  $status = strtolower(trim($member['status'] ?? ''));
+  $amount_cents = isset($member['monthly_fee']) ? intval(floatval($member['monthly_fee']) * 100) : 0;
 
-    if (strtolower(trim($member['payment_type'])) === 'draft') {
-        $member['status'] = 'current';
-    } elseif ($validUntil && $validUntil >= $today) {
-        $member['status'] = 'current';
-    } else {
-        $member['status'] = 'due';
-    }
+  // build simulated invoice
+  $invoice = [
+    'id' => 'INV-' . $member['id'] . '-' . date('Ym'),
+    'amount_cents' => $amount_cents,
+    'period_start' => date('Y-m-01'),
+    'period_end' => date('Y-m-t')
+  ];
 
-    // Format monetary and date fields
-    $member['monthly_fee'] = number_format((float)$member['monthly_fee'], 2);
-    $member['valid_from'] = $member['valid_from'] ?: '';
-    $member['valid_until'] = $member['valid_until'] ?: '';
-
-    // Fetch dues (if applicable)
-    $duesStmt = $pdo->prepare("
-        SELECT id, period_start, period_end, amount_cents, status
-        FROM dues
-        WHERE member_id = ?
-        ORDER BY id DESC
-        LIMIT 12
-    ");
-    $duesStmt->execute([$id]);
-    $dues = $duesStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    foreach ($dues as &$d) {
-        $d['amount'] = '$' . number_format(((int)$d['amount_cents']) / 100, 2);
-        $d['status'] = $d['status'] ?: 'due';
-    }
-    unset($d);
-
-    // Logging
-    file_put_contents(
-        $logFile,
-        date('c') . " - member #{$id} fetched; status={$member['status']}\n",
-        FILE_APPEND
-    );
-
-    echo json_encode([
-        'ok' => true,
-        'member' => $member,
-        'dues' => $dues
-    ], JSON_PRETTY_PRINT);
-
-} catch (Throwable $e) {
-    file_put_contents(
-        $logFile,
-        date('c') . " - error for member #{$id}: {$e->getMessage()}\n",
-        FILE_APPEND
-    );
-    http_response_code(500);
-    echo json_encode([
-        'ok' => false,
-        'error' => 'server_error',
-        'detail' => $e->getMessage()
-    ]);
+  echo json_encode([
+    'ok' => true,
+    'member' => [
+      'id' => $member['id'],
+      'first_name' => $member['first_name'],
+      'last_name' => $member['last_name'],
+      'department_name' => $member['department_name'] ?? '',
+      'payment_type' => $member['payment_type'] ?? '',
+      'monthly_fee' => $member['monthly_fee'] ?? '0.00',
+      'status' => $status,
+      'valid_from' => $member['valid_from'] ?? '',
+      'valid_until' => $member['valid_until'] ?? ''
+    ],
+    'invoice' => $invoice,
+    'status' => $status
+  ]);
+} catch (Exception $e) {
+  echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
 }
