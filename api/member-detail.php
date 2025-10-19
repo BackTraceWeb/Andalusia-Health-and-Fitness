@@ -28,16 +28,36 @@ try {
   // LOOKUP MEMBER
   // ----------------------------------------------------------------
   if ($id > 0) {
+    // Direct ID lookup
     $stmt = $pdo->prepare("SELECT * FROM members WHERE id = ?");
     $stmt->execute([$id]);
   } else {
-    $stmt = $pdo->prepare("
-      SELECT * FROM members
-      WHERE first_name LIKE ? OR last_name LIKE ?
-      ORDER BY id DESC
-      LIMIT 1
-    ");
-    $stmt->execute(["%$search%", "%$search%"]);
+    // Split the search into first and last name parts
+    $parts = preg_split('/\s+/', $search);
+    $first = $parts[0] ?? '';
+    $last  = $parts[1] ?? '';
+
+    if ($first && $last) {
+      // Require both first and last name for accurate match
+      $stmt = $pdo->prepare("
+        SELECT * FROM members
+        WHERE LOWER(first_name) = LOWER(?) 
+          AND LOWER(last_name) = LOWER(?)
+        ORDER BY id DESC
+        LIMIT 1
+      ");
+      $stmt->execute([$first, $last]);
+    } else {
+      // Fallback: partial search (for admin or debugging)
+      $stmt = $pdo->prepare("
+        SELECT * FROM members
+        WHERE LOWER(first_name) LIKE LOWER(?) 
+           OR LOWER(last_name) LIKE LOWER(?)
+        ORDER BY id DESC
+        LIMIT 1
+      ");
+      $stmt->execute(["%$search%", "%$search%"]);
+    }
   }
 
   $member = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -66,10 +86,9 @@ try {
   $status = $member['status'] ?? 'current';
   $now = time();
 
-  // Convert valid_until to timestamp if it exists
   $validUntil = !empty($member['valid_until']) ? strtotime($member['valid_until']) : 0;
 
-  // Logic: mark as "due" if payment_type is card AND (expired OR unpaid dues)
+  // Logic: mark as "due" if payment_type is card AND (expired OR unpaid)
   if (
     strtolower($member['payment_type']) === 'card' &&
     (
@@ -114,3 +133,4 @@ try {
   ]);
   exit;
 }
+
