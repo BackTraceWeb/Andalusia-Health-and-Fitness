@@ -1,129 +1,177 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Andalusia Health & Fitness — Get fit & healthy</title>
-  <link rel="stylesheet" href="/styles.css"/>
-  <meta name="description" content="Andalusia Health & Fitness — 24/7 gym in Andalusia, AL. Join online.">
-</head>
-<body class="theme-andalusia">
- <!-- Topbar -->
-<div class="topbar">
-  <div class="shell">
-    <div class="brand-pill">
-      <a href="/index.html"><img src="/AHFlogo.png" alt="Andalusia Health & Fitness"></a>
-    </div>
-
-    <nav class="mainnav">
-      <a href="/index.html" class="active">Home</a>
-      <a href="/pricing.html">Pricing</a>
-      <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
-    </nav>
-  </div>
-</div>
-
-<main class="shell qp-wrap">
-  <h1>QuickPay</h1>
-  <section class="card" style="max-width:340px; margin:auto; padding:1.25rem 1rem;">
-    <p class="qp-intro">Enter your name to look up your membership and pay securely.</p>
-
-    <!-- Lookup Form -->
-    <div id="lookupForm" class="stack">
-      <div class="qp-grid">
-        <label>
-          <span>First name</span>
-          <input id="first" name="first" type="text" autocomplete="given-name" required>
-        </label>
-        <label>
-          <span>Last name</span>
-          <input id="last" name="last" type="text" autocomplete="family-name" required>
-        </label>
-      </div>
-
-      <div class="row" style="gap:.75rem; align-items:center; margin-top:1rem;">
-        <button id="lookupBtn" type="button" class="pill-cta">Find my invoice</button>
-        <span id="lookupSpin" style="display:none;">Looking up…</span>
-      </div>
-
-      <div id="resultBox" class="qp-status" style="display:none"></div>
-
-      <!-- Payment Form (no nesting) -->
-      <form id="payForm" action="/api/payments/hosted-start.php" method="post" style="margin-top:1rem;">
-        <input type="hidden" name="memberId" id="memberId">
-        <input type="hidden" name="invoiceId" id="invoiceId">
-        <button id="payBtn" type="submit" class="pill-cta" disabled>Pay securely</button>
-        <small>You’ll be redirected to our secure payment page.</small>
-        <div style="margin-top:0.5rem; color:#888; font-size:0.95em;">
-          For issues with QuickPay, please call <a href="tel:3345822000" style="color:inherit;text-decoration:underline;">334&nbsp;582&nbsp;2000</a>.
-        </div>
-      </form>
-    </div>
-  </section>
-</main>
-
-<script>
-  const $ = s => document.querySelector(s);
-  const elFirst = $('#first'), elLast = $('#last');
-  const elLookupBtn = $('#lookupBtn'), elSpin = $('#lookupSpin');
-  const elBox = $('#resultBox'), elPayBtn = $('#payBtn');
-  const elMemberId = $('#memberId'), elInvoiceId = $('#invoiceId');
-  const elPayForm = $('#payForm');
-
-  function setStatus(msg, tone=''){
-    elBox.style.display='block';
-    elBox.className='qp-status ' + (tone ? 'qp-' + tone : '');
-    elBox.innerHTML=msg;
-  }
-
-  async function doLookup(){
-    const first=(elFirst.value||'').trim();
-    const last =(elLast.value||'').trim();
-    if(!first || !last){ setStatus('Please enter both first and last name.','warn'); return; }
-
-    elLookupBtn.disabled=true; elPayBtn.disabled=true; elSpin.style.display='inline';
-    setStatus('Looking up your account…');
-
-    try{
-      const qs=new URLSearchParams({first,last});
-      const res=await fetch('/api/quickpay/lookup.php?'+qs.toString(),{credentials:'same-origin'});
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      const data=await res.json();
-
-      if(data.status==='not_found' || !data.member){
-        setStatus('We couldn’t find a matching account. Please check your spelling or contact the front desk.','warn');
-        return;
-      }
-
-      const m=data.member;
-      if(data.status==='due' && data.invoice){
-        const cents=parseInt(data.invoice.amount_cents,10)||0;
-        const amount='$'+(cents/100).toFixed(2);
-        setStatus(`<strong>${m.first_name} ${m.last_name}</strong> found.<br>
-                   Amount due: <strong>${amount}</strong><br>
-                   <small>Period ${data.invoice.period_start??''} – ${data.invoice.period_end??''}</small>`, 'ok');
-        elMemberId.value=m.id;
-        elInvoiceId.value=data.invoice.id;
-        elPayBtn.disabled=false;
-      } else {
-        setStatus(`<strong>${m.first_name} ${m.last_name}</strong> found.<br>No payment is due right now.`, 'ok');
-        elPayBtn.disabled=true;
-      }
-    } catch(e){
-      console.error(e);
-      setStatus('Sorry, something went wrong. Please try again shortly.','err');
-    } finally {
-      elLookupBtn.disabled=false; elSpin.style.display='none';
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickPay — Andalusia Health & Fitness</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
     }
-  }
 
-  elLookupBtn.addEventListener('click', doLookup);
-  elPayBtn.addEventListener('click', (e)=>{
-    if(elPayBtn.disabled){ e.preventDefault(); return; }
-    elPayForm.submit();
-  });
-  elLast.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doLookup(); }});
-</script>
+    .shell {
+      max-width: 600px;
+      margin: 80px auto;
+      background: #111;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(255, 20, 147, 0.4);
+    }
+
+    h1 {
+      color: #ff1493;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1em;
+      border: none;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+
+    input {
+      background: #222;
+      color: #fff;
+    }
+
+    button {
+      background: #ff1493;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background: #ff4fa3;
+    }
+
+    .status {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .ok { color: #0f0; }
+    .error { color: #ff4444; }
+
+    .btn-disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      color: #888;
+      font-size: 0.9em;
+    }
+
+    footer a {
+      color: #ff1493;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <h1>QuickPay Portal</h1>
+
+    <p>Enter your name to check your account:</p>
+
+    <input type="text" id="searchInput" placeholder="First or Last Name" />
+    <button id="lookupBtn">Find Member</button>
+
+    <div class="status" id="status"></div>
+
+    <input type="hidden" id="memberId" />
+    <input type="hidden" id="invoiceId" />
+
+    <button id="payBtn" class="btn-disabled" disabled>Pay Securely</button>
+  </div>
+
+  <footer>
+    <p>
+      <a href="/legal/terms.html">Terms & Conditions</a> |
+      <a href="/legal/privacy.html">Privacy Policy</a>
+    </p>
+  </footer>
+
+  <script>
+    const elLookup = document.getElementById('lookupBtn');
+    const elPayBtn = document.getElementById('payBtn');
+    const elSearch = document.getElementById('searchInput');
+    const elStatus = document.getElementById('status');
+    const elMemberId = document.getElementById('memberId');
+    const elInvoiceId = document.getElementById('invoiceId');
+
+    function setStatus(msg, type) {
+      elStatus.innerHTML = msg;
+      elStatus.className = 'status ' + type;
+    }
+
+    // Lookup member
+    elLookup.addEventListener('click', async () => {
+      const q = elSearch.value.trim();
+      if (!q) return setStatus('Please enter a name.', 'error');
+
+      setStatus('Searching...', '');
+
+      try {
+        const res = await fetch(`/api/members-list.php?search=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        if (!data.ok || !data.member) {
+          setStatus('Member not found. Please try again.', 'error');
+          elPayBtn.disabled = true;
+          elPayBtn.classList.add('btn-disabled');
+          return;
+        }
+
+        const m = data.member;
+        elMemberId.value = m.id;
+
+        if (data.invoice && data.status === 'due') {
+          const amount = (data.invoice.amount_cents / 100).toFixed(2);
+          setStatus(`<strong>${m.first_name} ${m.last_name}</strong><br>
+            Amount Due: <strong>$${amount}</strong><br>
+            <small>Period ${data.invoice.period_start ?? ''} – ${data.invoice.period_end ?? ''}</small>`, 'ok');
+
+          elInvoiceId.value = data.invoice.id;
+          elPayBtn.disabled = false;
+          elPayBtn.classList.remove('btn-disabled');
+        } else {
+          setStatus(`<strong>${m.first_name} ${m.last_name}</strong><br>No payment is due right now.`, 'ok');
+          elPayBtn.disabled = true;
+          elPayBtn.classList.add('btn-disabled');
+        }
+      } catch (err) {
+        console.error(err);
+        setStatus('Error contacting server.', 'error');
+      }
+    });
+
+    // Redirect to Authorize.Net sandbox
+    elPayBtn.addEventListener('click', () => {
+      const memberId = elMemberId.value;
+      const invoiceId = elInvoiceId.value;
+      if (!memberId || !invoiceId) return alert('Please look up your account first.');
+
+      const url = `/api/payments/authorize-hosted.php?memberId=${encodeURIComponent(memberId)}&invoiceId=${encodeURIComponent(invoiceId)}`;
+      window.location.href = url;
+    });
+  </script>
 </body>
 </html>
-
