@@ -24,7 +24,7 @@
     }
 
     h1 {
-      color: #d81b60;          /* primary brand pink */
+      color: #d81b60;
       text-align: center;
       margin-bottom: 30px;
     }
@@ -44,7 +44,7 @@
     }
 
     button {
-      background: #d81b60;          /* primary brand pink */
+      background: #d81b60;
       color: #fff;
       font-weight: 600;
       cursor: pointer;
@@ -122,7 +122,7 @@
       elStatus.className = 'status ' + type;
     }
 
-    // Lookup member (uses the unified backend structure)
+    // 🔍 Lookup member using backend unified endpoint
     elLookup.addEventListener('click', async () => {
       const q = elSearch.value.trim();
       if (!q) return setStatus('Please enter a name.', 'error');
@@ -130,8 +130,8 @@
       setStatus('Searching...', '');
 
       try {
-        // Unified backend — same structure as admin + AxTrax
-        const res = await fetch(`/api/member-status.php?search=${encodeURIComponent(q)}`);
+        const res = await fetch(`/api/member-detail.php?search=${encodeURIComponent(q)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
         if (!data.ok || !data.member) {
@@ -144,7 +144,7 @@
         const m = data.member;
         elMemberId.value = m.id;
 
-        // If due and invoice present, show amount
+        // If status shows due and invoice exists, display amount
         if (data.status === 'due' && data.invoice) {
           const cents = parseInt(data.invoice.amount_cents, 10) || 0;
           const amount = '$' + (cents / 100).toFixed(2);
@@ -156,8 +156,16 @@
           elInvoiceId.value = data.invoice.id;
           elPayBtn.disabled = false;
           elPayBtn.classList.remove('btn-disabled');
+        } else if (m.status && m.status.toLowerCase() === 'due') {
+          // fallback: if invoice missing but member marked due
+          const amount = m.monthly_fee ? `$${parseFloat(m.monthly_fee).toFixed(2)}` : '';
+          setStatus(`
+            <strong>${m.first_name} ${m.last_name}</strong><br>
+            Amount Due: <strong>${amount}</strong>
+          `, 'ok');
+          elPayBtn.disabled = false;
+          elPayBtn.classList.remove('btn-disabled');
         } else {
-          // Fallback — show current
           setStatus(`<strong>${m.first_name} ${m.last_name}</strong><br>No payment is due right now.`, 'ok');
           elPayBtn.disabled = true;
           elPayBtn.classList.add('btn-disabled');
@@ -168,11 +176,11 @@
       }
     });
 
-    // Redirect to Authorize.Net sandbox (unchanged)
+    // 💳 Redirect to Authorize.Net sandbox
     elPayBtn.addEventListener('click', () => {
       const memberId = elMemberId.value;
       const invoiceId = elInvoiceId.value;
-      if (!memberId || !invoiceId) return alert('Please look up your account first.');
+      if (!memberId) return alert('Please look up your account first.');
 
       const url = `/api/payments/authorize-hosted.php?memberId=${encodeURIComponent(memberId)}&invoiceId=${encodeURIComponent(invoiceId)}`;
       window.location.href = url;
@@ -180,4 +188,3 @@
   </script>
 </body>
 </html>
-
