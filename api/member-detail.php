@@ -2,11 +2,12 @@
 header('Content-Type: application/json');
 
 // ------------------------------------------------------------------
-// CONFIG LOAD
+// Load global bootstrap (provides pdo() function and DB connection)
 // ------------------------------------------------------------------
-require_once __DIR__ . '/config.php'; // << uses the existing DB connection
+require_once __DIR__ . '/../_bootstrap.php';   // go up one level from /api/
+$pdo = pdo();
 
-if (!isset($pdo) || !$pdo) {
+if (!$pdo) {
   echo json_encode(['ok' => false, 'error' => 'db_not_connected']);
   exit;
 }
