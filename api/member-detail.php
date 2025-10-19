@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 
 // ------------------------------------------------------------------
-// Load global bootstrap (provides pdo() function and DB connection)
+// Load global bootstrap for database connection
 // ------------------------------------------------------------------
 require_once __DIR__ . '/../_bootstrap.php';
 $pdo = pdo();
@@ -25,7 +25,7 @@ if ($id <= 0 && $search === '') {
 
 try {
   // ----------------------------------------------------------------
-  // LOOKUP BY ID OR NAME
+  // LOOKUP MEMBER
   // ----------------------------------------------------------------
   if ($id > 0) {
     $stmt = $pdo->prepare("SELECT * FROM members WHERE id = ?");
@@ -47,7 +47,7 @@ try {
   }
 
   // ----------------------------------------------------------------
-  // GET DUES INFO IF ANY DUE
+  // GET MOST RECENT DUES RECORD
   // ----------------------------------------------------------------
   $due = null;
   $dueCheck = $pdo->prepare("
@@ -60,14 +60,28 @@ try {
   $dueCheck->execute([$member['id']]);
   $due = $dueCheck->fetch(PDO::FETCH_ASSOC);
 
-  // Determine status dynamically
-  $status = $member['status'] ?? 'unknown';
-  if ($due && isset($due['is_paid']) && !$due['is_paid']) {
+  // ----------------------------------------------------------------
+  // DETERMINE STATUS
+  // ----------------------------------------------------------------
+  $status = $member['status'] ?? 'current';
+  $now = time();
+
+  // Convert valid_until to timestamp if it exists
+  $validUntil = !empty($member['valid_until']) ? strtotime($member['valid_until']) : 0;
+
+  // Logic: mark as "due" if payment_type is card AND (expired OR unpaid dues)
+  if (
+    strtolower($member['payment_type']) === 'card' &&
+    (
+      ($validUntil && $validUntil < $now) ||
+      ($due && isset($due['is_paid']) && !$due['is_paid'])
+    )
+  ) {
     $status = 'due';
   }
 
   // ----------------------------------------------------------------
-  // FORMAT RESPONSE
+  // OUTPUT JSON
   // ----------------------------------------------------------------
   echo json_encode([
     'ok' => true,
