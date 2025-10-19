@@ -23,11 +23,11 @@
       box-shadow: 0 0 20px rgba(255, 20, 147, 0.4);
     }
 
-    h1 {
-      color: #ff1493;
-      text-align: center;
-      margin-bottom: 30px;
-    }
+  h1 {
+    color: #d81b60;          /* primary brand pink */
+    text-align: center;
+    margin-bottom: 30px;
+  }
 
     input, button {
       width: 100%;
@@ -43,13 +43,13 @@
       color: #fff;
     }
 
-    button {
-      background: #ff1493;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease-in-out;
-    }
+  button {
+    background: #d81b60;          /* primary brand pink */
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
 
     button:hover {
       background: #ff4fa3;
@@ -76,7 +76,7 @@
     }
 
     footer a {
-      color: #ff1493;
+      color: #d81b60;
       text-decoration: none;
     }
 
@@ -140,8 +140,12 @@
   return;
 }
 
-// Use first matching member (could add name refinement later)
-const m = data.members[0];
+// Try to find exact name match first, fallback to first record
+const search = elSearch.value.trim().toLowerCase();
+const m = data.members.find(x =>
+  (`${x.first_name} ${x.last_name}`).toLowerCase().includes(search)
+) || data.members[0];
+
 
         elMemberId.value = m.id;
 
