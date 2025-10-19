@@ -133,14 +133,16 @@
         const res = await fetch(`/api/members-list.php?search=${encodeURIComponent(q)}`);
         const data = await res.json();
 
-        if (!data.ok || !data.member) {
-          setStatus('Member not found. Please try again.', 'error');
-          elPayBtn.disabled = true;
-          elPayBtn.classList.add('btn-disabled');
-          return;
-        }
+       if (!data.ok || !data.members || data.members.length === 0) {
+  setStatus('Member not found. Please try again.', 'error');
+  elPayBtn.disabled = true;
+  elPayBtn.classList.add('btn-disabled');
+  return;
+}
 
-        const m = data.member;
+// Use first matching member (could add name refinement later)
+const m = data.members[0];
+
         elMemberId.value = m.id;
 
         if (data.invoice && data.status === 'due') {
