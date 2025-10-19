@@ -116,7 +116,7 @@ $curlError = curl_error($ch);
 curl_close($ch);
 
 // ------------------------------------------------------------------
-// Debug
+// Handle Response
 // ------------------------------------------------------------------
 if ($curlError) {
   echo "<h3>cURL Error</h3><pre>{$curlError}</pre>";
@@ -127,7 +127,11 @@ if (!$response) {
   exit;
 }
 
+// Trim BOM (UTF-8 marker) before decoding
+$response = preg_replace('/^\xEF\xBB\xBF/', '', $response);
+
 $data = json_decode($response, true);
+
 if (json_last_error() !== JSON_ERROR_NONE) {
   echo "<h3>JSON Decode Error:</h3><pre>" . json_last_error_msg() . "</pre>";
   echo "<pre>RAW RESPONSE:\n" . htmlspecialchars($response) . "</pre>";
@@ -135,7 +139,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 }
 
 // ------------------------------------------------------------------
-// Handle token
+// Redirect to payment page
 // ------------------------------------------------------------------
 if (!isset($data['token'])) {
   echo "<h2>Authorize.Net Error</h2><pre>" . htmlspecialchars(json_encode($data, JSON_PRETTY_PRINT)) . "</pre>";
