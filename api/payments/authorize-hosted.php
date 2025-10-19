@@ -78,10 +78,18 @@ $payload = [
           "settingValue" => json_encode([
             "showReceipt" => true,
             "url" => "https://andalusiahealthandfitness.com/quickpay/thanks.html",
-            "urlText" => "Return to Andalusia Health & Fitness",
+            "urlText" => "Return to Andalusia Health and Fitness",
             "cancelUrl" => "https://andalusiahealthandfitness.com/quickpay/",
             "cancelUrlText" => "Cancel"
-          ])
+          ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
+          "settingName" => "hostedPaymentButtonOptions",
+          "settingValue" => json_encode(["text" => "Pay Now"])
+        ],
+        [
+          "settingName" => "hostedPaymentStyleOptions",
+          "settingValue" => json_encode(["bgColor" => "#000000"])
         ]
       ]
     ]
@@ -99,7 +107,7 @@ curl_setopt_array($ch, [
     'Content-Type: application/json',
     'Accept: application/json'
   ],
-  CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+  CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_SLASHES),
   CURLOPT_TIMEOUT => 20
 ]);
 
@@ -108,7 +116,7 @@ $curlError = curl_error($ch);
 curl_close($ch);
 
 // ------------------------------------------------------------------
-// Debug output
+// Debug
 // ------------------------------------------------------------------
 if ($curlError) {
   echo "<h3>cURL Error</h3><pre>{$curlError}</pre>";
@@ -119,16 +127,15 @@ if (!$response) {
   exit;
 }
 
-echo "<pre>RAW RESPONSE:\n" . htmlspecialchars($response) . "</pre><hr>";
-
 $data = json_decode($response, true);
 if (json_last_error() !== JSON_ERROR_NONE) {
   echo "<h3>JSON Decode Error:</h3><pre>" . json_last_error_msg() . "</pre>";
+  echo "<pre>RAW RESPONSE:\n" . htmlspecialchars($response) . "</pre>";
   exit;
 }
 
 // ------------------------------------------------------------------
-// Handle token or error
+// Handle token
 // ------------------------------------------------------------------
 if (!isset($data['token'])) {
   echo "<h2>Authorize.Net Error</h2><pre>" . htmlspecialchars(json_encode($data, JSON_PRETTY_PRINT)) . "</pre>";
