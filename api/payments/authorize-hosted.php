@@ -1,7 +1,6 @@
 <?php
 /**
  * Authorize.Net Hosted Payment Integration (Sandbox)
- * Compatible with new QuickPay + dues table
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -20,7 +19,7 @@ if (!$pdo) {
 }
 
 // ------------------------------------------------------------------
-// Input validation
+// Input
 // ------------------------------------------------------------------
 $memberId = isset($_GET['memberId']) ? intval($_GET['memberId']) : 0;
 $duesId   = isset($_GET['invoiceId']) ? intval($_GET['invoiceId']) : 0;
@@ -49,7 +48,7 @@ if (!$m || !$d) {
 }
 
 // ------------------------------------------------------------------
-// Build Authorize.Net transaction request
+// Build API payload
 // ------------------------------------------------------------------
 $loginId        = AUTH_LOGIN_ID;
 $transactionKey = AUTH_TRANSACTION_KEY;
@@ -92,6 +91,14 @@ $payload = [
             'cancelUrl' => 'https://andalusiahealthandfitness.com/quickpay/',
             'cancelUrlText' => 'Cancel'
           ])
+        ],
+        [
+          'settingName'  => 'hostedPaymentButtonOptions',
+          'settingValue' => json_encode(['text' => 'Pay Now'])
+        ],
+        [
+          'settingName'  => 'hostedPaymentStyleOptions',
+          'settingValue' => json_encode(['bgColor' => '#000000'])
         ]
       ]
     ]
@@ -110,41 +117,38 @@ curl_setopt_array($ch, [
 ]);
 
 $response = curl_exec($ch);
-if ($response === false) {
-  http_response_code(500);
-  echo "Curl error: " . curl_error($ch);
+$curlError = curl_error($ch);
+curl_close($ch);
+
+if ($curlError) {
+  echo "<h2>CURL Error:</h2><pre>$curlError</pre>";
   exit;
 }
 
-curl_close($ch);
 $data = json_decode($response, true);
 
 // ------------------------------------------------------------------
-// Handle Response
+// Debug (when no token returned)
 // ------------------------------------------------------------------
-if (isset($data['messages']['resultCode']) && $data['messages']['resultCode'] === 'Ok') {
-  $token = $data['token'] ?? null;
-  if (!$token) {
-    echo "<h2>Error: Missing hosted form token.</h2><pre>" . htmlspecialchars($response) . "</pre>";
-    exit;
-  }
-
-  echo <<<HTML
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <title>Redirecting to Secure Payment...</title>
-  </head>
-  <body onload="document.getElementById('authForm').submit()">
-    <p>Redirecting to Secure Payment...</p>
-    <form id="authForm" method="POST" action="https://test.authorize.net/payment/payment">
-      <input type="hidden" name="token" value="{$token}">
-    </form>
-  </body>
-  </html>
-  HTML;
-} else {
-  http_response_code(500);
-  echo "<h2>Authorize.Net Error</h2><pre>" . htmlspecialchars(json_encode($data, JSON_PRETTY_PRINT)) . "</pre>";
+if (!isset($data['token'])) {
+  echo "<h2>Authorize.Net Error</h2>";
+  echo "<pre>" . htmlspecialchars(json_encode($data, JSON_PRETTY_PRINT)) . "</pre>";
+  exit;
 }
+
+// ------------------------------------------------------------------
+// Redirect to Hosted Payment Form
+// ------------------------------------------------------------------
+$token = $data['token'];
+echo <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Redirecting...</title></head>
+<body onload="document.forms[0].submit()">
+  <p>Redirecting to Secure Payment...</p>
+  <form method="POST" action="https://test.authorize.net/payment/payment">
+    <input type="hidden" name="token" value="{$token}">
+  </form>
+</body>
+</html>
+HTML;
