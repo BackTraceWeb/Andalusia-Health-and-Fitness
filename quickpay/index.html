@@ -1,190 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuickPay — Andalusia Health & Fitness</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <meta charset="UTF-8">
+  <title>QuickPay Portal — Andalusia Health & Fitness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
+      font-family: Arial, sans-serif;
       background: #000;
       color: #fff;
-      font-family: "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       margin: 0;
-      padding: 0;
     }
-
-    .shell {
-      max-width: 600px;
-      margin: 80px auto;
+    .box {
       background: #111;
+      border-radius: 20px;
       padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(216, 27, 96, 0.4);
-    }
-
-    h1 {
-      color: #d81b60;
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    input, button {
+      box-shadow: 0 0 30px rgba(255, 0, 80, 0.4);
+      max-width: 420px;
       width: 100%;
-      padding: 12px;
-      font-size: 1em;
+      text-align: center;
+    }
+    h1 {
+      color: #ff0066;
+      margin-bottom: 25px;
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
       border: none;
       border-radius: 6px;
-      margin-top: 8px;
-    }
-
-    input {
-      background: #222;
-      color: #fff;
-    }
-
-    button {
-      background: #d81b60;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease-in-out;
-    }
-
-    button:hover {
-      background: #ff4fa3;
-    }
-
-    .status {
-      margin-top: 20px;
+      margin: 5px 0;
       text-align: center;
     }
-
-    .ok { color: #0f0; }
-    .error { color: #ff4444; }
-
-    .btn-disabled {
+    button {
+      width: 85%;
+      margin-top: 15px;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button#findBtn {
+      background: #ff0066;
+      color: #fff;
+    }
+    button#findBtn:disabled {
       background: #555;
       cursor: not-allowed;
     }
-
+    button#payBtn {
+      background: #333;
+      color: #ccc;
+    }
+    button#payBtn.active {
+      background: #28a745;
+      color: #fff;
+    }
+    .status {
+      margin-top: 20px;
+      font-size: 0.95rem;
+    }
+    .status.ok { color: #00e676; }
+    .status.error { color: #ff1744; }
+    .status.info { color: #ffeb3b; }
     footer {
-      text-align: center;
-      margin-top: 60px;
+      margin-top: 40px;
+      font-size: 0.75rem;
       color: #888;
-      font-size: 0.9em;
     }
-
-    footer a {
-      color: #d81b60;
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
+    footer a { color: #ff0066; text-decoration: none; }
   </style>
 </head>
 <body>
-  <div class="shell">
+  <div class="box">
     <h1>QuickPay Portal</h1>
 
-    <p>Enter your name to check your account:</p>
+    <p>Enter your first and last name:</p>
+    <input type="text" id="firstName" placeholder="First name">
+    <input type="text" id="lastName" placeholder="Last name">
 
-    <input type="text" id="searchInput" placeholder="First or Last Name" />
-    <button id="lookupBtn">Find Member</button>
+    <button id="findBtn" onclick="lookup()">Find Member</button>
+    <div id="status" class="status"></div>
 
-    <div class="status" id="status"></div>
+    <button id="payBtn" disabled>Pay Securely</button>
 
-    <input type="hidden" id="memberId" />
-    <input type="hidden" id="invoiceId" />
+    <input type="hidden" id="memberId">
+    <input type="hidden" id="invoiceId">
 
-    <button id="payBtn" class="btn-disabled" disabled>Pay Securely</button>
+    <footer>
+      <a href="#">Terms & Conditions</a> | <a href="#">Privacy Policy</a>
+    </footer>
   </div>
 
-  <footer>
-    <p>
-      <a href="/legal/terms.html">Terms & Conditions</a> |
-      <a href="/legal/privacy.html">Privacy Policy</a>
-    </p>
-  </footer>
-
   <script>
-    const elLookup = document.getElementById('lookupBtn');
+    const elFirst = document.getElementById('firstName');
+    const elLast = document.getElementById('lastName');
+    const elFindBtn = document.getElementById('findBtn');
     const elPayBtn = document.getElementById('payBtn');
-    const elSearch = document.getElementById('searchInput');
     const elStatus = document.getElementById('status');
     const elMemberId = document.getElementById('memberId');
     const elInvoiceId = document.getElementById('invoiceId');
 
-    function setStatus(msg, type) {
-      elStatus.innerHTML = msg;
-      elStatus.className = 'status ' + type;
-    }
+    async function lookup() {
+      const first = elFirst.value.trim();
+      const last = elLast.value.trim();
 
-    // 🔍 Lookup member using backend unified endpoint
-    elLookup.addEventListener('click', async () => {
-      const q = elSearch.value.trim();
-      if (!q) return setStatus('Please enter a name.', 'error');
+      if (!first || !last) {
+        setStatus('Please enter both first and last name.', 'error');
+        return;
+      }
 
-      setStatus('Searching...', '');
+      setStatus('Looking up member...', 'info');
+      elFindBtn.disabled = true;
+      elPayBtn.disabled = true;
 
       try {
-        const res = await fetch(`/api/member-detail.php?search=${encodeURIComponent(q)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const search = encodeURIComponent(`${first} ${last}`);
+        const res = await fetch(`/api/member-detail.php?search=${search}`);
         const data = await res.json();
 
-        if (!data.ok || !data.member) {
-          setStatus('Member not found. Please try again.', 'error');
-          elPayBtn.disabled = true;
-          elPayBtn.classList.add('btn-disabled');
+        if (!data.ok) {
+          setStatus('Member not found or inactive.', 'error');
+          elFindBtn.disabled = false;
           return;
         }
 
         const m = data.member;
-        elMemberId.value = m.id;
-
-        // If status shows due and invoice exists, display amount
         if (data.status === 'due' && data.invoice) {
-          const cents = parseInt(data.invoice.amount_cents, 10) || 0;
-          const amount = '$' + (cents / 100).toFixed(2);
+          const amount = `$${(data.invoice.amount_cents / 100).toFixed(2)}`;
           setStatus(`
-            <strong>${m.first_name} ${m.last_name}</strong><br>
-            Amount Due: <strong>${amount}</strong><br>
+            <strong>${m.first_name} ${m.last_name}</strong> found.<br>
+            Amount due: <strong>${amount}</strong><br>
             <small>Period ${data.invoice.period_start ?? ''} – ${data.invoice.period_end ?? ''}</small>
           `, 'ok');
+
+          elMemberId.value = m.id;
           elInvoiceId.value = data.invoice.id;
           elPayBtn.disabled = false;
-          elPayBtn.classList.remove('btn-disabled');
-        } else if (m.status && m.status.toLowerCase() === 'due') {
-          // fallback: if invoice missing but member marked due
-          const amount = m.monthly_fee ? `$${parseFloat(m.monthly_fee).toFixed(2)}` : '';
-          setStatus(`
-            <strong>${m.first_name} ${m.last_name}</strong><br>
-            Amount Due: <strong>${amount}</strong>
-          `, 'ok');
-          elPayBtn.disabled = false;
-          elPayBtn.classList.remove('btn-disabled');
+          elPayBtn.classList.add('active');
         } else {
-          setStatus(`<strong>${m.first_name} ${m.last_name}</strong><br>No payment is due right now.`, 'ok');
+          setStatus(`<strong>${m.first_name} ${m.last_name}</strong> found.<br>No payment is due right now.`, 'ok');
           elPayBtn.disabled = true;
-          elPayBtn.classList.add('btn-disabled');
+          elPayBtn.classList.remove('active');
         }
+
       } catch (err) {
         console.error(err);
         setStatus('Error contacting server.', 'error');
+      } finally {
+        elFindBtn.disabled = false;
       }
-    });
+    }
 
-    // 💳 Redirect to Authorize.Net sandbox
-    elPayBtn.addEventListener('click', () => {
+    elPayBtn.onclick = function() {
       const memberId = elMemberId.value;
       const invoiceId = elInvoiceId.value;
-      if (!memberId) return alert('Please look up your account first.');
 
+      if (!memberId || !invoiceId) {
+        alert('No member or invoice selected.');
+        return;
+      }
+
+      // Redirect directly into hosted Authorize.Net payment
       const url = `/api/payments/authorize-hosted.php?memberId=${encodeURIComponent(memberId)}&invoiceId=${encodeURIComponent(invoiceId)}`;
       window.location.href = url;
-    });
+    };
+
+    function setStatus(msg, cls) {
+      elStatus.innerHTML = msg;
+      elStatus.className = 'status ' + cls;
+    }
   </script>
 </body>
 </html>
