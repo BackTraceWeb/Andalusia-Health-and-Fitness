@@ -99,7 +99,7 @@ try {
     $status = 'due';
   }
 
-  // ----------------------------------------------------------------
+    // ----------------------------------------------------------------
   // OUTPUT JSON
   // ----------------------------------------------------------------
   echo json_encode([
@@ -115,13 +115,15 @@ try {
       'valid_until'     => $member['valid_until'] ?? null,
       'status'          => $status,
     ],
-    'dues' => $due ? [
+    // ✅ rename dues → invoice so JS reads it properly
+    'invoice' => $due ? [
       'id'            => (int)$due['id'],
       'period_start'  => $due['period_start'] ?? '',
       'period_end'    => $due['period_end'] ?? '',
       'amount_cents'  => isset($due['amount_cents']) ? (int)$due['amount_cents'] : 0,
       'is_paid'       => (bool)($due['is_paid'] ?? 0)
-    ] : null
+    ] : null,
+    'status' => $status
   ]);
 
 } catch (Exception $e) {
