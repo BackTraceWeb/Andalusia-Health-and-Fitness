@@ -1,113 +1,150 @@
 <?php
+/**
+ * Authorize.Net Hosted Payment Integration (Sandbox)
+ * Compatible with new QuickPay + dues table
+ */
+
+header('Content-Type: text/html; charset=utf-8');
+
+// ------------------------------------------------------------------
+// Includes
+// ------------------------------------------------------------------
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../db_connect.php'; // make sure this points to your existing PDO setup
+require_once __DIR__ . '/../../_bootstrap.php';
 
-// Capture member and invoice IDs from GET or POST
-$memberId  = $_GET['memberId']  ?? $_POST['memberId']  ?? null;
-$invoiceId = $_GET['invoiceId'] ?? $_POST['invoiceId'] ?? null;
+$pdo = pdo();
+if (!$pdo) {
+  http_response_code(500);
+  echo "Database not connected.";
+  exit;
+}
 
-// Validate inputs
-if (!$memberId || !$invoiceId) {
+// ------------------------------------------------------------------
+// Input validation
+// ------------------------------------------------------------------
+$memberId = isset($_GET['memberId']) ? intval($_GET['memberId']) : 0;
+$duesId   = isset($_GET['invoiceId']) ? intval($_GET['invoiceId']) : 0;
+
+if ($memberId <= 0 || $duesId <= 0) {
   http_response_code(400);
-  exit("Missing memberId or invoiceId");
+  echo "Missing memberId or invoiceId.";
+  exit;
 }
 
-// Look up invoice and member info
-$stmt = $pdo->prepare("
-  SELECT i.amount_cents, i.id AS invoice_id, i.period_start, i.period_end,
-         m.first_name, m.last_name, m.email
-  FROM invoices i
-  JOIN members m ON m.id = i.member_id
-  WHERE i.id = :invoiceId AND m.id = :memberId
-");
-$stmt->execute(['invoiceId' => $invoiceId, 'memberId' => $memberId]);
-$invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+// ------------------------------------------------------------------
+// Fetch member and dues info
+// ------------------------------------------------------------------
+$member = $pdo->prepare("SELECT first_name, last_name, payment_type, monthly_fee FROM members WHERE id = ?");
+$member->execute([$memberId]);
+$m = $member->fetch(PDO::FETCH_ASSOC);
 
-if (!$invoice) {
+$dues = $pdo->prepare("SELECT amount_cents, period_start, period_end FROM dues WHERE id = ?");
+$dues->execute([$duesId]);
+$d = $dues->fetch(PDO::FETCH_ASSOC);
+
+if (!$m || !$d) {
   http_response_code(404);
-  exit("Invoice not found for this member");
+  echo "Member or dues record not found.";
+  exit;
 }
 
-// Convert to dollars
-$amount = round($invoice['amount_cents'] / 100, 2);
-$invoiceNumber = $invoice['invoice_id'];
-$description   = "Andalusia Health & Fitness Membership (" .
-                 ($invoice['period_start'] ?? '') . "–" .
-                 ($invoice['period_end'] ?? '') . ")";
+// ------------------------------------------------------------------
+// Build Authorize.Net transaction request
+// ------------------------------------------------------------------
+$loginId        = AUTH_LOGIN_ID;
+$transactionKey = AUTH_TRANSACTION_KEY;
+$apiUrl         = AUTH_API_URL;
 
-// Build the Authorize.Net request
-$request = [
-  "getHostedPaymentPageRequest" => [
-    "merchantAuthentication" => [
-      "name" => AUTH_LOGIN_ID,
-      "transactionKey" => AUTH_TRANSACTION_KEY
+$amount = number_format(($d['amount_cents'] / 100), 2, '.', '');
+$invoiceNumber = "DUES{$duesId}-MEM{$memberId}";
+$description = "Membership Dues for {$m['first_name']} {$m['last_name']} ({$d['period_start']}–{$d['period_end']})";
+
+$payload = [
+  'getHostedPaymentPageRequest' => [
+    'merchantAuthentication' => [
+      'name' => $loginId,
+      'transactionKey' => $transactionKey
     ],
-    "transactionRequest" => [
-      "transactionType" => "authCaptureTransaction",
-      "amount" => $amount,
-      "order" => [
-        "invoiceNumber" => $invoiceNumber,
-        "description"   => $description
+    'transactionRequest' => [
+      'transactionType' => 'authCaptureTransaction',
+      'amount' => $amount,
+      'order' => [
+        'invoiceNumber' => $invoiceNumber,
+        'description' => $description
       ],
-      "customer" => [
-        "id" => $memberId,
-        "email" => $invoice['email']
+      'customer' => [
+        'id' => (string)$memberId,
+        'email' => 'noemail@andalusiahealthandfitness.com'
+      ],
+      'billTo' => [
+        'firstName' => $m['first_name'],
+        'lastName'  => $m['last_name']
       ]
     ],
-    "hostedPaymentSettings" => [
-      "setting" => [
+    'hostedPaymentSettings' => [
+      'setting' => [
         [
-          "settingName" => "hostedPaymentReturnOptions",
-          "settingValue" => json_encode([
-            "showReceipt" => false,
-            "url" => "https://andalusiahealthandfitness.com/api/webhooks/authorize-success.php",
-            "urlText" => "Return to Andalusia Health & Fitness",
-            "cancelUrl" => "https://andalusiahealthandfitness.com/quickpay/",
-            "cancelUrlText" => "Cancel"
+          'settingName'  => 'hostedPaymentReturnOptions',
+          'settingValue' => json_encode([
+            'showReceipt' => true,
+            'url' => 'https://andalusiahealthandfitness.com/quickpay/thanks.html',
+            'urlText' => 'Return to Andalusia Health & Fitness',
+            'cancelUrl' => 'https://andalusiahealthandfitness.com/quickpay/',
+            'cancelUrlText' => 'Cancel'
           ])
-        ],
-        [
-          "settingName" => "hostedPaymentButtonOptions",
-          "settingValue" => json_encode(["text" => "Pay Securely"])
-        ],
-        [
-          "settingName" => "hostedPaymentStyleOptions",
-          "settingValue" => json_encode(["bgColor" => "#ffffff"])
-        ],
-        [
-          "settingName" => "hostedPaymentBillingAddressOptions",
-          "settingValue" => json_encode(["show" => false])
         ]
       ]
     ]
   ]
 ];
 
+// ------------------------------------------------------------------
 // Send to Authorize.Net
-$ch = curl_init(AUTH_API_URL);
+// ------------------------------------------------------------------
+$ch = curl_init($apiUrl);
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_POST => true,
-  CURLOPT_HTTPHEADER => ["Content-Type: application/json"],
-  CURLOPT_POSTFIELDS => json_encode($request)
+  CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+  CURLOPT_POSTFIELDS => json_encode($payload)
 ]);
+
 $response = curl_exec($ch);
+if ($response === false) {
+  http_response_code(500);
+  echo "Curl error: " . curl_error($ch);
+  exit;
+}
+
 curl_close($ch);
-
 $data = json_decode($response, true);
-$token = $data['token'] ?? null;
 
-// Log for debugging
-$logDir = __DIR__ . '/../../logs';
-if (!is_dir($logDir)) mkdir($logDir, 0755, true);
-file_put_contents("$logDir/authorize-hosted.log", "[".date('Y-m-d H:i:s')."] $response\n", FILE_APPEND);
+// ------------------------------------------------------------------
+// Handle Response
+// ------------------------------------------------------------------
+if (isset($data['messages']['resultCode']) && $data['messages']['resultCode'] === 'Ok') {
+  $token = $data['token'] ?? null;
+  if (!$token) {
+    echo "<h2>Error: Missing hosted form token.</h2><pre>" . htmlspecialchars($response) . "</pre>";
+    exit;
+  }
 
-// Redirect or show error
-if ($token) {
-  echo "<form id='PayForm' method='post' action='https://accept.authorize.net/payment/payment'>";
-  echo "<input type='hidden' name='token' value='{$token}'/>";
-  echo "</form>";
-  echo "<script>document.getElementById('PayForm').submit();</script>";
+  echo <<<HTML
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Redirecting to Secure Payment...</title>
+  </head>
+  <body onload="document.getElementById('authForm').submit()">
+    <p>Redirecting to Secure Payment...</p>
+    <form id="authForm" method="POST" action="https://test.authorize.net/payment/payment">
+      <input type="hidden" name="token" value="{$token}">
+    </form>
+  </body>
+  </html>
+  HTML;
 } else {
-  echo "<pre>❌ Error getting payment token:\n$response</pre>";
+  http_response_code(500);
+  echo "<h2>Authorize.Net Error</h2><pre>" . htmlspecialchars(json_encode($data, JSON_PRETTY_PRINT)) . "</pre>";
 }
