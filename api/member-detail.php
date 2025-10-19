@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 // ------------------------------------------------------------------
 // Load global bootstrap (provides pdo() function and DB connection)
 // ------------------------------------------------------------------
-require_once __DIR__ . '/../_bootstrap.php';   // go up one level from /api/
+require_once __DIR__ . '/../_bootstrap.php';
 $pdo = pdo();
 
 if (!$pdo) {
@@ -47,17 +47,24 @@ try {
   }
 
   // ----------------------------------------------------------------
-  // GET INVOICE IF ANY DUE
+  // GET DUES INFO IF ANY DUE
   // ----------------------------------------------------------------
-  $invoice = null;
+  $due = null;
   $dueCheck = $pdo->prepare("
-    SELECT * FROM invoices
-    WHERE member_id = ? AND status = 'due'
-    ORDER BY id DESC
+    SELECT *
+    FROM dues
+    WHERE member_id = ?
+    ORDER BY period_end DESC
     LIMIT 1
   ");
   $dueCheck->execute([$member['id']]);
-  $invoice = $dueCheck->fetch(PDO::FETCH_ASSOC);
+  $due = $dueCheck->fetch(PDO::FETCH_ASSOC);
+
+  // Determine status dynamically
+  $status = $member['status'] ?? 'unknown';
+  if ($due && isset($due['is_paid']) && !$due['is_paid']) {
+    $status = 'due';
+  }
 
   // ----------------------------------------------------------------
   // FORMAT RESPONSE
@@ -73,14 +80,14 @@ try {
       'monthly_fee'     => $member['monthly_fee'] ?? '0.00',
       'valid_from'      => $member['valid_from'] ?? null,
       'valid_until'     => $member['valid_until'] ?? null,
-      'status'          => $member['status'] ?? '',
+      'status'          => $status,
     ],
-    'invoice' => $invoice ? [
-      'id'            => (int)$invoice['id'],
-      'amount_cents'  => (int)($invoice['amount_cents'] ?? 0),
-      'period_start'  => $invoice['period_start'] ?? '',
-      'period_end'    => $invoice['period_end'] ?? '',
-      'status'        => $invoice['status'] ?? ''
+    'dues' => $due ? [
+      'id'            => (int)$due['id'],
+      'period_start'  => $due['period_start'] ?? '',
+      'period_end'    => $due['period_end'] ?? '',
+      'amount_cents'  => isset($due['amount_cents']) ? (int)$due['amount_cents'] : 0,
+      'is_paid'       => (bool)($due['is_paid'] ?? 0)
     ] : null
   ]);
 
