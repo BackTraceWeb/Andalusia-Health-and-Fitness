@@ -1,25 +1,29 @@
 <?php
 /**
  * Authorize.Net Payment Success Webhook
- * - Accepts test pings and live payment events
- * - Updates AxTrax via NinjaOne when payment captured
- * - Logs everything for audit
+ * - Accepts validation pings with no body
+ * - Handles real payment events (authcapture.created)
+ * - Logs all traffic
  */
 
 header('Content-Type: application/json');
 
-// === 0️⃣ Early OK response for validation ping ===
-// Authorize.net sends an empty or minimal payload to verify the endpoint
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty(file_get_contents('php://input'))) {
-    echo json_encode(["ok" => true, "message" => "Webhook validation OK"]);
-    http_response_code(200);
-    exit;
+// === ✅ EARLY EXIT FOR VALIDATION TESTS ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = file_get_contents('php://input');
+
+    // Authorize.net test ping sends an empty body
+    if (trim($input) === '') {
+        echo json_encode(["ok" => true, "message" => "Validation successful"]);
+        http_response_code(200);
+        exit;
+    }
 }
 
 // === 1️⃣ Read webhook payload ===
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
-
+ 
 // Fallback if JSON decode fails
 if (!$data && !empty($_POST)) {
     $data = $_POST;
