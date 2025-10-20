@@ -4,21 +4,23 @@ require __DIR__ . '/../../_bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');
 ini_set('display_errors', 0);
 
+// Utility to normalize strings
 function norm($s) {
   return preg_replace('/\s+/', ' ', strtolower(trim($s ?? '')));
 }
 
+// --- Logging setup ---
 $logFile = __DIR__ . '/../../../logs/lookup-debug.log';
 if (!is_dir(dirname($logFile))) mkdir(dirname($logFile), 0775, true);
 file_put_contents($logFile, date('c') . " --- Lookup start ---\n", FILE_APPEND);
 
 try {
-  // Confirm DB
+  // Confirm DB connection
   $dbName = $pdo->query("SELECT DATABASE()")->fetchColumn();
   file_put_contents($logFile, "Connected to DB: {$dbName}\n", FILE_APPEND);
 
-  $first = norm($_GET['first'] ?? '');
-  $last  = norm($_GET['last'] ?? '');
+  $first   = norm($_GET['first'] ?? '');
+  $last    = norm($_GET['last'] ?? '');
   $company = norm($_GET['company'] ?? '');
 
   if ($first === '' && $last === '' && $company === '') {
@@ -46,7 +48,7 @@ try {
     ':company' => $company ?: "$first $last"
   ]);
 
-  $member = $stmt->fetch();
+  $member = $stmt->fetch(PDO::FETCH_ASSOC);
 
   if (!$member) {
     file_put_contents($logFile, "No member found\n", FILE_APPEND);
@@ -57,33 +59,31 @@ try {
 
   file_put_contents($logFile, "Found member ID {$member['id']}\n", FILE_APPEND);
 
-// --- Determine current/due status ---
-$today = new DateTimeImmutable('today');
-$validUntil = $member['valid_until'] ? new DateTimeImmutable($member['valid_until']) : null;
+  // --- Determine current/due status ---
+  $today = new DateTimeImmutable('today');
+  $validUntil = $member['valid_until'] ? new DateTimeImmutable($member['valid_until']) : null;
 
-// Base from DB status (preferred source)
-$dbStatus = strtolower(trim($member['status'] ?? ''));
+  // Base from DB status
+  $dbStatus = strtolower(trim($member['status'] ?? ''));
+  $isCurrent = in_array($dbStatus, ['current', 'active'], true);
 
-// Default: assume current if DB says so
-$isCurrent = in_array($dbStatus, ['current', 'active']);
+  // If expired date → due
+  if ($validUntil && $validUntil < $today) {
+    $isCurrent = false;
+  }
 
-// Override if expiration date has passed
-if ($validUntil && $validUntil < $today) {
-  $isCurrent = false;
-}
+  // If draft → always current
+  if (strtolower($member['payment_type']) === 'draft') {
+    $isCurrent = true;
+  }
 
-// Override again if payment type is 'draft' (auto current)
-if (strtolower($member['payment_type']) === 'draft') {
-  $isCurrent = true;
-}
-
-// Final computed status
-$computedStatus = $isCurrent ? 'current' : 'due';
-
+  $computedStatus = $isCurrent ? 'current' : 'due';
 
   // --- Lookup dues invoice if due ---
   $invoice = null;
-  if (!$isCurrent) {
+  $amountCents = (int)round($member['monthly_fee'] * 100);
+
+  if ($computedStatus === 'due') {
     $inv = $pdo->prepare("
       SELECT id, member_id, period_start, period_end, amount_cents, currency, status
       FROM dues
@@ -92,12 +92,39 @@ $computedStatus = $isCurrent ? 'current' : 'due';
       LIMIT 1
     ");
     $inv->execute([':mid' => $member['id']]);
-    $invoice = $inv->fetch();
+    $invoice = $inv->fetch(PDO::FETCH_ASSOC);
+
+    // Auto-create invoice if none exists
+    if (!$invoice) {
+      $periodStart = (new DateTimeImmutable('first day of this month'))->format('Y-m-d');
+      $periodEnd   = (new DateTimeImmutable('last day of this month'))->format('Y-m-d');
+      $ins = $pdo->prepare("
+        INSERT INTO dues (member_id, period_start, period_end, amount_cents, currency, status)
+        VALUES (:mid, :ps, :pe, :amt, 'USD', 'due')
+      ");
+      $ins->execute([
+        ':mid' => $member['id'],
+        ':ps'  => $periodStart,
+        ':pe'  => $periodEnd,
+        ':amt' => $amountCents,
+      ]);
+      $invoiceId = $pdo->lastInsertId();
+      $invoice = [
+        'id'           => $invoiceId,
+        'member_id'    => $member['id'],
+        'period_start' => $periodStart,
+        'period_end'   => $periodEnd,
+        'amount_cents' => $amountCents,
+        'currency'     => 'USD',
+        'status'       => 'due',
+      ];
+      file_put_contents($logFile, "Auto-created invoice #{$invoiceId} for member {$member['id']}\n", FILE_APPEND);
+    }
   }
 
-  $amountCents = $invoice ? (int)$invoice['amount_cents'] : (int)($member['monthly_fee'] * 100);
-
+  // --- Output JSON ---
   $result = [
+    'ok'           => true,
     'status'       => $computedStatus,
     'member'       => $member,
     'invoice'      => $invoice,
@@ -108,12 +135,13 @@ $computedStatus = $isCurrent ? 'current' : 'due';
   echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
   flush();
 
-  file_put_contents($logFile, "Returning member {$member['id']} OK\n", FILE_APPEND);
+  file_put_contents($logFile, "Returning member {$member['id']} with status {$computedStatus}\n", FILE_APPEND);
 
 } catch (Throwable $e) {
   file_put_contents($logFile, "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
   http_response_code(500);
   echo json_encode([
+    'ok' => false,
     'error' => 'server_error',
     'detail' => $e->getMessage()
   ]);
