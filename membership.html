@@ -229,6 +229,7 @@
   © <script>document.write(new Date().getFullYear())</script> Andalusia Health & Fitness — Open 24/7.
 </footer>
 
+<!-- Fixes for Andalusia Health & Fitness Membership Page -->
 <script>
 (function(){
   const INIT_FEE=20,FOB_FEE=15,TANNING_ADDON=27.5,EXTRA_CHILD_FEE=10;
@@ -245,8 +246,6 @@
         todayEl=document.getElementById('todayTotal'),
         waiverCount=document.getElementById('waiverCount'),
         launchBtn=document.getElementById('launchWizard');
-
-  let waiverEntries=[];
 
   function parsePlan(){
     const sel=form.querySelector('input[name="plan"]:checked');
@@ -275,8 +274,9 @@
 
     const init=waiveInit.checked?0:INIT_FEE;
     const fobs=parseInt(fobCount.value||'0',10)*FOB_FEE;
-    const today=init+fobs;
-    const totalMonthly=plan.amount+addons;
+
+    // 🧮 Include monthly dues in today's total
+    const today=plan.amount+addons+init+fobs;
 
     monthlyPlanEl.textContent='$'+plan.amount.toFixed(2);
     monthlyAddEl.textContent='$'+addons.toFixed(2);
@@ -288,15 +288,24 @@
   form.addEventListener('change',recalc);
   recalc();
 
-  // === Waiver Launcher ===
+  // === Single-tab Waiver Wizard ===
   launchBtn.addEventListener('click',()=>{
     const total=parseInt(waiverCount.value||'1',10);
-    for(let i=0;i<total;i++){
-      const url=`waiver.html?i=${i}&total=${total}`;
-      window.open(url,'_blank');
-    }
+    const url=`waiver.html?start=0&total=${total}`;
+    window.open(url,'_blank');
   });
 })();
 </script>
+
+<style>
+.hero.hero--photo::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.22); /* slightly lighter again */
+}
+</style>
+
+
 </body>
 </html>
