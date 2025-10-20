@@ -3,141 +3,46 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Checkout — Andalusia Health & Fitness</title>
-  <link rel="icon" href="assets/images/favicon.png"/>
+  <title>Secure Checkout — Andalusia Health & Fitness</title>
   <link rel="stylesheet" href="styles.css"/>
   <style>
-    .summary { display:grid; gap:14px }
-    .row { display:flex; justify-content:space-between; gap:12px }
-    .muted-sm { color:#aab3c2; font-size:12px }
-    .thumb { width:120px; height:120px; object-fit:cover; border-radius:10px; border:1px solid #2a3346 }
-    .sig { width:220px; height:60px; object-fit:contain; background:#fff; border:1px solid #e5e7eb; border-radius:6px }
-    .grid-2 { display:grid; gap:16px; grid-template-columns: 1fr 1fr }
-    @media (max-width: 720px){ .grid-2 { grid-template-columns: 1fr } }
+    body {
+      background-color:#0a0a0a; color:#fff; text-align:center; font-family:'Inter',sans-serif;
+      padding:80px 20px;
+    }
+    .box {
+      max-width:480px; margin:auto; background:#111; border-radius:16px;
+      padding:40px; box-shadow:0 0 25px rgba(255,0,100,0.25);
+    }
+    h1 { color:#ff006e; margin-bottom:12px; }
+    .total { font-size:1.8rem; font-weight:700; margin:10px 0 20px; }
+    .pill-cta { background:#ff006e; color:#fff; border:none; border-radius:999px;
+      padding:12px 32px; font-size:1rem; cursor:pointer;
+    }
+    .pill-cta:hover { background:#ff4fa3; }
   </style>
 </head>
 <body>
-
-  <!-- Topbar -->
-  <div class="topbar">
-    <div class="shell">
-      <div class="brand-pill">
-        <a href="index.html"><img src="AHFlogo.png" alt="Andalusia Health & Fitness"></a>
-      </div>
-      <nav class="mainnav">
-        <a href="index.html">Home</a>
-        <a href="pricing.html">Pricing</a>
-        <a href="membership.html">Back to Form</a>
-      </nav>
-    </div>
+  <div class="box">
+    <h1>Secure Checkout</h1>
+    <p>Confirm your membership and continue to Authorize.Net for secure payment.</p>
+    <div class="total" id="amountDisplay">$0.00</div>
+    <form id="payForm" action="payments.php" method="POST">
+      <input type="hidden" name="amount" id="amount">
+      <input type="hidden" name="invoice" id="invoice">
+      <button class="pill-cta" type="submit">Continue to Secure Payment</button>
+    </form>
   </div>
 
-  <main class="section">
-    <div class="shell">
-      <h1>Review & Pay</h1>
-
-      <div id="content" class="summary"></div>
-
-      <div class="card" style="margin-top:16px">
-        <h3>Pay Securely</h3>
-        <p class="muted-sm">You’ll be redirected to our secure payment page (eProcessing Network). Your card data never touches this website.</p>
-        <!-- eProcessing Hosted Payment Form (HPF) -->
-        <form id="epnForm" method="post" action="https://secure.eprocessingnetwork.com/cgi-bin/epn_admin.pl">
-          <input type="hidden" name="amount" id="epnAmount" value="">
-          <input type="hidden" name="description" id="epnDesc" value="Andalusia Health & Fitness — Membership Setup">
-          <input type="hidden" name="email" id="epnEmail" value="">
-          <!-- Merchant-defined fields (configure in ePN HPF) -->
-          <input type="hidden" name="md_flow" value="signup">
-          <input type="hidden" name="md_ref" id="epnRef" value="">
-          <!-- Optional return/postback placeholders (actual wiring in backend step) -->
-          <!-- <input type="hidden" name="return_url" value="https://YOURDOMAIN/payments.html?paid=1"> -->
-          <!-- <input type="hidden" name="postback_url" value="https://YOURDOMAIN/api/payment_webhook_epn.php"> -->
-          <button class="pill-cta" type="submit">Proceed to Secure Payment</button>
-        </form>
-      </div>
-
-      <div style="margin-top:10px">
-        <a class="btn btn-ghost" href="membership.html">Back to Edit</a>
-      </div>
-    </div>
-  </main>
-
-  <footer class="sitefoot">
-    © <span id="y"></span> Andalusia Health &amp; Fitness · 205 Church St, Andalusia, AL 36420 · (334) 582-2000
-  </footer>
-
   <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-
-    (function(){
-      const mount = document.getElementById('content');
-      const raw = sessionStorage.getItem('ahfSignup');
-      if (!raw) {
-        mount.innerHTML = '<div class="card">No signup data found. Please <a href="membership.html">return to the form</a>.</div>';
-        document.getElementById('epnForm').style.display='none';
-        return;
-      }
-      const d = JSON.parse(raw);
-
-      function money(n){ return '$' + (n||0).toFixed(2); }
-      const monthlyTotal = (d.plan_amount||0) + (d.monthly_addons||0);
-      const oneTimeTotal = (d.today_total||0);
-
-      // Photo
-      const photoHtml = d.primary_photo_dataurl
-        ? `<img class="thumb" src="${d.primary_photo_dataurl}" alt="Primary member photo">`
-        : `<div class="muted-sm">No photo uploaded.</div>`;
-
-      // Signers
-      const waiversHtml = (d.waivers||[]).map((w,i)=>`
-        <div class="card" style="padding:10px">
-          <div class="row"><strong>Waiver ${i+1}:</strong><span>${w.type==='minor'?'Minor (guardian signing)':'Adult'}</span></div>
-          <div class="row"><span>Name</span><span>${w.name||''}</span></div>
-          <div class="row"><span>Signed</span><span>${new Date(w.signed_at||d.signed_at||Date.now()).toLocaleString()}</span></div>
-          ${w.signature_png ? `<div style="margin-top:6px"><img class="sig" src="${w.signature_png}" alt="Signature"></div>` : ''}
-        </div>
-      `).join('');
-
-      mount.innerHTML = `
-        <div class="grid-2">
-          <div class="card">
-            <h3>Primary Member</h3>
-            <div class="row"><span>Name</span><span>${d.first_name||''} ${d.last_name||''}</span></div>
-            <div class="row"><span>Phone</span><span>${d.phone||''}</span></div>
-            <div class="row"><span>Email</span><span>${d.email||''}</span></div>
-            <div class="row"><span>Address</span><span>${[d.address1,d.address2,d.city,d.state,d.zip].filter(Boolean).join(', ')}</span></div>
-            <div style="margin-top:8px">${photoHtml}</div>
-          </div>
-
-          <div class="card">
-            <h3>Membership</h3>
-            <div class="row"><span>Plan</span><span>${d.plan_name||''}</span></div>
-            <div class="row"><span>Adults</span><span>${d.adult_count||1}</span></div>
-            <div class="row"><span>Children</span><span>${d.child_count||0}</span></div>
-            <div class="row"><span>Monthly plan</span><span>${money(d.plan_amount||0)}</span></div>
-            <div class="row"><span>Monthly add-ons</span><span>${money(d.monthly_addons||0)}</span></div>
-            <div class="row"><span><strong>First monthly draft</strong></span><span><strong>${money(monthlyTotal)}</strong></span></div>
-            <hr style="border:none;border-top:1px solid #243048; margin:10px 0">
-            <div class="row"><span>Initiation fee</span><span>${money(d.initiation_fee||0)}</span></div>
-            <div class="row"><span>Keys @ $${(d.fob_fee_each||15).toFixed(2)}</span><span>${d.fob_count||0}</span></div>
-            <div class="row"><span><strong>Today’s total</strong></span><span><strong>${money(oneTimeTotal)}</strong></span></div>
-            <p class="muted-sm">Today covers initiation and keys only. Draft setup for monthly dues happens with the office or via your draft settings.</p>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:16px">
-          <h3>Waivers (${(d.waivers||[]).length}/${d.waiver_count||1} completed)</h3>
-          ${waiversHtml || '<div class="muted-sm">No waivers captured.</div>'}
-        </div>
-      `;
-
-      // eProcessing HPF fields
-      document.getElementById('epnAmount').value = (oneTimeTotal||0).toFixed(2);
-      document.getElementById('epnEmail').value  = d.email || '';
-      document.getElementById('epnRef').value    = (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
-
-      // If you want to include more fields (name/phone) and your HPF supports them, add here.
-    })();
+    const data = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+    if(!data.today_total){ document.getElementById('amountDisplay').textContent='$0.00'; }
+    else {
+      document.getElementById('amountDisplay').textContent='$'+parseFloat(data.today_total).toFixed(2);
+      document.getElementById('amount').value=parseFloat(data.today_total).toFixed(2);
+      document.getElementById('invoice').value=Date.now();
+    }
   </script>
 </body>
 </html>
+
