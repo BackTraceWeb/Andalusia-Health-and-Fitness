@@ -1,23 +1,25 @@
 <?php
 /**
- * Authorize.Net Payment Success Webhook
- * - Accepts validation pings with no body
- * - Handles real payment events (authcapture.created)
- * - Logs all traffic
+ * Authorize.Net Payment Success Webhook (Auto-validating)
+ * - Always returns 200 OK for validation pings
+ * - Handles real Authorize.net JSON payloads
+ * - Triggers NinjaOne automation for successful captures
  */
 
 header('Content-Type: application/json');
 
-// === ✅ EARLY EXIT FOR VALIDATION TESTS ===
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = file_get_contents('php://input');
+// === Handle HEAD or empty POST (Authorize.net validation) ===
+if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {
+    echo json_encode(["ok" => true, "message" => "HEAD request acknowledged"]);
+    http_response_code(200);
+    exit;
+}
 
-    // Authorize.net test ping sends an empty body
-    if (trim($input) === '') {
-        echo json_encode(["ok" => true, "message" => "Validation successful"]);
-        http_response_code(200);
-        exit;
-    }
+$input = file_get_contents('php://input');
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && trim($input) === '') {
+    echo json_encode(["ok" => true, "message" => "Validation successful"]);
+    http_response_code(200);
+    exit;
 }
 
 // === 1️⃣ Read webhook payload ===
