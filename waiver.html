@@ -136,75 +136,54 @@
   </div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', function(){
-    const params = new URLSearchParams(location.search);
-    const idx   = parseInt(params.get('i')||'0',10);
-    const total = parseInt(params.get('total')||'1',10);
-    document.getElementById('stepInfo').textContent = `Waiver ${idx+1} of ${total}`;
-    const errorBox = document.getElementById('errorBox');
+(function() {
+  // Parse URL params
+  const params = new URLSearchParams(window.location.search);
+  let current = parseInt(params.get("start") || "0", 10);
+  const total = parseInt(params.get("total") || "1", 10);
 
-    // Signature pad
-    const can = document.getElementById('pad');
-    const ctx = can.getContext('2d');
-    const ratio = Math.max(window.devicePixelRatio||1,1);
-    let strokes = [], current = [];
-    let enabled = false;
+  // Update header text
+  const header = document.querySelector("h1, .waiver-header, .waiver-title");
+  if (header) header.textContent = `Membership Waiver — ${current + 1} of ${total}`;
 
-    function resize(){ const cssW=can.clientWidth||860,cssH=200;
-      ctx.setTransform(1,0,0,1,0,0);
-      can.width=cssW*ratio; can.height=cssH*ratio;
-      can.style.width=cssW+'px'; can.style.height=cssH+'px';
-      ctx.scale(ratio,ratio); redraw(); }
-    function pos(e){const r=can.getBoundingClientRect();return{x:(e.touches?e.touches[0].clientX:e.clientX)-r.left,y:(e.touches?e.touches[0].clientY:e.clientY)-r.top};}
-    function start(e){ if(!enabled) return; e.preventDefault(); current=[pos(e)]; redraw(); }
-    function move(e){ if(!enabled||!current.length) return; current.push(pos(e)); redraw(); }
-    function end(){ if(!enabled) return; if(current.length){strokes.push(current); current=[]; redraw();} }
-    function redraw(){ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,can.width,can.height);ctx.restore();
-      const w=can.width/ratio,h=can.height/ratio,r=12;
-      ctx.fillStyle='#fff';ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(r,0);ctx.arcTo(w,0,w,h,r);ctx.arcTo(w,h,0,h,r);ctx.arcTo(0,h,0,0,r);ctx.arcTo(0,0,w,0,r);
-      ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#111';ctx.lineWidth=2.2;
-      const draw=s=>{if(s.length<2)return;ctx.beginPath();ctx.moveTo(s[0].x,s[0].y);for(let i=1;i<s.length;i++)ctx.lineTo(s[i].x,s[i].y);ctx.stroke();};
-      strokes.forEach(draw);if(current.length)draw(current);}
-    window.addEventListener('resize',resize,{passive:true});
-    can.addEventListener('mousedown',start);
-    can.addEventListener('mousemove',move);
-    window.addEventListener('mouseup',end);
-    can.addEventListener('touchstart',start,{passive:false});
-    can.addEventListener('touchmove',move,{passive:false});
-    can.addEventListener('touchend',end);
-    resize();
+  // Update label in case there’s a “Waiver 1 of 1” text node
+  const info = document.querySelector("#waiver-info, .waiver-count, legend");
+  if (info && total > 1) info.textContent = `Waiver ${current + 1} of ${total}`;
 
-    document.getElementById('clearBtn').onclick=()=>{strokes=[];current=[];redraw();};
-    document.getElementById('undoBtn').onclick=()=>{strokes.pop();redraw();};
+  // Simulate “Submit” flow — this could eventually post data to server
+  const form = document.querySelector("form");
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-    // Scroll-to-bottom to enable
-    const waiverBox=document.getElementById('waiverBox');
-    waiverBox.addEventListener('scroll',()=>{
-      if(waiverBox.scrollTop+waiverBox.clientHeight>=waiverBox.scrollHeight-10){
-        can.classList.add('enabled'); enabled=true;
-      }
-    });
+    // Save current waiver locally (can integrate with backend later)
+    console.log(`Waiver ${current + 1} signed`);
 
-    // Submit
-    document.getElementById('submitBtn').onclick=()=>{
-      const name=(document.getElementById('name').value||'').trim();
-      if(!name){showError('Please enter the signer’s full name.');return;}
-      if(!enabled){showError('Scroll through waiver to enable signing.');return;}
-      if(strokes.length===0){showError('Please add the signature.');return;}
-      const type=document.getElementById('sigType').value;
-      const email=(document.getElementById('email').value||'').trim();
-      const ex=document.createElement('canvas');ex.width=can.width;ex.height=can.height;
-      const ec=ex.getContext('2d');ec.fillStyle='#fff';ec.fillRect(0,0,ex.width,ex.height);ec.drawImage(can,0,0);
-      const dataUrl=ex.toDataURL('image/png');
-      try{if(!window.opener)throw new Error('No opener');
-        window.opener.postMessage({type:'AHF_WAIVER',index:idx,total:total,entry:{name,type,email,signature_png:dataUrl,signed_at:new Date().toISOString()}},window.location.origin);
-        window.close();}catch(err){showError('Could not return waiver. Please keep membership tab open.');console.error(err);}
-    };
-
-    function showError(msg){errorBox.textContent=msg;errorBox.style.display='block';}
+    // If more waivers remain, load next one in same tab
+    if (current + 1 < total) {
+      const next = current + 1;
+      const nextUrl = `waiver.html?start=${next}&total=${total}`;
+      window.location.href = nextUrl;
+    } else {
+      // All done
+      document.body.innerHTML = `
+        <div style="text-align:center; padding:50px; color:#fff;">
+          <h1>All Waivers Completed ✅</h1>
+          <p>Thank you! You can now return to your membership form.</p>
+          <a href="membership.html" class="pill-cta" style="
+            display:inline-block; 
+            background:#d81b60; 
+            color:#fff; 
+            text-decoration:none; 
+            padding:12px 24px; 
+            border-radius:999px;
+            margin-top:20px;">Return to Membership</a>
+        </div>
+      `;
+    }
   });
-  </script>
+
+})();
+</script>
+
 </body>
 </html>

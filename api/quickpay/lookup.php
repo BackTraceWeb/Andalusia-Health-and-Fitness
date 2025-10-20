@@ -57,14 +57,29 @@ try {
 
   file_put_contents($logFile, "Found member ID {$member['id']}\n", FILE_APPEND);
 
-  // --- Determine current/due status ---
-  $today = new DateTimeImmutable('today');
-  $validUntil = $member['valid_until'] ? new DateTimeImmutable($member['valid_until']) : null;
-  $isCurrent = ($validUntil && $validUntil >= $today);
+// --- Determine current/due status ---
+$today = new DateTimeImmutable('today');
+$validUntil = $member['valid_until'] ? new DateTimeImmutable($member['valid_until']) : null;
 
-  if ($member['payment_type'] === 'draft') {
-    $isCurrent = true;
-  }
+// Base from DB status (preferred source)
+$dbStatus = strtolower(trim($member['status'] ?? ''));
+
+// Default: assume current if DB says so
+$isCurrent = in_array($dbStatus, ['current', 'active']);
+
+// Override if expiration date has passed
+if ($validUntil && $validUntil < $today) {
+  $isCurrent = false;
+}
+
+// Override again if payment type is 'draft' (auto current)
+if (strtolower($member['payment_type']) === 'draft') {
+  $isCurrent = true;
+}
+
+// Final computed status
+$computedStatus = $isCurrent ? 'current' : 'due';
+
 
   // --- Lookup dues invoice if due ---
   $invoice = null;
@@ -83,7 +98,7 @@ try {
   $amountCents = $invoice ? (int)$invoice['amount_cents'] : (int)($member['monthly_fee'] * 100);
 
   $result = [
-    'status'       => $isCurrent ? 'current' : 'due',
+    'status'       => $computedStatus,
     'member'       => $member,
     'invoice'      => $invoice,
     'amount'       => $amountCents / 100,
