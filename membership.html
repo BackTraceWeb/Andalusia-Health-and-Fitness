@@ -1,412 +1,302 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Join Today — Andalusia Health & Fitness</title>
-  <link rel="icon" href="assets/images/favicon.png" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css"/>
   <style>
-    /* === Force readable white text inside the dark calculator/waiver areas === */
-    .calc, .wizard { background:#0b0f19; border:1px solid #283248; border-radius:12px; padding:12px; margin-top:10px; }
-    .calc, .calc * { color:#fff !important; }               /* text, labels, totals */
-    .calc .help, .calc .muted-sm { color:rgba(255,255,255,.75) !important; }
-    .calc input[type="number"], .calc input[type="text"], .calc input[type="email"], .calc select {
-      background:#0b1220; border:1px solid #2a3346; color:#fff; border-radius:10px; padding:8px 10px;
-    }
-    .totals { display:grid; gap:6px; margin-top:8px }
-    .totals .line { display:flex; justify-content:space-between }
-    .totals .big { font-weight:700 }
+    body { background:#000; color:#fff; font-family:"Helvetica Neue", Arial, sans-serif; margin:0; }
 
-    .pill-ghost { background:#151c2a; border:1px solid #2a3346; color:#e8e9ee; border-radius:999px; padding:8px 12px }
-    .pfp { display:flex; align-items:center; gap:12px; margin-top:8px }
-    .pfp img { width:84px; height:84px; object-fit:cover; border-radius:10px; border:1px solid #2a3346 }
-    .toggle { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none }
-    .toggle input { width:18px; height:18px }
+    /* Make hero image visible */
+    .hero.hero--photo::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      background:rgba(0,0,0,0.3); /* lighter overlay for visibility */
+    }
+
+    .plan-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:20px;
+      margin-top:20px;
+    }
+
+    .plan {
+      background:#111;
+      border:2px solid #d81b60;
+      border-radius:12px;
+      padding:20px;
+      cursor:pointer;
+      color:#fff;
+      transition:transform 0.2s, box-shadow 0.2s;
+      display:block;
+    }
+
+    .plan:hover {
+      transform:translateY(-3px);
+      box-shadow:0 0 15px rgba(216,27,96,0.4);
+    }
+
+    .plan input { display:none; }
+    .plan-body strong { font-size:1.2em; display:block; margin-bottom:4px; color:#fff; }
+    .plan-body span.muted { color:#bbb; font-size:0.9em; }
+
+    input[type="text"], input[type="email"], input[type="number"], select {
+      width:100%;
+      padding:10px;
+      border:1px solid #000;
+      border-radius:8px;
+      background:#fff;
+      color:#000;
+    }
+
+    label { color:#000; font-weight:600; display:block; margin-bottom:6px; }
+    .fieldset { background:#fff; border-radius:12px; padding:20px; margin-top:20px; color:#000; }
+
+    .calc {
+      background:#111;
+      color:#fff;
+      border:1px solid #d81b60;
+      border-radius:12px;
+      padding:20px;
+      margin-top:20px;
+    }
+
+    .calc label { color:#fff; }
+
+    .totals { display:grid; gap:6px; margin-top:10px; }
+    .totals .line { display:flex; justify-content:space-between; }
+    .totals .big { font-weight:bold; color:#d81b60; }
+
+    .pill-cta {
+      background:#d81b60;
+      border:none;
+      padding:10px 18px;
+      color:#fff;
+      border-radius:999px;
+      font-weight:bold;
+      cursor:pointer;
+      transition:background 0.2s;
+    }
+
+    .pill-cta:hover { background:#ff4fa3; }
+
+    .pill-ghost {
+      background:transparent;
+      border:1px solid #d81b60;
+      color:#fff;
+      border-radius:999px;
+      padding:12px 20px;
+      cursor:pointer;
+      font-weight:600;
+      margin-left:10px;
+      white-space:nowrap;
+    }
+
+    .toggle { display:flex; align-items:center; gap:8px; cursor:pointer; }
+    .toggle input { width:18px; height:18px; }
+
+    .help { font-size:0.85em; color:#aaa; }
   </style>
 </head>
-<body>
-  <!-- Topbar -->
-  <div class="topbar">
-    <div class="shell">
-      <div class="brand-pill">
-        <a href="index.html"><img src="AHFlogo.png" alt="Andalusia Health & Fitness"></a>
-      </div>
-      <nav class="mainnav">
-        <a href="index.html">Home</a>
-        <a href="pricing.html">Pricing</a>
-        <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
-      </nav>
+
+<body class="theme-andalusia">
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="shell">
+    <div class="brand-pill">
+      <a href="index.html"><img src="AHFlogo.png" alt="Andalusia Health & Fitness"></a>
+    </div>
+    <nav class="mainnav">
+      <a href="index.html">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
+    </nav>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="ctabar">
+  <div class="shell">
+    <a href="/quickpay/" class="pill-cta">Quick Pay</a>
+    <a href="tel:+13345822000" class="pill-cta">Call • (334) 582-2000</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero hero--photo">
+  <div class="overlay"></div>
+  <div class="shell">
+    <div class="hero-copy">
+      <h1>Join Today</h1>
+      <p class="lede">24/7 access, sauna included, and flexible memberships.</p>
     </div>
   </div>
+</section>
 
-  <section class="hero hero--compact">
-    <div class="shell">
-      <div class="hero-copy">
-        <h1>Join Today</h1>
-        <p class="lede">24/7 access and sauna included on gym plans. Seniors & students save with valid ID.</p>
-      </div>
-    </div>
-  </section>
+<!-- MAIN FORM -->
+<main class="section">
+  <div class="shell">
+    <form id="membershipForm" class="form-card" method="GET" action="payments.html">
 
-  <main class="section">
-    <div class="shell">
+      <fieldset class="fieldset">
+        <legend>Choose Your Membership</legend>
+        <div class="plan-grid">
+          <label class="plan"><input type="radio" name="plan" value="Single|35" required>
+            <div class="plan-body"><strong>Single</strong><span class="muted">$35.00 / month</span></div></label>
 
-      <form id="membershipForm" class="form-card" method="GET" action="payments.html">
-        <input type="hidden" id="signed_at_iso" />
+          <label class="plan"><input type="radio" name="plan" value="Couples (married)|55">
+            <div class="plan-body"><strong>Couples (married)</strong><span class="muted">$55.00 / month</span></div></label>
 
-        <!-- Plans -->
-        <fieldset class="fieldset">
-          <legend>Choose Your Membership</legend>
+          <label class="plan"><input type="radio" name="plan" value="Family|65">
+            <div class="plan-body"><strong>Family</strong><span class="muted">$65.00 / month</span><span class="muted"><small>Includes spouse + 1 child · $10/mo per additional child (up to 6 total)</small></span></div></label>
 
-          <div class="grid-3 plan-grid">
-            <label class="plan">
-              <input type="radio" name="plan" value="Single|35" required>
-              <div class="plan-body"><strong>Single</strong><span class="muted">$35.00 / month</span></div>
-            </label>
+          <label class="plan"><input type="radio" name="plan" value="Senior (65+)|25">
+            <div class="plan-body"><strong>Senior (65+)</strong><span class="muted">$25.00 / month</span></div></label>
 
-            <label class="plan">
-              <input type="radio" name="plan" value="Couples (married)|55">
-              <div class="plan-body"><strong>Couples (married)</strong><span class="muted">$55.00 / month</span></div>
-            </label>
+          <label class="plan"><input type="radio" name="plan" value="Student|30">
+            <div class="plan-body"><strong>Student</strong><span class="muted">$30.00 / month</span></div></label>
 
-            <label class="plan">
-              <input type="radio" name="plan" value="Family|65">
-              <div class="plan-body">
-                <strong>Family</strong><span class="muted">$65.00 / month</span>
-                <span class="muted"><small>Includes spouse + 1 child · $10.00 per additional child</small></span>
-              </div>
-            </label>
-
-            <label class="plan">
-              <input type="radio" name="plan" value="Senior (65+)|25">
-              <div class="plan-body"><strong>Senior (65+)</strong><span class="muted">$25.00 / month</span></div>
-            </label>
-
-            <label class="plan">
-              <input type="radio" name="plan" value="Student|30">
-              <div class="plan-body">
-                <strong>Student</strong><span class="muted">$30.00 / month</span>
-                <span class="muted"><small>Full-time HS/College · proof required</small></span>
-              </div>
-            </label>
-
-            <label class="plan">
-              <input type="radio" name="plan" value="Daily Rate|5">
-              <div class="plan-body"><strong>Daily Rate</strong><span class="muted">$5.00 / day</span></div>
-            </label>
-
-            <!-- NEW: Tanning-Only plan (no gym) -->
-            <label class="plan">
-              <input type="radio" name="plan" value="Tanning Only (no gym)|45">
-              <div class="plan-body">
-                <strong>Tanning Only</strong>
-                <span class="muted">$45.00 / month · no gym access</span>
-              </div>
-            </label>
-          </div>
-
-          <!-- Calculator / counts -->
-          <div class="calc" id="calcBox">
-            <!-- NEW: Tanning add-on for gym plans -->
-            <div class="row" id="tanningAddonRow">
-              <label class="toggle">
-                <input type="checkbox" id="addTanning">
-                <span>Add Tanning (member add-on) — $27.50 / month</span>
-              </label>
-            </div>
-
-            <div class="row" id="familyCountsRow">
-              <label>Adults
-                <input type="number" id="adultCount" min="1" step="1" value="1">
-              </label>
-              <label>Children (under 18)
-                <input type="number" id="childCount" min="0" step="1" value="0">
-              </label>
-              <span class="help">Family includes spouse + 1 child · $10/mo per additional child</span>
-            </div>
-
-            <div class="row" id="accessRow">
-              <label>24/7 Access Keys (fobs) @ $15.00 each
-                <input type="number" id="fobCount" min="0" step="1" value="1">
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="waiveInitiation">
-                <span>Waive $20.00 initiation fee (draft signup)</span>
-              </label>
-            </div>
-
-            <div class="row">
-              <label>Waivers needed
-                <input type="number" id="waiverCount" min="1" step="1" value="1">
-              </label>
-              <button type="button" id="launchWizard" class="pill-ghost">Fill Waivers Now</button>
-              <span class="help" id="waiverStatus">0 / 1 completed</span>
-            </div>
-
-            <div class="totals">
-              <div class="line"><span>Monthly dues (plan)</span><span id="monthlyPlan">$0.00</span></div>
-              <div class="line"><span>Monthly add-ons</span><span id="monthlyAddons">$0.00</span></div>
-              <div class="line"><span>Initiation fee</span><span id="initiationLine">$20.00</span></div>
-              <div class="line"><span>24/7 key(s)</span><span id="fobsLine">$15.00</span></div>
-              <div class="line big"><span>Today’s total (one-time)</span><span id="todayTotal">$35.00</span></div>
-              <div class="muted-sm">Today = initiation + keys only. First monthly draft = plan + add-ons.</div>
-            </div>
-          </div>
-        </fieldset>
-
-        <!-- Primary Member -->
-        <fieldset class="fieldset">
-          <legend>Primary Member</legend>
-          <div class="grid-3">
-            <label>First Name <input required name="first_name" autocomplete="given-name"></label>
-            <label>Last Name <input required name="last_name" autocomplete="family-name"></label>
-            <label>Phone <input required name="phone" inputmode="tel" autocomplete="tel"></label>
-            <label>Email <input required type="email" name="email" autocomplete="email"></label>
-            <label>Address 1 <input name="address1" autocomplete="address-line1"></label>
-            <label>Address 2 <input name="address2" autocomplete="address-line2"></label>
-            <label>City <input name="city" autocomplete="address-level2"></label>
-            <label>State <input name="state" autocomplete="address-level1"></label>
-            <label>ZIP <input name="zip" autocomplete="postal-code"></label>
-          </div>
-
-          <div class="pfp">
-            <div>
-              <label>Upload a photo (primary member)
-                <input id="photoInput" type="file" accept="image/*" />
-              </label>
-              <div class="muted-sm" style="color:#6ea8ff">Helps staff recognize you at pickup. Optional but recommended.</div>
-            </div>
-            <img id="photoPreview" alt="Photo preview" src="" style="display:none">
-          </div>
-        </fieldset>
-
-        <!-- Waiver agree -->
-        <fieldset class="fieldset">
-          <legend>Membership Agreement & Liability Waiver (Online)</legend>
-          <p class="muted-sm" style="color:#566b8f">Each adult must sign their own waiver. Minors require a guardian’s signature.</p>
-          <label class="agree">
-            <input type="checkbox" id="agree" required />
-            <span>I confirm all required waivers will be signed and are accurate.</span>
-          </label>
-        </fieldset>
-
-        <div class="form-actions">
-          <button class="pill-cta" type="submit">Continue to Payment</button>
-          <a class="btn btn-ghost" href="pricing.html">Back to Pricing</a>
+          <label class="plan"><input type="radio" name="plan" value="Tanning Only (no gym)|45">
+            <div class="plan-body"><strong>Tanning Only</strong><span class="muted">$45.00 / month · no gym access</span></div></label>
         </div>
-      </form>
-    </div>
-  </main>
 
-  <footer class="sitefoot">
-    © <span id="y"></span> Andalusia Health &amp; Fitness · 205 Church St, Andalusia, AL 36420 · (334) 582-2000
-  </footer>
+        <div class="calc">
+          <div class="row"><label class="toggle"><input type="checkbox" id="addTanning"><span>Add Tanning (gym add-on) — $27.50 / month</span></label></div>
 
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
+          <div class="row" id="familyCountsRow" style="display:none;">
+            <label>Additional Family Members
+              <input type="number" id="extraMembers" min="0" value="0" max="3">
+            </label>
+            <span class="help">Base includes 2 adults + 1 child. $10 per extra member (up to 6 total).</span>
+          </div>
 
-    (function(){
-      // === Pricing constants
-      const INIT_FEE = 20.00;
-      const FOB_FEE  = 15.00;
-      const TANNING_ADDON = 27.50;     // for any gym plan
-      const TANNING_ONLY  = 45.00;     // standalone plan (no gym)
-      const EXTRA_CHILD_FEE = 10.00;   // per extra child beyond first (Family plan rule)
+          <div class="row" id="accessRow">
+            <label>24/7 Access Keys (fobs) @ $15.00 each <input type="number" id="fobCount" min="1" value="1"></label>
+            <label class="toggle"><input type="checkbox" id="waiveInitiation"><span>Waive $20 initiation (draft signup)</span></label>
+          </div>
 
-      const form = document.getElementById('membershipForm');
+          <div class="row" style="align-items:center; display:flex; gap:10px; flex-wrap:wrap;">
+            <div>
+              <label>Waivers needed</label>
+              <input type="number" id="waiverCount" min="1" value="1" readonly style="width:70px; text-align:center;">
+            </div>
+            <button type="button" id="launchWizard" class="pill-ghost">Fill Waivers Now</button>
+            <span class="help" id="waiverStatus">0 / 1 completed</span>
+          </div>
 
-      const addTanningEl  = document.getElementById('addTanning');
-      const adultEl       = document.getElementById('adultCount');
-      const childEl       = document.getElementById('childCount');
-      const fobCountEl    = document.getElementById('fobCount');
-      const waiveInitEl   = document.getElementById('waiveInitiation');
+          <div class="totals">
+            <div class="line"><span>Monthly dues</span><span id="monthlyPlan">$0.00</span></div>
+            <div class="line"><span>Monthly add-ons</span><span id="monthlyAddons">$0.00</span></div>
+            <div class="line"><span>Initiation fee</span><span id="initiationLine">$20.00</span></div>
+            <div class="line"><span>24/7 key(s)</span><span id="fobsLine">$15.00</span></div>
+            <div class="line big"><span>Today’s total</span><span id="todayTotal">$0.00</span></div>
+          </div>
+        </div>
+      </fieldset>
 
-      const monthlyPlanEl = document.getElementById('monthlyPlan');
-      const monthlyAddEl  = document.getElementById('monthlyAddons');
-      const initiationEl  = document.getElementById('initiationLine');
-      const fobsLineEl    = document.getElementById('fobsLine');
-      const todayTotalEl  = document.getElementById('todayTotal');
+      <fieldset class="fieldset">
+        <legend>Primary Member</legend>
+        <div class="grid-3">
+          <label>First Name <input required name="first_name"></label>
+          <label>Last Name <input required name="last_name"></label>
+          <label>Phone <input required name="phone"></label>
+          <label>Email <input required type="email" name="email"></label>
+          <label>Address 1 <input name="address1"></label>
+          <label>City <input name="city"></label>
+          <label>State <input name="state"></label>
+          <label>ZIP <input name="zip"></label>
+        </div>
+        <p class="help" style="color:#000;margin-top:10px;">Primary member must bring a valid driver’s license when picking up key fobs.</p>
+      </fieldset>
 
-      const tanningAddonRow = document.getElementById('tanningAddonRow');
-      const familyCountsRow = document.getElementById('familyCountsRow');
-      const accessRow       = document.getElementById('accessRow');
+      <fieldset class="fieldset">
+        <legend>Membership Agreement & Liability Waiver</legend>
+        <label class="agree"><input type="checkbox" id="agree" required> <span>I confirm all required waivers will be signed and are accurate.</span></label>
+      </fieldset>
 
-      const waiverCountEl   = document.getElementById('waiverCount');
-      const launchBtn       = document.getElementById('launchWizard');
-      const waiverStatus    = document.getElementById('waiverStatus');
+      <div class="form-actions">
+        <button class="pill-cta" type="submit">Continue to Payment</button>
+      </div>
+    </form>
+  </div>
+</main>
 
-      const photoInput = document.getElementById('photoInput');
-      const photoPreview = document.getElementById('photoPreview');
-      let photoDataUrl = '';
+<footer class="sitefoot">
+  © <script>document.write(new Date().getFullYear())</script> Andalusia Health & Fitness — Open 24/7.
+</footer>
 
-      // parse selected plan
-      function parsePlan(){
-        const sel = form.querySelector('input[name="plan"]:checked');
-        if(!sel) return {name:'', amount:0};
-        const [name, amt] = sel.value.split('|');
-        return {name, amount: parseFloat(amt || '0')};
-      }
-      const money = n => '$' + (n||0).toFixed(2);
+<script>
+(function(){
+  const INIT_FEE=20,FOB_FEE=15,TANNING_ADDON=27.5,EXTRA_CHILD_FEE=10;
+  const form=document.getElementById('membershipForm'),
+        addTanning=document.getElementById('addTanning'),
+        fobCount=document.getElementById('fobCount'),
+        waiveInit=document.getElementById('waiveInitiation'),
+        extraMembers=document.getElementById('extraMembers'),
+        familyRow=document.getElementById('familyCountsRow'),
+        monthlyPlanEl=document.getElementById('monthlyPlan'),
+        monthlyAddEl=document.getElementById('monthlyAddons'),
+        initEl=document.getElementById('initiationLine'),
+        fobEl=document.getElementById('fobsLine'),
+        todayEl=document.getElementById('todayTotal'),
+        waiverCount=document.getElementById('waiverCount'),
+        launchBtn=document.getElementById('launchWizard');
 
-      function isTanningOnly(){
-        return (parsePlan().name||'').toLowerCase().includes('tanning only');
-      }
+  let waiverEntries=[];
 
-      function suggestByPlan(){
-        const p = (parsePlan().name||'').toLowerCase();
-        if (p.includes('family')) {
-          if (+adultEl.value < 2) adultEl.value = 2;
-          if (+childEl.value < 1) childEl.value = 1;
-          if (+waiverCountEl.value < 2) waiverCountEl.value = 2;
-        } else if (p.includes('couples')) {
-          if (+adultEl.value < 2) adultEl.value = 2;
-          if (+waiverCountEl.value < 2) waiverCountEl.value = 2;
-        } else {
-          if (+adultEl.value < 1) adultEl.value = 1;
-          if (+waiverCountEl.value < 1) waiverCountEl.value = 1;
-        }
+  function parsePlan(){
+    const sel=form.querySelector('input[name="plan"]:checked');
+    if(!sel)return{name:'',amount:0};
+    const[n,a]=sel.value.split('|');
+    return{name:n,amount:parseFloat(a)};
+  }
 
-        // UI toggles for tanning-only vs gym plans
-        const tanningOnly = isTanningOnly();
-        accessRow.style.display       = tanningOnly ? 'none' : 'flex';
-        tanningAddonRow.style.display = tanningOnly ? 'none' : 'flex';
-        familyCountsRow.style.display = tanningOnly ? 'none' : 'flex';
+  function recalc(){
+    const plan=parsePlan();
+    const isFamily=plan.name.toLowerCase().includes('family');
+    const isCouple=plan.name.toLowerCase().includes('couple');
+    familyRow.style.display=isFamily?'block':'none';
 
-        if (tanningOnly) { // disable access costs
-          fobCountEl.value = 0;
-          waiveInitEl.checked = true; // effectively zero init
-        } else {
-          if (+fobCountEl.value < 1) fobCountEl.value = 1;
-        }
-      }
+    let addons=0;
+    if(addTanning.checked)addons+=TANNING_ADDON;
+    if(isFamily){
+      const extras=Math.max(0,parseInt(extraMembers.value||'0',10));
+      if(extras>0)addons+=extras*EXTRA_CHILD_FEE;
+    }
 
-      function recalc(){
-        suggestByPlan();
-        const plan = parsePlan();
-        let planMonthly = plan.amount;
+    let waiverTotal=1;
+    if(isCouple)waiverTotal=2;
+    else if(isFamily)waiverTotal=3+Math.max(0,parseInt(extraMembers.value||'0',10));
+    waiverCount.value=waiverTotal;
 
-        // Add-ons (only for gym plans, not tanning-only)
-        let addons = 0;
-        const tanningOnly = isTanningOnly();
-        if (!tanningOnly && addTanningEl.checked) addons += TANNING_ADDON;
+    const init=waiveInit.checked?0:INIT_FEE;
+    const fobs=parseInt(fobCount.value||'0',10)*FOB_FEE;
+    const today=init+fobs;
+    const totalMonthly=plan.amount+addons;
 
-        // Extra children beyond first for Family: +$10 each/month
-        const isFamily = (plan.name||'').toLowerCase().includes('family');
-        const childCount = Math.max(0, parseInt(childEl.value||'0',10));
-        if (!tanningOnly && isFamily && childCount > 1) {
-          addons += (childCount - 1) * EXTRA_CHILD_FEE;
-        }
+    monthlyPlanEl.textContent='$'+plan.amount.toFixed(2);
+    monthlyAddEl.textContent='$'+addons.toFixed(2);
+    initEl.textContent='$'+init.toFixed(2);
+    fobEl.textContent='$'+fobs.toFixed(2);
+    todayEl.textContent='$'+today.toFixed(2);
+  }
 
-        // One-time today (only for gym plans)
-        const fobs = tanningOnly ? 0 : Math.max(0, parseInt(fobCountEl.value||'0',10));
-        const init = tanningOnly ? 0 : (waiveInitEl.checked ? 0 : INIT_FEE);
-        const today = init + (fobs * FOB_FEE);
+  form.addEventListener('change',recalc);
+  recalc();
 
-        monthlyPlanEl.textContent = money(planMonthly);
-        monthlyAddEl.textContent  = money(addons);
-        initiationEl.textContent  = money(init);
-        fobsLineEl.textContent    = money(fobs * FOB_FEE);
-        todayTotalEl.textContent  = money(today);
-      }
-
-      ['change','input'].forEach(ev => form.addEventListener(ev, recalc, true));
-      recalc();
-
-      // photo preview
-      photoInput.addEventListener('change', (e)=>{
-        const file = e.target.files && e.target.files[0];
-        if (!file) { photoPreview.style.display='none'; photoPreview.src=''; photoDataUrl=''; return; }
-        const reader = new FileReader();
-        reader.onload = () => { photoDataUrl = reader.result; photoPreview.src = photoDataUrl; photoPreview.style.display = 'block'; };
-        reader.readAsDataURL(file);
-      });
-
-      // === New-tab waiver flow ===
-      const waiverEntries = []; // {name,type,email,signature_png,signed_at}
-      function updateStatus(){
-        const need = Math.max(1, parseInt(waiverCountEl.value||'1',10));
-        const have = waiverEntries.filter(Boolean).length;
-        waiverStatus.textContent = `${have} / ${need} completed`;
-      }
-      let nextIndexToCollect = 0;
-      function openNextWaiver(){
-        const total = Math.max(1, parseInt(waiverCountEl.value||'1',10));
-        if (nextIndexToCollect >= total) return;
-        const url = `waiver.html?i=${encodeURIComponent(nextIndexToCollect)}&total=${encodeURIComponent(total)}`;
-        window.open(url, '_blank');
-      }
-      launchBtn.addEventListener('click', function(){
-        nextIndexToCollect = waiverEntries.filter(Boolean).length;
-        openNextWaiver();
-      });
-      window.addEventListener('message', function(ev){
-        if (ev.origin !== window.location.origin) return;
-        const msg = ev.data || {};
-        if (msg.type !== 'AHF_WAIVER') return;
-        waiverEntries[msg.index] = msg.entry;
-        nextIndexToCollect = msg.index + 1;
-        updateStatus();
-        const total = Math.max(1, parseInt(waiverCountEl.value||'1',10));
-        if (nextIndexToCollect < total) openNextWaiver(); else alert('All waivers completed. You can continue to payment.');
-      });
-
-      // submit: basic checks + payload to sessionStorage (payments.html reads it)
-      form.addEventListener('submit', function(e){
-        if (!document.getElementById('agree').checked) { e.preventDefault(); alert('Please confirm agreement to the waiver.'); return; }
-        const phoneDigits = (this.phone.value||'').replace(/[^\d]/g,'');
-        if (phoneDigits.length < 10){ e.preventDefault(); alert('Please enter a valid phone number.'); return; }
-        const need = Math.max(1, parseInt(waiverCountEl.value||'1',10));
-        const have = waiverEntries.filter(Boolean).length;
-        if (have < need) { e.preventDefault(); alert(`You indicated ${need} waiver(s) but completed ${have}. Click "Fill Waivers Now".`); return; }
-
-        const plan = parsePlan();
-        const tanningOnly = isTanningOnly();
-        const fobs = tanningOnly ? 0 : Math.max(0, parseInt(fobCountEl.value||'0',10));
-        const init = tanningOnly ? 0 : (waiveInitEl.checked ? 0 : INIT_FEE);
-        const today = init + (fobs * FOB_FEE);
-
-        const addons = (!tanningOnly && addTanningEl.checked ? TANNING_ADDON : 0) +
-          ((!tanningOnly && (plan.name||'').toLowerCase().includes('family') && Math.max(0, parseInt(childEl.value||'0',10)) > 1)
-             ? (Math.max(0, parseInt(childEl.value||'0',10)) - 1) * 10 : 0);
-
-        const payload = {
-          // contact
-          first_name: this.first_name.value, last_name: this.last_name.value,
-          email: this.email.value, phone: this.phone.value,
-          address1: this.address1.value, address2: this.address2.value,
-          city: this.city.value, state: this.state.value, zip: this.zip.value,
-
-          // plan & counts
-          plan_name: plan.name, plan_amount: plan.amount,
-          adult_count: Math.max(1, parseInt(adultEl.value||'1',10)),
-          child_count: Math.max(0, parseInt(childEl.value||'0',10)),
-
-          // tanning
-          is_tanning_only: tanningOnly,
-          add_tanning: (!tanningOnly && addTanningEl.checked),
-          tanning_addon_amount: TANNING_ADDON,
-          tanning_only_amount: TANNING_ONLY,  // for reference (already in plan if chosen)
-          monthly_addons: addons,
-
-          // access one-time
-          fob_count: fobs, fob_fee_each: 15,
-          initiation_fee: init,
-          today_total: today,
-
-          // waivers
-          waiver_count: need,
-          waivers: waiverEntries,
-
-          // photo
-          primary_photo_dataurl: photoDataUrl || '',
-
-          signed_at: new Date().toISOString()
-        };
-        sessionStorage.setItem('ahfSignup', JSON.stringify(payload));
-      });
-
-    })();
-  </script>
+  // === Waiver Launcher ===
+  launchBtn.addEventListener('click',()=>{
+    const total=parseInt(waiverCount.value||'1',10);
+    for(let i=0;i<total;i++){
+      const url=`waiver.html?i=${i}&total=${total}`;
+      window.open(url,'_blank');
+    }
+  });
+})();
+</script>
 </body>
 </html>
