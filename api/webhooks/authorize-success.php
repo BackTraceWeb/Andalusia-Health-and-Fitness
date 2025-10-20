@@ -1,26 +1,30 @@
 <?php
 /**
- * Authorize.Net Payment Success Webhook (Auto-validating)
- * - Always returns 200 OK for validation pings
- * - Handles real Authorize.net JSON payloads
- * - Triggers NinjaOne automation for successful captures
+ * Authorize.Net Payment Webhook (Diagnostic Mode)
+ * Logs every request and always returns 200 OK for validation.
  */
 
 header('Content-Type: application/json');
 
-// === Handle HEAD or empty POST (Authorize.net validation) ===
-if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {
-    echo json_encode(["ok" => true, "message" => "HEAD request acknowledged"]);
-    http_response_code(200);
-    exit;
-}
+// === Log everything for diagnostics ===
+$logDir = __DIR__ . '/../../logs';
+if (!is_dir($logDir)) mkdir($logDir, 0755, true);
+$logFile = "$logDir/authorize-diagnostic.log";
 
-$input = file_get_contents('php://input');
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && trim($input) === '') {
-    echo json_encode(["ok" => true, "message" => "Validation successful"]);
-    http_response_code(200);
-    exit;
-}
+$method = $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN';
+$headers = getallheaders();
+$body = file_get_contents('php://input');
+$timestamp = date('Y-m-d H:i:s');
+
+$log = "=== [{$timestamp}] {$method} Request ===\n";
+$log .= "Headers:\n" . print_r($headers, true) . "\n";
+$log .= "Body:\n{$body}\n\n";
+file_put_contents($logFile, $log, FILE_APPEND);
+
+// === Respond OK for any request (Authorize.net validation safe) ===
+http_response_code(200);
+echo json_encode(["ok" => true, "received" => true, "method" => $method]);
+exit;
 
 // === 1️⃣ Read webhook payload ===
 $raw = file_get_contents('php://input');
