@@ -108,94 +108,55 @@ if (preg_match('/^QP(\d+)M(\d+)$/i', $invoiceNumber, $m)) {
   FILE_APPEND
 );
 
-// === NinjaOne OAuth (form-encoded) ===
+// === NinjaOne OAuth (form-encoded; smart scope fallback) ===
 $clientId     = "qJGajqV0AiEiiRMRbGaIJ3cGQuI";
 $clientSecret = "TCPQK-WLS0F4X3gqtb_KqdwMIf_4qgtRMd7h6dVkYYB2S1R1rVY7Mg";
 $authUrl      = "https://api.us2.ninjarmm.com/oauth/token";
 $execUrl      = "https://api.us2.ninjarmm.com/v2/scripts/execute";
 
-// Try WITHOUT scope (most tenants inherit app scopes)
-$fields = [
-  "grant_type"    => "client_credentials",
-  "client_id"     => $clientId,
-  "client_secret" => $clientSecret,
-];
-$authFields = http_build_query($fields, '', '&');
-
-$ch = curl_init($authUrl);
-curl_setopt_array($ch, [
-  CURLOPT_RETURNTRANSFER => true,
-  CURLOPT_POST           => true,
-  CURLOPT_HTTPHEADER     => ["Content-Type: application/x-www-form-urlencoded"],
-  CURLOPT_POSTFIELDS     => $authFields,
-  CURLOPT_TIMEOUT        => 20,
-]);
-$authResp = curl_exec($ch);
-$httpAuth = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlErr  = curl_error($ch);
-curl_close($ch);
-
-$token = null;
-if ($httpAuth === 400 && stripos($authResp, 'invalid_scope') !== false) {
-  // Fallback: explicitly request the app’s checked scopes (lowercase, space-separated)
-  $fields["scope"] = "management control"; // your app has Management checked; include Control if you need device actions
-  $authFields2 = http_build_query($fields, '', '&');
+function ninja_token($authUrl, $clientId, $clientSecret, $scopeOrNull, $logFile) {
+  $fields = [
+    "grant_type"    => "client_credentials",
+    "client_id"     => $clientId,
+    "client_secret" => $clientSecret,
+  ];
+  if ($scopeOrNull !== null && $scopeOrNull !== '') {
+    $fields["scope"] = $scopeOrNull; // space-separated if multiple
+  }
+  $body = http_build_query($fields, '', '&');
 
   $ch = curl_init($authUrl);
   curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
     CURLOPT_HTTPHEADER     => ["Content-Type: application/x-www-form-urlencoded"],
-    CURLOPT_POSTFIELDS     => $authFields2,
+    CURLOPT_POSTFIELDS     => $body,
     CURLOPT_TIMEOUT        => 20,
   ]);
-  $authResp = curl_exec($ch);
-  $httpAuth = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-  $curlErr  = curl_error($ch);
+  $resp = curl_exec($ch);
+  $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  $err  = curl_error($ch);
   curl_close($ch);
+
+  if ($resp && ($j = json_decode($resp, true)) && !empty($j['access_token'])) {
+    return [$j['access_token'], $code, $resp];
+  }
+  file_put_contents($logFile, "CHECKPOINT: ninja-auth-attempt scope='".($scopeOrNull??'')."' http=$code err='$err' resp='$resp'\n", FILE_APPEND);
+  return [null, $code, $resp];
 }
 
-if ($authResp && ($j = json_decode($authResp, true))) {
-  $token = $j['access_token'] ?? null;
+// 1) Try WITHOUT scope (most tenants inherit app scopes)
+[$token, $httpAuth, $authResp] = ninja_token($authUrl, $clientId, $clientSecret, null, $logFile);
+
+// 2) If invalid_scope, try ONLY 'management' (your app has Management checked)
+if (!$token && $httpAuth === 400 && stripos($authResp, 'invalid_scope') !== false) {
+  [$token, $httpAuth, $authResp] = ninja_token($authUrl, $clientId, $clientSecret, 'management', $logFile);
 }
 
 if (!$token) {
-  file_put_contents($logFile, "CHECKPOINT: ninja-auth-failed http=$httpAuth curl='$curlErr' resp='$authResp'\n\n", FILE_APPEND);
+  file_put_contents($logFile, "CHECKPOINT: ninja-auth-failed-final http=$httpAuth resp='$authResp'\n\n", FILE_APPEND);
   http_response_code(200); echo json_encode(["ok"=>false,"error"=>"ninja-auth-failed"]); return;
 }
 
 file_put_contents($logFile, "CHECKPOINT: ninja-auth-ok\n", FILE_APPEND);
 
-// === execute call stays the same ===
-$execPayload = [
-  "device_id"   => "DESKTOP-DTDNBM0",
-  "script_name" => "Update AxTrax Member (Authorize.net Payment)",
-  "parameters"  => [
-    "memberId"  => (string)$memberId,
-    "invoiceId" => (string)$invoiceId,
-    "amount"    => number_format($amount, 2, '.', ''),
-    "transId"   => (string)$transId,
-  ]
-];
-
-$ch = curl_init($execUrl);
-curl_setopt_array($ch, [
-  CURLOPT_RETURNTRANSFER => true,
-  CURLOPT_POST           => true,
-  CURLOPT_HTTPHEADER     => [
-    "Authorization: Bearer $token",
-    "Content-Type: application/json"
-  ],
-  CURLOPT_POSTFIELDS     => json_encode($execPayload, JSON_UNESCAPED_SLASHES),
-  CURLOPT_TIMEOUT        => 30,
-]);
-$resp  = curl_exec($ch);
-$code  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$errEx = curl_error($ch);
-curl_close($ch);
-
-file_put_contents($logFile, "CHECKPOINT: ninja-exec http=$code err='$errEx'\n$resp\n\n", FILE_APPEND);
-
-// Always ACK ANet
-http_response_code(200);
-echo json_encode(["ok" => ($code>=200 && $code<300), "http"=>$code]);
