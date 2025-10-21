@@ -1,12 +1,15 @@
 <?php
 /**
- * Authorize.Net Hosted Payment (Production/Sandbox)
- * Final working version for QuickPay + AxTrax flow
+ * Authorize.Net Hosted Payment Page (QuickPay Integration)
+ * Auto-redirects to webhook on successful payment.
  */
 
 declare(strict_types=1);
 header('Content-Type: text/html; charset=utf-8');
 
+// ------------------------------------------------------------------
+// Includes
+// ------------------------------------------------------------------
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../../_bootstrap.php';
 
@@ -36,7 +39,7 @@ $stmt = $pdo->prepare("SELECT first_name,last_name,email,zip FROM members WHERE 
 $stmt->execute([$memberId]);
 $m = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$stmt2 = $pdo->prepare("SELECT amount_cents,period_start,period_end FROM dues WHERE id=?");
+$stmt2 = $pdo->prepare("SELECT amount_cents FROM dues WHERE id=?");
 $stmt2->execute([$duesId]);
 $d = $stmt2->fetch(PDO::FETCH_ASSOC);
 
@@ -51,9 +54,7 @@ if (!$m || !$d) {
 // ------------------------------------------------------------------
 $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 $invoice = "DUES{$duesId}-MEM{$memberId}";
-
-$returnBase = "https://andalusiahealthandfitness.com/api/payments/authorize-return.php";
-$returnWithIds = $returnBase . "?memberId=" . $memberId . "&invoiceId=" . $duesId;
+$returnUrl = "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}";
 
 $payload = [
     "getHostedPaymentPageRequest" => [
@@ -80,17 +81,10 @@ $payload = [
                     "settingName"  => "hostedPaymentReturnOptions",
                     "settingValue" => json_encode([
                         "showReceipt"   => false,
-                        "url"           => $returnWithIds,
-                        "urlText"       => "Return to Andalusia",
+                        "url"           => $returnUrl,
                         "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
                         "cancelUrlText" => "Cancel",
                         "linkMethod"    => "POST"
-                    ], JSON_UNESCAPED_SLASHES)
-                ],
-                [
-                    "settingName"  => "hostedPaymentIFrameCommunicatorUrl",
-                    "settingValue" => json_encode([
-                        "url" => $returnWithIds
                     ], JSON_UNESCAPED_SLASHES)
                 ],
                 [
@@ -126,22 +120,24 @@ $curlError = curl_error($ch);
 curl_close($ch);
 
 // ------------------------------------------------------------------
-// Logging (optional but helpful)
+// Logging
+// ------------------------------------------------------------------
 $logDir = __DIR__ . '/../../logs';
 if (!is_dir($logDir)) mkdir($logDir, 0755, true);
 file_put_contents("$logDir/authorize-hosted.log",
-    date('c') . " Payload:\n" . json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) .
+    date('c') . " Payload:\n" . json_encode($payload, JSON_PRETTY_PRINT) .
     "\nResponse:\n" . $response . "\n\n",
     FILE_APPEND
 );
 
 // ------------------------------------------------------------------
-// Handle Response
+// Handle response
 // ------------------------------------------------------------------
 if ($curlError) {
     echo "<h3>cURL Error</h3><pre>{$curlError}</pre>";
     exit;
 }
+
 if (!$response) {
     echo "<h3>No response from Authorize.Net</h3>";
     exit;
@@ -164,20 +160,20 @@ if (!isset($data['token'])) {
 }
 
 // ------------------------------------------------------------------
-// Redirect to payment page
+// Redirect to Hosted Payment Page
 // ------------------------------------------------------------------
 $token = htmlspecialchars($data['token']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Redirecting...</title></head>
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting to Secure Payment...</title>
+</head>
 <body onload="document.forms[0].submit()">
   <p>Redirecting to Secure Payment...</p>
-  <!-- Use test or production URL based on config -->
   <form method="POST" action="https://test.authorize.net/payment/payment">
     <input type="hidden" name="token" value="<?= $token ?>">
-    <input type="hidden" name="invoice_id" value="<?= htmlspecialchars($duesId) ?>">
-    <input type="hidden" name="member_id" value="<?= htmlspecialchars($memberId) ?>">
     <noscript><button type="submit">Continue</button></noscript>
   </form>
 </body>
