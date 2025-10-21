@@ -50,11 +50,10 @@ if (!$m || !$d) {
 }
 
 // ------------------------------------------------------------------
-// Build payload (correct structure)
+// Build payload
 // ------------------------------------------------------------------
 $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 $invoice = "DUES{$duesId}-MEM{$memberId}";
-$returnUrl = "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}";
 
 $payload = [
     "getHostedPaymentPageRequest" => [
@@ -74,34 +73,30 @@ $payload = [
                 "lastName"  => $m['last_name'],
                 "zip"       => $m['zip'] ?? ''
             ]
-],
-// ⬇ hostedPaymentSettings must be at the SAME LEVEL as transactionRequest
-"hostedPaymentSettings" => [
-    "setting" => [
-        [
-            "settingName"  => "hostedPaymentReturnOptions",
-            "settingValue" => json_encode([
-                "showReceipt" => false,
-                "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId=" . $memberId . "&invoiceId=" . $duesId,
-                "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/",
-                "linkMethod"  => "POST"
-            ], JSON_UNESCAPED_SLASHES)
         ],
-        [
-            "settingName"  => "hostedPaymentButtonOptions",
-            "settingValue" => '{"text":"Pay Now"}'
-        ],
-        [
-            "settingName"  => "hostedPaymentStyleOptions",
-            "settingValue" => '{"bgColor":"#000000"}'
+        "hostedPaymentSettings" => [
+            "setting" => [
+                [
+                    "settingName"  => "hostedPaymentReturnOptions",
+                    "settingValue" => json_encode([
+                        "showReceipt" => false,
+                        "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
+                        "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/",
+                        "linkMethod"  => "POST"
+                    ], JSON_UNESCAPED_SLASHES)
+                ],
+                [
+                    "settingName"  => "hostedPaymentButtonOptions",
+                    "settingValue" => '{"text":"Pay Now"}'
+                ],
+                [
+                    "settingName"  => "hostedPaymentStyleOptions",
+                    "settingValue" => '{"bgColor":"#000000"}'
+                ]
+            ]
         ]
     ]
-]
-
-file_put_contents(
-    '/var/www/andalusiahealthandfitness/logs/authorize-debug.json',
-    json_encode($payload, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES)
-);
+];
 
 // ------------------------------------------------------------------
 // Send request to Authorize.Net
