@@ -1,13 +1,11 @@
 <?php
 /**
- * Authorize.Net Hosted Payment (Sandbox)
+ * Authorize.Net Hosted Payment (Production / Sandbox)
+ * Updated for QuickPay → AxTrax automation flow
  */
 
 header('Content-Type: text/html; charset=utf-8');
 
-// ------------------------------------------------------------------
-// Includes
-// ------------------------------------------------------------------
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../../_bootstrap.php';
 
@@ -33,7 +31,7 @@ if ($memberId <= 0 || $duesId <= 0) {
 // ------------------------------------------------------------------
 // Get member & dues data
 // ------------------------------------------------------------------
-$stmt = $pdo->prepare("SELECT first_name,last_name,monthly_fee,payment_type FROM members WHERE id=?");
+$stmt = $pdo->prepare("SELECT first_name,last_name,email,zip FROM members WHERE id=?");
 $stmt->execute([$memberId]);
 $m = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -48,9 +46,9 @@ if (!$m || !$d) {
 }
 
 // ------------------------------------------------------------------
-// Payload
+// Build payload
 // ------------------------------------------------------------------
-$amount = number_format(($d['amount_cents'] / 100), 2, '.', '');
+$amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 $invoice = "DUES{$duesId}-MEM{$memberId}";
 
 $payload = [
@@ -68,7 +66,11 @@ $payload = [
       ],
       "billTo" => [
         "firstName" => $m['first_name'],
-        "lastName"  => $m['last_name']
+        "lastName"  => $m['last_name'],
+        "zip"       => $m['zip'] ?? ''
+      ],
+      "customer" => [
+        "email" => $m['email'] ?? ''
       ]
     ],
     "hostedPaymentSettings" => [
@@ -76,9 +78,9 @@ $payload = [
         [
           "settingName" => "hostedPaymentReturnOptions",
           "settingValue" => json_encode([
-            "showReceipt" => true,
-            "url" => "https://andalusiahealthandfitness.com/quickpay/thanks.html",
-            "urlText" => "Return to Andalusia Health and Fitness",
+            "showReceipt" => false,
+            "url" => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
+            "urlText" => "Return to Andalusia Health & Fitness",
             "cancelUrl" => "https://andalusiahealthandfitness.com/quickpay/",
             "cancelUrlText" => "Cancel"
           ], JSON_UNESCAPED_SLASHES)
@@ -97,7 +99,7 @@ $payload = [
 ];
 
 // ------------------------------------------------------------------
-// Send request
+// Send request to Authorize.net
 // ------------------------------------------------------------------
 $ch = curl_init(AUTH_API_URL);
 curl_setopt_array($ch, [
@@ -116,7 +118,7 @@ $curlError = curl_error($ch);
 curl_close($ch);
 
 // ------------------------------------------------------------------
-// Handle Response
+// Handle response
 // ------------------------------------------------------------------
 if ($curlError) {
   echo "<h3>cURL Error</h3><pre>{$curlError}</pre>";
@@ -127,9 +129,7 @@ if (!$response) {
   exit;
 }
 
-// Trim BOM (UTF-8 marker) before decoding
 $response = preg_replace('/^\xEF\xBB\xBF/', '', $response);
-
 $data = json_decode($response, true);
 
 if (json_last_error() !== JSON_ERROR_NONE) {
@@ -153,8 +153,10 @@ $token = htmlspecialchars($data['token']);
 <head><meta charset="UTF-8"><title>Redirecting...</title></head>
 <body onload="document.forms[0].submit()">
   <p>Redirecting to Secure Payment...</p>
-  <form method="POST" action="https://test.authorize.net/payment/payment">
+  <form method="POST" action="https://accept.authorize.net/payment/payment">
     <input type="hidden" name="token" value="<?= $token ?>">
+    <input type="hidden" name="invoice_id" value="<?= htmlspecialchars($duesId) ?>">
+    <input type="hidden" name="member_id" value="<?= htmlspecialchars($memberId) ?>">
   </form>
 </body>
 </html>
