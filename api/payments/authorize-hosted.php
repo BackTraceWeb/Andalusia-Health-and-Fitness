@@ -63,19 +63,20 @@ $payload = [
                     "settingName"  => "hostedPaymentReturnOptions",
                     "settingValue" => json_encode([
                         "showReceipt"   => false,
-                        "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
-                        "urlText"       => "Return to Andalusia",
+                        "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
+                        "urlText"       => "",
                         "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
-                        "cancelUrlText" => "Cancel"
+                        "cancelUrlText" => "Cancel",
+                        "linkMethod"    => "POST"
                     ], JSON_UNESCAPED_SLASHES)
                 ],
                 [
                     "settingName"  => "hostedPaymentButtonOptions",
-                    "settingValue" => json_encode(["text" => "Pay Now"])
+                    "settingValue" => json_encode(["text" => "Pay Now"], JSON_UNESCAPED_SLASHES)
                 ],
                 [
                     "settingName"  => "hostedPaymentStyleOptions",
-                    "settingValue" => json_encode(["bgColor" => "#000000"])
+                    "settingValue" => json_encode(["bgColor" => "#000000"], JSON_UNESCAPED_SLASHES)
                 ]
             ]
         ]
