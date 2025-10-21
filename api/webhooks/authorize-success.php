@@ -108,36 +108,45 @@ if (preg_match('/^QP(\d+)M(\d+)$/i', $invoiceNumber, $m)) {
   FILE_APPEND
 );
 
-// ── NinjaOne OAuth
+// === NinjaOne OAuth (form-encoded, not JSON) ===
 $clientId     = "qJGajqV0AiEiiRMRbGaIJ3cGQuI";
 $clientSecret = "TCPQK-WLS0F4X3gqtb_KqdwMIf_4qgtRMd7h6dVkYYB2S1R1rVY7Mg";
 $authUrl      = "https://api.us2.ninjarmm.com/oauth/token";
 $execUrl      = "https://api.us2.ninjarmm.com/v2/scripts/execute";
 
+// Send as application/x-www-form-urlencoded
+$authFields = http_build_query([
+  "grant_type"    => "client_credentials",
+  "client_id"     => $clientId,
+  "client_secret" => $clientSecret,
+], '', '&');
+
 $ch = curl_init($authUrl);
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_POST           => true,
-  CURLOPT_HTTPHEADER     => ["Content-Type: application/json"],
-  CURLOPT_POSTFIELDS     => json_encode([
-    "grant_type"    => "client_credentials",
-    "client_id"     => $clientId,
-    "client_secret" => $clientSecret
-  ], JSON_UNESCAPED_SLASHES),
+  CURLOPT_HTTPHEADER     => ["Content-Type: application/x-www-form-urlencoded"],
+  CURLOPT_POSTFIELDS     => $authFields,
   CURLOPT_TIMEOUT        => 20,
 ]);
 $authResp = curl_exec($ch);
-$errAuth  = curl_error($ch);
+$curlErr  = curl_error($ch);
+$httpAuth = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
-$token = ($authResp && ($j = json_decode($authResp, true))) ? ($j['access_token'] ?? null) : null;
+
+$token = null;
+if ($authResp && ($j = json_decode($authResp, true))) {
+  $token = $j['access_token'] ?? null;
+}
 
 if (!$token) {
-  @file_put_contents($logFile, "CHECKPOINT: ninja-auth-failed curl='$errAuth' resp='$authResp'\n\n", FILE_APPEND);
+  file_put_contents($logFile, "CHECKPOINT: ninja-auth-failed http=$httpAuth curl='$curlErr' resp='$authResp'\n\n", FILE_APPEND);
   http_response_code(200); echo json_encode(["ok"=>false,"error"=>"ninja-auth-failed"]); return;
 }
-@file_put_contents($logFile, "CHECKPOINT: ninja-auth-ok\n", FILE_APPEND);
 
-// ── NinjaOne execute
+file_put_contents($logFile, "CHECKPOINT: ninja-auth-ok\n", FILE_APPEND);
+
+// === (unchanged) Execute script with JSON ===
 $execPayload = [
   "device_id"   => "DESKTOP-DTDNBM0",
   "script_name" => "Update AxTrax Member (Authorize.net Payment)",
@@ -165,8 +174,8 @@ $code  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $errEx = curl_error($ch);
 curl_close($ch);
 
-@file_put_contents($logFile, "CHECKPOINT: ninja-exec http=$code err='$errEx'\n$resp\n\n", FILE_APPEND);
+file_put_contents($logFile, "CHECKPOINT: ninja-exec http=$code err='$errEx'\n$resp\n\n", FILE_APPEND);
 
-// Always ACK to stop retries
+// Always ACK to ANet
 http_response_code(200);
 echo json_encode(["ok" => ($code>=200 && $code<300), "http"=>$code]);
