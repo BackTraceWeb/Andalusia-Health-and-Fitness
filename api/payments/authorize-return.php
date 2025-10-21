@@ -24,8 +24,8 @@ header('Content-Type: text/html; charset=utf-8');
 // ----------------------------------------------------------------------
 // Capture return parameters
 // ----------------------------------------------------------------------
-$invoiceId = $_GET['invoice_id'] ?? $_POST['invoice_id'] ?? null;
-$memberId  = $_GET['member_id'] ?? $_POST['member_id'] ?? null;
+$memberId = $_POST['memberId'] ?? $_GET['memberId'] ?? 0;
+$invoiceId = $_POST['invoiceId'] ?? $_GET['invoiceId'] ?? 0;
 
 // Create log directory if missing
 $logDir = __DIR__ . '/../../logs';

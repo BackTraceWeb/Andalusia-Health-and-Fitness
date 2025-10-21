@@ -73,38 +73,35 @@ $payload = [
                 "zip"       => $m['zip'] ?? ''
             ]
         ],
-        "hostedPaymentSettings" => [
-            "setting" => [
-                // --- Immediate redirect (no receipt screen) ---
-                [
-                    "settingName"  => "hostedPaymentReturnOptions",
-                    "settingValue" => json_encode([
-                        "showReceipt"   => false,
-                        "url"           => $returnUrl,
-                        "urlText"       => "Return to Andalusia",
-                        "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
-                        "cancelUrlText" => "Cancel"
-                    ], JSON_UNESCAPED_SLASHES)
-                ],
-                // --- Forces Authorize.net to post to our return handler silently ---
-                [
-                    "settingName"  => "hostedPaymentIFrameCommunicatorUrl",
-                    "settingValue" => json_encode([
-                        "url" => $returnUrl
-                    ], JSON_UNESCAPED_SLASHES)
-                ],
-                [
-                    "settingName"  => "hostedPaymentButtonOptions",
-                    "settingValue" => json_encode(["text" => "Pay Now"])
-                ],
-                [
-                    "settingName"  => "hostedPaymentStyleOptions",
-                    "settingValue" => json_encode(["bgColor" => "#000000"])
-                ]
-            ]
+   "hostedPaymentSettings" => [
+    "setting" => [
+        [
+            "settingName"  => "hostedPaymentReturnOptions",
+            "settingValue" => json_encode([
+                "showReceipt"   => false,
+                "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
+                "urlText"       => "Return to Andalusia",
+                "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
+                "cancelUrlText" => "Cancel",
+                "linkMethod"    => "POST"
+            ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
+            "settingName"  => "hostedPaymentIFrameCommunicatorUrl",
+            "settingValue" => json_encode([
+                "url" => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}"
+            ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
+            "settingName"  => "hostedPaymentButtonOptions",
+            "settingValue" => json_encode(["text" => "Pay Now"])
+        ],
+        [
+            "settingName"  => "hostedPaymentStyleOptions",
+            "settingValue" => json_encode(["bgColor" => "#000000"])
         ]
     ]
-];
+]
 
 // ------------------------------------------------------------------
 // Send request to Authorize.Net
