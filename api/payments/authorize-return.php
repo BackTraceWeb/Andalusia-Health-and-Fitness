@@ -18,7 +18,7 @@ error_reporting(E_ALL);
  * - Displays confirmation message to member
  */
 
-require __DIR__ . '/../_bootstrap.php';
+require_once __DIR__ . '/../../_bootstrap.php';
 header('Content-Type: text/html; charset=utf-8');
 
 // ----------------------------------------------------------------------
