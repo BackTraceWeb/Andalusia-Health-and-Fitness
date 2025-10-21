@@ -7,6 +7,7 @@ declare(strict_types=1);
  * - Supports "Applications" semicolon payload: a single POST key whose value is "Key=Val;Key=Val;..."
  * - Updates DB when we can determine approval/decline
  * - Emits CSV ONLY when we have a real, interpretable result; otherwise returns empty 200 to let caller poll.
+ * - Triggers AxTrax reactivation webhook ONLY for QuickPay successful payments
  */
 
 header('Content-Type: text/plain');
@@ -84,19 +85,47 @@ try {
         if (!$ticket && is_string($resp) && preg_match('/YAUTH\/TKT\s+(\d+)/i', $resp, $mm)) {
           $ticket = $mm[1];
         }
+
+        // Update dues record
         $pdo->prepare("UPDATE dues SET status='paid', epn_ticket=?, paid_at=NOW()
                        WHERE id=? AND status IN('due','failed')")
             ->execute([$ticket, $row['invoice_id']]);
+
+        // ✅ Fire webhook for AxTrax reactivation (QuickPay only)
+        try {
+          $webhookUrl = 'https://your-ninjaone-webhook-or-endpoint.com/axtrax-update';
+          $payload = [
+            'invoice_id' => $row['invoice_id'],
+            'action'     => 'reactivate_fob'
+          ];
+          $ch = curl_init($webhookUrl);
+          curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 5
+          ]);
+          $resp = curl_exec($ch);
+          curl_close($ch);
+        } catch (Throwable $e) {
+          error_log('Webhook error: ' . $e->getMessage());
+        }
+
       } elseif ($status === 'N') {
+        // Declined
         $pdo->prepare("UPDATE dues SET status='failed'
                        WHERE id=? AND status='due'")
             ->execute([$row['invoice_id']]);
       }
+
+      // Mark postback handled
       $pdo->prepare("UPDATE quickpay_postbacks SET handled=1 WHERE pbid=?")->execute([$pbid]);
     }
   }
 } catch (Throwable $e) {
   // swallow errors; still send CSV below
+  error_log('Postback error: ' . $e->getMessage());
 }
 
 // 6) Emit CSV ONLY for real, interpretable postbacks
