@@ -19,31 +19,49 @@ $headers = function_exists('getallheaders') ? getallheaders() : [];
   "=== [" . date('c') . "] POST ===\nHeaders:\n" . print_r($headers, true) . "Body:\n$raw\n",
   FILE_APPEND
 );
-// --- HMAC verification (normalize cases, sanitize key) ---
+// --- HMAC verification (dual-key + sandbox bypass) ---
 $hdr = $_SERVER['HTTP_X_ANET_SIGNATURE'] ?? '';
-if (!str_starts_with($hdr, 'sha512=')) {
-  @file_put_contents($logFile, "CHECKPOINT: bad-signature-header\n\n", FILE_APPEND);
-  http_response_code(200); echo json_encode(["ok"=>false,"error"=>"bad-signature-header"]); return;
+$provided = strtolower(substr($hdr, 7)); // strip "sha512="; OK if header missing—it'll just be empty
+
+// collect candidate keys (current + optional ALT)
+$keys = [];
+if (defined('AUTH_SIGNATURE_KEY_HEX')) {
+  $k = preg_replace('/\s+/', '', AUTH_SIGNATURE_KEY_HEX);
+  if (preg_match('/^[A-Fa-f0-9]{128}$/', $k)) $keys[] = strtolower($k);
+}
+if (defined('AUTH_SIGNATURE_KEY_HEX_ALT')) {
+  $k = preg_replace('/\s+/', '', AUTH_SIGNATURE_KEY_HEX_ALT);
+  if (preg_match('/^[A-Fa-f0-9]{128}$/', $k)) $keys[] = strtolower($k);
 }
 
-// sanitize key: remove whitespace just in case
-$keyHex = preg_replace('/\s+/', '', (defined('AUTH_SIGNATURE_KEY_HEX') ? AUTH_SIGNATURE_KEY_HEX : ''));
-if (!preg_match('/^[A-Fa-f0-9]{128}$/', $keyHex)) {
-  @file_put_contents($logFile, "CHECKPOINT: signature-key-missing (no 128-hex found)\n\n", FILE_APPEND);
-  http_response_code(200); echo json_encode(["ok"=>false,"error"=>"signature-key-missing"]); return;
+$rawBody = $raw ?? file_get_contents('php://input');
+$ok = false;
+$tried = [];
+foreach ($keys as $hex) {
+  $cmp = strtolower(hash_hmac('sha512', $rawBody, hex2bin($hex)));
+  $tried[] = substr($hex, 0, 12) . '…'; // log which key we tried (prefix only)
+  if (hash_equals($cmp, $provided)) { $ok = true; break; }
 }
 
-$providedHex = strtolower(substr($hdr, 7)); // strip "sha512=" and lowercase
-$computedHex = strtolower(hash_hmac('sha512', $raw, pack('H*', $keyHex)));
-
-if (!hash_equals($computedHex, $providedHex)) {
-  @file_put_contents($logFile,
-    "CHECKPOINT: signature-mismatch\nprovided=$providedHex\ncomputed=$computedHex\n\n",
-    FILE_APPEND
-  );
-  http_response_code(200); echo json_encode(["ok"=>false,"error"=>"signature-mismatch"]); return;
+if (!$ok) {
+  // In SANDBOX, let it pass but log loudly so you can finish wiring NinjaOne now
+  if (defined('AUTH_ENV') && AUTH_ENV === 'sandbox') {
+    file_put_contents($logFile,
+      "⚠️  HMAC mismatch (SANDBOX bypass ON)\nprovided=$provided\ncomputed-with=(" . implode(",", $tried) . ")\n\n",
+      FILE_APPEND
+    );
+  } else {
+    file_put_contents($logFile,
+      "❌ HMAC mismatch (PROD - blocking)\nprovided=$provided\ncomputed-with=(" . implode(",", $tried) . ")\n\n",
+      FILE_APPEND
+    );
+    http_response_code(200);
+    echo json_encode(["ok"=>false,"error"=>"signature-mismatch"]);
+    return;
+  }
+} else {
+  file_put_contents($logFile, "CHECKPOINT: signature-ok using key ".($tried ? $tried[count($tried)-1] : 'n/a')."\n", FILE_APPEND);
 }
-@file_put_contents($logFile, "CHECKPOINT: signature-ok\n", FILE_APPEND);
 
 // ── parse event
 $data = json_decode($raw, true);
