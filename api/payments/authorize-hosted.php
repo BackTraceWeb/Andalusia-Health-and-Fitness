@@ -37,53 +37,49 @@ if (!$m || !$d) {
 
 $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 
-// ── only tweak: make invoice clearly QuickPay and webhook-friendly
-$invoice = "QP-{$duesId}";
+// Safe, short invoice (<=20 alnum)
+$invoice = substr(preg_replace('/[^A-Za-z0-9]/','', "QP{$duesId}M{$memberId}"), 0, 20);
 
 $payload = [
-    "getHostedPaymentPageRequest" => [
-        "merchantAuthentication" => [
-            "name" => AUTH_LOGIN_ID,
-            "transactionKey" => AUTH_TRANSACTION_KEY
+  "getHostedPaymentPageRequest" => [
+    "merchantAuthentication" => [
+      "name" => AUTH_LOGIN_ID,
+      "transactionKey" => AUTH_TRANSACTION_KEY
+    ],
+    "transactionRequest" => [
+      "transactionType" => "authCaptureTransaction",
+      "amount" => $amount,
+      "order" => [
+        "invoiceNumber" => $invoice
+        // (omit description/billTo for the first pass)
+      ]
+    ],
+    "hostedPaymentSettings" => [
+      "setting" => [
+        [
+          "settingName"  => "hostedPaymentReturnOptions",
+          "settingValue" => json_encode([
+            "showReceipt" => false,
+            // keep only the two *supported* properties; omit linkMethod/urlText for now
+            "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
+            "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/"
+          ], JSON_UNESCAPED_SLASHES)
         ],
-        "transactionRequest" => [
-            "transactionType" => "authCaptureTransaction",
-            "amount" => $amount,
-            "order" => [
-                "invoiceNumber" => $invoice,
-                "description"   => "Membership dues for {$m['first_name']} {$m['last_name']}"
-            ],
-            "billTo" => [
-                "firstName" => $m['first_name'],
-                "lastName"  => $m['last_name'],
-                "zip"       => $m['zip'] ?? ''
-            ]
-            // (no userFields here—Accept Hosted is touchy about it)
+        [
+          "settingName"  => "hostedPaymentPaymentOptions",
+          "settingValue" => json_encode([
+            "cardCodeRequired" => true
+          ], JSON_UNESCAPED_SLASHES)
         ],
-        "hostedPaymentSettings" => [
-            "setting" => [
-                [
-                    "settingName"  => "hostedPaymentReturnOptions",
-                    "settingValue" => json_encode([
-                        "showReceipt"   => false,
-                        "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
-                        "urlText"       => "",
-                        "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
-                        "cancelUrlText" => "Cancel",
-                        "linkMethod"    => "POST"
-                    ], JSON_UNESCAPED_SLASHES)
-                ],
-                [
-                    "settingName"  => "hostedPaymentButtonOptions",
-                    "settingValue" => json_encode(["text" => "Pay Now"], JSON_UNESCAPED_SLASHES)
-                ],
-                [
-                    "settingName"  => "hostedPaymentStyleOptions",
-                    "settingValue" => json_encode(["bgColor" => "#000000"], JSON_UNESCAPED_SLASHES)
-                ]
-            ]
+        [
+          "settingName"  => "hostedPaymentOrderOptions",
+          "settingValue" => json_encode([
+            "show" => true
+          ], JSON_UNESCAPED_SLASHES)
         ]
+      ]
     ]
+  ]
 ];
 
 $logDir = __DIR__ . '/../../logs';
