@@ -57,32 +57,33 @@ $payload = [
       "name" => AUTH_LOGIN_ID,
       "transactionKey" => AUTH_TRANSACTION_KEY
     ],
- "transactionRequest" => [
-    "transactionType" => "authCaptureTransaction",
-    "amount" => $amount,
-    "order" => [
-        "invoiceNumber" => $invoice,
-        "description" => "Membership dues for {$m['first_name']} {$m['last_name']}"
+    // 🧾 Customer info now lives at the top level
+    "customer" => [
+      "email" => $m['email'] ?? '',
+      "id"    => "MEM{$memberId}"
     ],
-    "billTo" => [
+    "transactionRequest" => [
+      "transactionType" => "authCaptureTransaction",
+      "amount" => $amount,
+      "order" => [
+        "invoiceNumber" => $invoice,
+        "description"   => "Membership dues for {$m['first_name']} {$m['last_name']}"
+      ],
+      "billTo" => [
         "firstName" => $m['first_name'],
         "lastName"  => $m['last_name'],
         "zip"       => $m['zip'] ?? ''
-    ]
-],
-"customer" => [
-    "email" => $m['email'] ?? ''
-],
-
+      ]
+    ],
     "hostedPaymentSettings" => [
       "setting" => [
         [
           "settingName" => "hostedPaymentReturnOptions",
           "settingValue" => json_encode([
-            "showReceipt" => false,
-            "url" => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
-            "urlText" => "Return to Andalusia Health & Fitness",
-            "cancelUrl" => "https://andalusiahealthandfitness.com/quickpay/",
+            "showReceipt"   => false,
+            "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
+            "urlText"       => "Return to Andalusia Health & Fitness",
+            "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
             "cancelUrlText" => "Cancel"
           ], JSON_UNESCAPED_SLASHES)
         ],
