@@ -94,30 +94,51 @@ if (!$txn) {
   exit;
 }
 
-// === 4) QuickPay-only filter ===
+// --- APPROVAL & QUICKPAY CHECKS ---
 $isApproved    = ((int)($txn['responseCode'] ?? 0) === 1);
-$invoiceNumber = $txn['order']['invoiceNumber'] ?? '';
-$mdf           = $txn['merchantDefinedFields'] ?? [];
-$tags = [];
-foreach ($mdf as $f) { $tags[$f['name']] = $f['value']; }
-$isQuickPay = (str_starts_with((string)$invoiceNumber, 'QP-') || (($tags['flow'] ?? '') === 'quickpay'));
+$invoiceNumber = trim($txn['order']['invoiceNumber'] ?? '');
+
+// QuickPay if invoice starts with QP (e.g., "QP895M1981")
+$isQuickPay = (strncasecmp($invoiceNumber, 'QP', 2) === 0);
 
 if (!$isApproved || !$isQuickPay) {
-  file_put_contents($logFile, "Ignored txn $transId (approved=$isApproved quickpay=$isQuickPay invoice=$invoiceNumber)\n", FILE_APPEND);
+  file_put_contents($logFile, "Ignored txn {$transId} (approved=$isApproved quickpay=$isQuickPay invoice=$invoiceNumber)\n", FILE_APPEND);
   echo json_encode(["ok"=>true, "ignored"=>"not-quickpay-or-not-approved"]);
   exit;
 }
 
-// Pull clean fields
-$amount     = (float)($txn['authAmount'] ?? $txn['settleAmount'] ?? 0);
-$memberId   = $tags['memberId']  ?? null;
-$invoiceId  = $tags['invoiceId'] ?? null;
-$first      = trim($txn['billTo']['firstName'] ?? '');
-$last       = trim($txn['billTo']['lastName']  ?? '');
+// --- EXTRACT IDs FROM INVOICE FORMAT "QP<duesId>M<memberId>" ---
+$duesIdFromInv = null;  // this is your invoiceId for dues
+$memberIdFromInv = null;
 
-// If invoiceNumber looks like "QP-123", use that as a fallback invoiceId
-if (!$invoiceId && preg_match('/^QP-(\d+)/', (string)$invoiceNumber, $m)) {
-  $invoiceId = $m[1];
+if (preg_match('/^QP(\d+)(?:M(\d+))?$/i', $invoiceNumber, $m)) {
+  $duesIdFromInv   = $m[1] ?? null;   // 895
+  $memberIdFromInv = $m[2] ?? null;   // 1981 (if present)
+}
+
+// prefer values parsed from invoice; fall back to names if needed
+$invoiceId = $invoiceId ?? $duesIdFromInv;
+$memberId  = $memberId  ?? $memberIdFromInv;
+
+// amount (for logging / Ninja)
+$amount = (float)($txn['authAmount'] ?? $txn['settleAmount'] ?? 0);
+
+// If we still don't have memberId, fall back to your name lookup (as before)
+if (!$memberId) {
+  $first = trim($txn['billTo']['firstName'] ?? '');
+  $last  = trim($txn['billTo']['lastName']  ?? '');
+  if ($first && $last) {
+    require_once __DIR__ . '/../db.php';
+    $stmt = $pdo->prepare("SELECT id FROM members WHERE LOWER(first_name)=LOWER(?) AND LOWER(last_name)=LOWER(?) LIMIT 1");
+    $stmt->execute([$first, $last]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) $memberId = $row['id'];
+  }
+  if (!$memberId) {
+    http_response_code(404);
+    echo json_encode(["ok"=>false, "error"=>"Member not resolved from invoice or name", "invoiceNumber"=>$invoiceNumber]);
+    exit;
+  }
 }
 
 file_put_contents($logFile,
@@ -125,21 +146,7 @@ file_put_contents($logFile,
   FILE_APPEND
 );
 
-// === 5) Resolve member if not provided (fallback to your original name lookup) ===
-if (!$memberId) {
-  require_once __DIR__ . '/../db.php';
-  if ($first && $last) {
-    $stmt = $pdo->prepare("SELECT id FROM members WHERE LOWER(first_name)=LOWER(?) AND LOWER(last_name)=LOWER(?) LIMIT 1");
-    $stmt->execute([$first, $last]);
-    $member = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($member) $memberId = $member['id'];
-  }
-  if (!$memberId) {
-    http_response_code(404);
-    echo json_encode(["ok"=>false, "error"=>"Member not resolved", "name"=>"$first $last"]);
-    exit;
-  }
-}
+// ... (keep your existing NinjaOne OAuth + script execute call)
 
 // === 6) Authenticate with NinjaOne (unchanged, but consider moving secrets to config/env) ===
 $clientId     = "qJGajqV0AiEiiRMRbGaIJ3cGQuI";
