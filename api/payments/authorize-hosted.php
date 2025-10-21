@@ -36,7 +36,9 @@ if (!$m || !$d) {
 }
 
 $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
-$invoice = "DUES{$duesId}-MEM{$memberId}";
+$invoiceRaw = "QP{$duesId}M{$memberId}";
+$invoice = substr(preg_replace('/[^A-Za-z0-9]/', '', $invoiceRaw), 0, 20);
+
 
 $payload = [
     "getHostedPaymentPageRequest" => [
@@ -67,31 +69,26 @@ $payload = [
     ]
 ],
 
-        "hostedPaymentSettings" => [
-            "setting" => [
-                [
-                    "settingName"  => "hostedPaymentReturnOptions",
-                    "settingValue" => json_encode([
-                        "showReceipt"   => false,
-                        "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
-                        "urlText"       => "",
-                        "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
-                        "cancelUrlText" => "Cancel",
-                        "linkMethod"    => "POST"
-                    ], JSON_UNESCAPED_SLASHES)
-                ],
-                [
-                    "settingName"  => "hostedPaymentButtonOptions",
-                    "settingValue" => json_encode(["text" => "Pay Now"], JSON_UNESCAPED_SLASHES)
-                ],
-                [
-                    "settingName"  => "hostedPaymentStyleOptions",
-                    "settingValue" => json_encode(["bgColor" => "#000000"], JSON_UNESCAPED_SLASHES)
-                ]
-            ]
-        ]
-    ]
-];
+    "hostedPaymentSettings" => [
+  "setting" => [
+    [
+      "settingName"  => "hostedPaymentReturnOptions",
+      "settingValue" => json_encode([
+        "showReceipt"   => false,
+        "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
+        "urlText"       => "Return to Andalusia",
+        "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
+        "cancelUrlText" => "Cancel"
+      ], JSON_UNESCAPED_SLASHES)
+    ],
+    [
+      "settingName"  => "hostedPaymentButtonOptions",
+      "settingValue" => json_encode(["text" => "Pay Now"], JSON_UNESCAPED_SLASHES)
+    ],
+    // (Optional later) Add payment/order options once token works again
+  ]
+]
+
 
 $logDir = __DIR__ . '/../../logs';
 if (!is_dir($logDir)) mkdir($logDir, 0755, true);
