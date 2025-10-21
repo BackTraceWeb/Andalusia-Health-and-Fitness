@@ -57,11 +57,6 @@ $payload = [
       "name" => AUTH_LOGIN_ID,
       "transactionKey" => AUTH_TRANSACTION_KEY
     ],
-    // 🧾 Customer info now lives at the top level
-    "customer" => [
-      "email" => $m['email'] ?? '',
-      "id"    => "MEM{$memberId}"
-    ],
     "transactionRequest" => [
       "transactionType" => "authCaptureTransaction",
       "amount" => $amount,
@@ -74,6 +69,7 @@ $payload = [
         "lastName"  => $m['last_name'],
         "zip"       => $m['zip'] ?? ''
       ]
+      // 👈 no 'customer' block here
     ],
     "hostedPaymentSettings" => [
       "setting" => [
