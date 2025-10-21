@@ -44,7 +44,7 @@ $payload = [
             "name" => AUTH_LOGIN_ID,
             "transactionKey" => AUTH_TRANSACTION_KEY
         ],
-   "transactionRequest" => [
+"transactionRequest" => [
     "transactionType" => "authCaptureTransaction",
     "amount" => $amount,
     "order" => [
@@ -57,14 +57,15 @@ $payload = [
         "zip"       => $m['zip'] ?? ''
     ],
 
-// ✅ correct for getHostedPaymentPageRequest → transactionRequest
-"userFields" => [
-    "userField" => [
-        ["name" => "flow",     "value" => "quickpay"],
-        ["name" => "memberId", "value" => (string)$memberId],
-        ["name" => "invoiceId","value" => (string)$duesId]
+    // ✅ use userFields → userField[]
+    "userFields" => [
+        "userField" => [
+            ["name" => "flow",     "value" => "quickpay"],
+            ["name" => "memberId", "value" => (string)$memberId],
+            ["name" => "invoiceId","value" => (string)$duesId]
+        ]
     ]
-]
+],
 
         "hostedPaymentSettings" => [
             "setting" => [
