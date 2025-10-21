@@ -108,18 +108,19 @@ if (preg_match('/^QP(\d+)M(\d+)$/i', $invoiceNumber, $m)) {
   FILE_APPEND
 );
 
-// === NinjaOne OAuth (form-encoded, not JSON) ===
+// === NinjaOne OAuth (form-encoded) ===
 $clientId     = "qJGajqV0AiEiiRMRbGaIJ3cGQuI";
 $clientSecret = "TCPQK-WLS0F4X3gqtb_KqdwMIf_4qgtRMd7h6dVkYYB2S1R1rVY7Mg";
 $authUrl      = "https://api.us2.ninjarmm.com/oauth/token";
 $execUrl      = "https://api.us2.ninjarmm.com/v2/scripts/execute";
 
-// Send as application/x-www-form-urlencoded
-$authFields = http_build_query([
+// Try WITHOUT scope (most tenants inherit app scopes)
+$fields = [
   "grant_type"    => "client_credentials",
   "client_id"     => $clientId,
   "client_secret" => $clientSecret,
-], '', '&');
+];
+$authFields = http_build_query($fields, '', '&');
 
 $ch = curl_init($authUrl);
 curl_setopt_array($ch, [
@@ -130,11 +131,30 @@ curl_setopt_array($ch, [
   CURLOPT_TIMEOUT        => 20,
 ]);
 $authResp = curl_exec($ch);
-$curlErr  = curl_error($ch);
 $httpAuth = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlErr  = curl_error($ch);
 curl_close($ch);
 
 $token = null;
+if ($httpAuth === 400 && stripos($authResp, 'invalid_scope') !== false) {
+  // Fallback: explicitly request the app’s checked scopes (lowercase, space-separated)
+  $fields["scope"] = "management control"; // your app has Management checked; include Control if you need device actions
+  $authFields2 = http_build_query($fields, '', '&');
+
+  $ch = curl_init($authUrl);
+  curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_HTTPHEADER     => ["Content-Type: application/x-www-form-urlencoded"],
+    CURLOPT_POSTFIELDS     => $authFields2,
+    CURLOPT_TIMEOUT        => 20,
+  ]);
+  $authResp = curl_exec($ch);
+  $httpAuth = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  $curlErr  = curl_error($ch);
+  curl_close($ch);
+}
+
 if ($authResp && ($j = json_decode($authResp, true))) {
   $token = $j['access_token'] ?? null;
 }
@@ -146,7 +166,7 @@ if (!$token) {
 
 file_put_contents($logFile, "CHECKPOINT: ninja-auth-ok\n", FILE_APPEND);
 
-// === (unchanged) Execute script with JSON ===
+// === execute call stays the same ===
 $execPayload = [
   "device_id"   => "DESKTOP-DTDNBM0",
   "script_name" => "Update AxTrax Member (Authorize.net Payment)",
@@ -176,6 +196,6 @@ curl_close($ch);
 
 file_put_contents($logFile, "CHECKPOINT: ninja-exec http=$code err='$errEx'\n$resp\n\n", FILE_APPEND);
 
-// Always ACK to ANet
+// Always ACK ANet
 http_response_code(200);
 echo json_encode(["ok" => ($code>=200 && $code<300), "http"=>$code]);
