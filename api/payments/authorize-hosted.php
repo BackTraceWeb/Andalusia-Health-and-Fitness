@@ -35,8 +35,10 @@ if (!$m || !$d) {
     exit('Member or dues record not found.');
 }
 
-$amount = number_format(($d['amount_cents'] / 100), 2, '.', '');
-$invoice = "DUES{$duesId}-MEM{$memberId}";
+$amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
+
+// ── only tweak: make invoice clearly QuickPay and webhook-friendly
+$invoice = "QP-{$duesId}";
 
 $payload = [
     "getHostedPaymentPageRequest" => [
@@ -55,16 +57,8 @@ $payload = [
                 "firstName" => $m['first_name'],
                 "lastName"  => $m['last_name'],
                 "zip"       => $m['zip'] ?? ''
-            ],
-
-            // 🔻 ADDED: QuickPay markers so the webhook can identify & act
-            "userFields" => [
-                "userField" => [
-                    ["name" => "flow",     "value" => "quickpay"],
-                    ["name" => "memberId", "value" => (string)$memberId],
-                    ["name" => "invoiceId","value" => (string)$duesId]
-                ]
             ]
+            // (no userFields here—Accept Hosted is touchy about it)
         ],
         "hostedPaymentSettings" => [
             "setting" => [
