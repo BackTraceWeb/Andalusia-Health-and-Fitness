@@ -51,7 +51,7 @@ if (!$m || !$d) {
 $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 $invoice = "DUES{$duesId}-MEM{$memberId}";
 
-$payload = [
+$$payload = [
   "getHostedPaymentPageRequest" => [
     "merchantAuthentication" => [
       "name" => AUTH_LOGIN_ID,
@@ -69,27 +69,42 @@ $payload = [
         "lastName"  => $m['last_name'],
         "zip"       => $m['zip'] ?? ''
       ]
-      // 👈 no 'customer' block here
+      // ⚠️ No "customer" block here — schema forbids it for hosted payment
     ],
     "hostedPaymentSettings" => [
       "setting" => [
+        // ------------------------------------------------------------------
+        // Where Authorize.net returns after payment success / cancel
+        // ------------------------------------------------------------------
         [
-          "settingName" => "hostedPaymentReturnOptions",
+          "settingName"  => "hostedPaymentReturnOptions",
           "settingValue" => json_encode([
             "showReceipt"   => false,
             "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
-            "urlText"       => "Return to Andalusia Health & Fitness",
+            "urlText"       => "Return to Andalusia",   // ✅ simplified text — no ampersand
             "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
-            "cancelUrlText" => "Cancel"
+            "cancelUrlText" => "Cancel"                 // ✅ safe, simple text
           ], JSON_UNESCAPED_SLASHES)
         ],
+
+        // ------------------------------------------------------------------
+        // Button styling / text
+        // ------------------------------------------------------------------
         [
-          "settingName" => "hostedPaymentButtonOptions",
-          "settingValue" => json_encode(["text" => "Pay Now"])
+          "settingName"  => "hostedPaymentButtonOptions",
+          "settingValue" => json_encode([
+            "text" => "Pay Now"
+          ])
         ],
+
+        // ------------------------------------------------------------------
+        // Cosmetic styling (background color)
+        // ------------------------------------------------------------------
         [
-          "settingName" => "hostedPaymentStyleOptions",
-          "settingValue" => json_encode(["bgColor" => "#000000"])
+          "settingName"  => "hostedPaymentStyleOptions",
+          "settingValue" => json_encode([
+            "bgColor" => "#000000"
+          ])
         ]
       ]
     ]
