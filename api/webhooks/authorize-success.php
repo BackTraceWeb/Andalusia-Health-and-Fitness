@@ -1,217 +1,154 @@
 <?php
 /**
  * Authorize.Net Payment Webhook (QuickPay-only, HMAC-verified)
- * Logs every request and returns 200 OK on valid signature.
- * Triggers your existing NinjaOne script exactly as before.
+ * Uses payload directly; fires NinjaOne for QP invoices only.
  */
 
 declare(strict_types=1);
-require __DIR__ . '/../config.php'; // uses AUTH_* constants
+require __DIR__ . '/../config.php';
 
 header('Content-Type: application/json');
 
-// === 0) Log every request (kept from your version) ===
+// ── logging ───────────────────────────────────────────────────────────────────
 $logDir = __DIR__ . '/../../logs';
 if (!is_dir($logDir)) mkdir($logDir, 0755, true);
 $logFile = "$logDir/authorize-webhook.log";
-
-$method   = $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN';
-$headers  = function_exists('getallheaders') ? getallheaders() : [];
-$raw      = file_get_contents('php://input') ?: '';
-$ts       = date('c');
+$method  = $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN';
+$headers = function_exists('getallheaders') ? getallheaders() : [];
+$raw     = file_get_contents('php://input') ?: '';
 file_put_contents($logFile,
-  "=== [$ts] $method ===\nHeaders:\n" . print_r($headers, true) . "Body:\n$raw\n\n",
+  "=== [" . date('c') . "] $method ===\nHeaders:\n" . print_r($headers, true) . "Body:\n$raw\n\n",
   FILE_APPEND
 );
 
-// === 1) Verify Authorize.Net HMAC signature ===
+// ── HMAC verify ───────────────────────────────────────────────────────────────
 $hdr = $_SERVER['HTTP_X_ANET_SIGNATURE'] ?? '';
-if (!str_starts_with($hdr, 'sha512=')) {
-  http_response_code(400);
-  echo json_encode(["ok"=>false, "error"=>"Bad signature header"]);
-  exit;
-}
-if (!defined('AUTH_SIGNATURE_KEY_HEX') || !preg_match('/^[A-Fa-f0-9]{128}$/', AUTH_SIGNATURE_KEY_HEX)) {
-  http_response_code(500);
-  echo json_encode(["ok"=>false, "error"=>"Signature key missing/invalid"]);
-  exit;
-}
+if (!str_starts_with($hdr, 'sha512=')) { http_response_code(200); echo json_encode(["ok"=>false,"error"=>"bad-signature-header"]); return; }
+if (!defined('AUTH_SIGNATURE_KEY_HEX') || !preg_match('/^[A-Fa-f0-9]{128}$/', AUTH_SIGNATURE_KEY_HEX)) { http_response_code(200); echo json_encode(["ok"=>false,"error"=>"signature-key-missing"]); return; }
 $provided = substr($hdr, 7);
 $computed = hash_hmac('sha512', $raw, pack('H*', AUTH_SIGNATURE_KEY_HEX));
-if (!hash_equals($computed, $provided)) {
-  http_response_code(401);
-  echo json_encode(["ok"=>false, "error"=>"Signature mismatch"]);
-  exit;
-}
+if (!hash_equals($computed, $provided)) { http_response_code(200); echo json_encode(["ok"=>false,"error"=>"signature-mismatch"]); return; }
 
-// === 2) Parse event JSON ===
+// ── parse event ───────────────────────────────────────────────────────────────
 $data = json_decode($raw, true);
-if (!$data) {
-  http_response_code(400);
-  echo json_encode(["ok"=>false, "error"=>"Invalid JSON"]);
-  exit;
-}
-$eventType = $data['eventType'] ?? '';
-$payload   = $data['payload']   ?? [];
-$transId   = $payload['id']     ?? null;
+if (!$data) { http_response_code(200); echo json_encode(["ok"=>false,"error"=>"invalid-json"]); return; }
 
-// Only handle successful auth-capture payments
+$eventType    = $data['eventType'] ?? '';
+$payload      = $data['payload'] ?? [];
+$responseCode = (int)($payload['responseCode'] ?? 0);
+$invoiceNumber= trim($payload['invoiceNumber'] ?? '');
+$transId      = $payload['id'] ?? null;
+$amount       = (float)($payload['authAmount'] ?? 0.0);
+
 if ($eventType !== 'net.authorize.payment.authcapture.created' || !$transId) {
-  echo json_encode(["ok"=>true, "ignored"=>$eventType ?: 'no-event']);
-  exit;
+  http_response_code(200); echo json_encode(["ok"=>true,"ignored"=>$eventType ?: 'no-event']); return;
+}
+if ($responseCode !== 1) {
+  http_response_code(200); echo json_encode(["ok"=>true,"ignored"=>"not-approved"]); return;
 }
 
-// === 3) Fetch full transaction details (more reliable than webhook body) ===
-function anet_get_txn(string $id): ?array {
-  $req = [
-    'getTransactionDetailsRequest' => [
-      'merchantAuthentication' => [
-        'name'           => AUTH_LOGIN_ID,
-        'transactionKey' => AUTH_TRANSACTION_KEY,
-      ],
-      'transId' => $id,
-    ],
-  ];
-  $ch = curl_init(AUTH_API_URL);
-  curl_setopt_array($ch, [
-    CURLOPT_POST           => true,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-    CURLOPT_POSTFIELDS     => json_encode($req),
-    CURLOPT_TIMEOUT        => 20,
-  ]);
-  $resp = curl_exec($ch);
-  if ($resp === false) return null;
-  $d = json_decode($resp, true);
-  if (($d['messages']['resultCode'] ?? '') !== 'Ok') return null;
-  return $d['transaction'] ?? null;
+// ── QuickPay filter via invoice prefix ────────────────────────────────────────
+if (strncasecmp($invoiceNumber, 'QP', 2) !== 0) {
+  http_response_code(200); echo json_encode(["ok"=>true,"ignored"=>"not-quickpay"]); return;
 }
 
-$txn = anet_get_txn($transId);
-if (!$txn) {
-  file_put_contents($logFile, "No txn details for $transId\n", FILE_APPEND);
-  echo json_encode(["ok"=>true, "ignored"=>"no-transaction-details"]);
-  exit;
-}
-
-// --- APPROVAL & QUICKPAY CHECKS ---
-$isApproved    = ((int)($txn['responseCode'] ?? 0) === 1);
-$invoiceNumber = trim($txn['order']['invoiceNumber'] ?? '');
-
-// QuickPay if invoice starts with QP (e.g., "QP895M1981")
-$isQuickPay = (strncasecmp($invoiceNumber, 'QP', 2) === 0);
-
-if (!$isApproved || !$isQuickPay) {
-  file_put_contents($logFile, "Ignored txn {$transId} (approved=$isApproved quickpay=$isQuickPay invoice=$invoiceNumber)\n", FILE_APPEND);
-  echo json_encode(["ok"=>true, "ignored"=>"not-quickpay-or-not-approved"]);
-  exit;
-}
-
-// --- EXTRACT IDs FROM INVOICE FORMAT "QP<duesId>M<memberId>" ---
-$duesIdFromInv = null;  // this is your invoiceId for dues
-$memberIdFromInv = null;
-
-if (preg_match('/^QP(\d+)(?:M(\d+))?$/i', $invoiceNumber, $m)) {
-  $duesIdFromInv   = $m[1] ?? null;   // 895
-  $memberIdFromInv = $m[2] ?? null;   // 1981 (if present)
-}
-
-// prefer values parsed from invoice; fall back to names if needed
-$invoiceId = $invoiceId ?? $duesIdFromInv;
-$memberId  = $memberId  ?? $memberIdFromInv;
-
-// amount (for logging / Ninja)
-$amount = (float)($txn['authAmount'] ?? $txn['settleAmount'] ?? 0);
-
-// If we still don't have memberId, fall back to your name lookup (as before)
-if (!$memberId) {
-  $first = trim($txn['billTo']['firstName'] ?? '');
-  $last  = trim($txn['billTo']['lastName']  ?? '');
-  if ($first && $last) {
-    require_once __DIR__ . '/../db.php';
-    $stmt = $pdo->prepare("SELECT id FROM members WHERE LOWER(first_name)=LOWER(?) AND LOWER(last_name)=LOWER(?) LIMIT 1");
-    $stmt->execute([$first, $last]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row) $memberId = $row['id'];
-  }
-  if (!$memberId) {
-    http_response_code(404);
-    echo json_encode(["ok"=>false, "error"=>"Member not resolved from invoice or name", "invoiceNumber"=>$invoiceNumber]);
-    exit;
-  }
+// Expect "QP<duesId>M<memberId>" (e.g., QP895M1981)
+$invoiceId = null;  // duesId
+$memberId  = null;
+if (preg_match('/^QP(\d+)M(\d+)$/i', $invoiceNumber, $m)) {
+  $invoiceId = $m[1];
+  $memberId  = $m[2];
 }
 
 file_put_contents($logFile,
-  "QuickPay APPROVED: transId=$transId amount=$amount invoiceNumber=$invoiceNumber memberId=$memberId invoiceId=$invoiceId\n",
+  sprintf("[%s] QuickPay APPROVED trans=%s inv=%s member=%s invoiceId=%s amount=%.2f\n",
+    date('c'), $transId, $invoiceNumber, $memberId ?: '-', $invoiceId ?: '-', $amount
+  ),
   FILE_APPEND
 );
 
-// ... (keep your existing NinjaOne OAuth + script execute call)
+// ── (optional) fallback: resolve member by name if needed ─────────────────────
+if (!$memberId) {
+  // Only try if you really need it; otherwise skip
+  $billTo = $payload['billTo'] ?? []; // sometimes present in payload; otherwise skip lookup
+  $first  = trim($billTo['firstName'] ?? '');
+  $last   = trim($billTo['lastName']  ?? '');
+  if ($first && $last) {
+    // include DB bootstrap if available
+    $dbBootstrap = __DIR__ . '/../db.php';
+    if (is_file($dbBootstrap)) {
+      require_once $dbBootstrap; // should define $pdo
+      if (isset($pdo)) {
+        $stmt = $pdo->prepare("SELECT id FROM members WHERE LOWER(first_name)=LOWER(?) AND LOWER(last_name)=LOWER(?) LIMIT 1");
+        $stmt->execute([$first, $last]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) $memberId = $row['id'];
+      }
+    }
+  }
+}
 
-// === 6) Authenticate with NinjaOne (unchanged, but consider moving secrets to config/env) ===
+// ── NinjaOne OAuth ───────────────────────────────────────────────────────────
 $clientId     = "qJGajqV0AiEiiRMRbGaIJ3cGQuI";
 $clientSecret = "TCPQK-WLS0F4X3gqtb_KqdwMIf_4qgtRMd7h6dVkYYB2S1R1rVY7Mg";
 $authUrl      = "https://api.us2.ninjarmm.com/oauth/token";
+$execUrl      = "https://api.us2.ninjarmm.com/v2/scripts/execute";
 
-$authPayload = [
-  "grant_type"    => "client_credentials",
-  "client_id"     => $clientId,
-  "client_secret" => $clientSecret
-];
-
+// auth
 $ch = curl_init($authUrl);
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_POST           => true,
   CURLOPT_HTTPHEADER     => ["Content-Type: application/json"],
-  CURLOPT_POSTFIELDS     => json_encode($authPayload)
+  CURLOPT_POSTFIELDS     => json_encode([
+    "grant_type"    => "client_credentials",
+    "client_id"     => $clientId,
+    "client_secret" => $clientSecret
+  ], JSON_UNESCAPED_SLASHES),
+  CURLOPT_TIMEOUT        => 20,
 ]);
-$authResponse = curl_exec($ch);
+$authResp = curl_exec($ch);
+$curlErr  = curl_error($ch);
 curl_close($ch);
 
-$authData    = json_decode($authResponse, true);
-$accessToken = $authData['access_token'] ?? null;
-
-if (!$accessToken) {
-  file_put_contents($logFile, "❌ Failed to get NinjaOne token: $authResponse\n", FILE_APPEND);
-  http_response_code(500);
-  echo json_encode(["ok"=>false, "error"=>"Failed to authenticate with NinjaOne"]);
-  exit;
+$token = null;
+if ($authResp && ($j = json_decode($authResp, true))) $token = $j['access_token'] ?? null;
+if (!$token) {
+  file_put_contents($logFile, "❌ Ninja auth failed: $curlErr | $authResp\n", FILE_APPEND);
+  http_response_code(200); echo json_encode(["ok"=>false,"error"=>"ninja-auth-failed"]); return;
 }
 
-// === 7) Trigger AxTrax update via NinjaOne (kept from your version) ===
-$ninjaPayload = [
-  "device_id"   => "DESKTOP-DTDNBM0", // your AxTrax machine ID
+// ── NinjaOne execute ─────────────────────────────────────────────────────────
+$execPayload = [
+  "device_id"   => "DESKTOP-DTDNBM0",
   "script_name" => "Update AxTrax Member (Authorize.net Payment)",
   "parameters"  => [
     "memberId"  => (string)$memberId,
-    "invoiceId" => (string)($invoiceId ?? ''),
-    "amount"    => number_format($amount, 2, '.', '')
+    "invoiceId" => (string)$invoiceId,
+    "amount"    => number_format($amount, 2, '.', ''),
+    "transId"   => (string)$transId,
   ]
 ];
 
-$ch = curl_init("https://api.us2.ninjarmm.com/v2/scripts/execute");
+$ch = curl_init($execUrl);
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_POST           => true,
   CURLOPT_HTTPHEADER     => [
-    "Authorization: Bearer $accessToken",
+    "Authorization: Bearer $token",
     "Content-Type: application/json"
   ],
-  CURLOPT_POSTFIELDS     => json_encode($ninjaPayload)
+  CURLOPT_POSTFIELDS     => json_encode($execPayload, JSON_UNESCAPED_SLASHES),
+  CURLOPT_TIMEOUT        => 30,
 ]);
-
-$response = curl_exec($ch);
-$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$resp = curl_exec($ch);
+$code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$err2 = curl_error($ch);
 curl_close($ch);
 
-// === 8) Log result & respond ===
-$logMsg = "[" . date('Y-m-d H:i:s') . "] OK trans:$transId member:$memberId invoice:$invoiceId amount:$amount HTTP:$httpcode\nResponse:$response\n\n";
-file_put_contents($logFile, $logMsg, FILE_APPEND);
+file_put_contents($logFile, "Ninja exec HTTP:$code ERR:$err2\n$resp\n\n", FILE_APPEND);
 
-if ($httpcode >= 200 && $httpcode < 300) {
-  echo json_encode(["ok"=>true, "memberId"=>$memberId, "invoiceId"=>$invoiceId, "amount"=>$amount]);
-} else {
-  http_response_code(502);
-  echo json_encode(["ok"=>false, "error"=>"NinjaOne call failed", "response"=>$response]);
-}
+// Always return 200 to ANet
+http_response_code(200);
+echo json_encode(["ok" => ($code>=200 && $code<300), "http"=>$code]);
+
