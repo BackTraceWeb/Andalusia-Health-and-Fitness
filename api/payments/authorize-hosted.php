@@ -57,22 +57,23 @@ $payload = [
       "name" => AUTH_LOGIN_ID,
       "transactionKey" => AUTH_TRANSACTION_KEY
     ],
-    "transactionRequest" => [
-      "transactionType" => "authCaptureTransaction",
-      "amount" => $amount,
-      "order" => [
+ "transactionRequest" => [
+    "transactionType" => "authCaptureTransaction",
+    "amount" => $amount,
+    "order" => [
         "invoiceNumber" => $invoice,
         "description" => "Membership dues for {$m['first_name']} {$m['last_name']}"
-      ],
-      "billTo" => [
+    ],
+    "billTo" => [
         "firstName" => $m['first_name'],
         "lastName"  => $m['last_name'],
         "zip"       => $m['zip'] ?? ''
-      ],
-      "customer" => [
-        "email" => $m['email'] ?? ''
-      ]
-    ],
+    ]
+],
+"customer" => [
+    "email" => $m['email'] ?? ''
+],
+
     "hostedPaymentSettings" => [
       "setting" => [
         [
