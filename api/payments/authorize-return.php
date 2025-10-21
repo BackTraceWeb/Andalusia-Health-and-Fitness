@@ -1,8 +1,13 @@
 <?php
+declare(strict_types=1);
+
+/**
+ * Authorize.Net Hosted Payment Return Handler
+ * Receives redirect after successful payment and triggers Ninja/AxTrax webhook.
+ */
+
 ini_set('display_errors', '1');
 error_reporting(E_ALL);
-
-declare(strict_types=1);
 
 /**
  * Authorize.net Return Handler (QuickPay flow)
