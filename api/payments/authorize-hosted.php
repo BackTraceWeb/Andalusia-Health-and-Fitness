@@ -163,7 +163,7 @@ $token = htmlspecialchars($data['token']);
 <head><meta charset="UTF-8"><title>Redirecting...</title></head>
 <body onload="document.forms[0].submit()">
   <p>Redirecting to Secure Payment...</p>
-  <form method="POST" action="https://accept.authorize.net/payment/payment">
+ <form method="POST" action="https://test.authorize.net/payment/payment">
     <input type="hidden" name="token" value="<?= $token ?>">
     <input type="hidden" name="invoice_id" value="<?= htmlspecialchars($duesId) ?>">
     <input type="hidden" name="member_id" value="<?= htmlspecialchars($memberId) ?>">
