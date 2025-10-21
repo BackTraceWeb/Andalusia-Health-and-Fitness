@@ -68,26 +68,32 @@ $payload = [
       ],
     ],
     // Keep settings minimal to avoid E00001
-    "hostedPaymentSettings" => [
-      "setting" => [
-        [
-          "settingName"  => "hostedPaymentReturnOptions",
-          "settingValue" => json_encode([
-            "showReceipt"   => false,
-            "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
-            "urlText"       => "Return to Andalusia",
-            "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
-            "cancelUrlText" => "Cancel"
-          ], JSON_UNESCAPED_SLASHES)
-        ],
-        [
-          "settingName"  => "hostedPaymentButtonOptions",
-          "settingValue" => json_encode(["text" => "Pay Now"], JSON_UNESCAPED_SLASHES)
-        ]
-      ]
+"hostedPaymentSettings" => [
+  "setting" => [
+    [
+      "settingName"  => "hostedPaymentReturnOptions",
+      "settingValue" => json_encode([
+        "showReceipt"   => false,
+        "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
+        "urlText"       => "Return to Andalusia",
+        "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
+        "cancelUrlText" => "Cancel"
+      ], JSON_UNESCAPED_SLASHES)
+    ],
+    [
+      "settingName"  => "hostedPaymentOrderOptions",
+      "settingValue" => json_encode([
+        "show" => true   // <- forces the Order Summary panel to render
+      ], JSON_UNESCAPED_SLASHES)
+    ],
+    [
+      "settingName"  => "hostedPaymentPaymentOptions",
+      "settingValue" => json_encode([
+        "cardCodeRequired" => true  // <- ensures the payment section renders
+      ], JSON_UNESCAPED_SLASHES)
     ]
   ]
-];
+]
 
 // Safe debug (no permission issues)
 @file_put_contents("/tmp/authorize-debug.json", json_encode($payload, JSON_PRETTY_PRINT));
