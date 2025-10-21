@@ -44,19 +44,27 @@ $payload = [
             "name" => AUTH_LOGIN_ID,
             "transactionKey" => AUTH_TRANSACTION_KEY
         ],
-        "transactionRequest" => [
-            "transactionType" => "authCaptureTransaction",
-            "amount" => $amount,
-            "order" => [
-                "invoiceNumber" => $invoice,
-                "description"   => "Membership dues for {$m['first_name']} {$m['last_name']}"
-            ],
-            "billTo" => [
-                "firstName" => $m['first_name'],
-                "lastName"  => $m['last_name'],
-                "zip"       => $m['zip'] ?? ''
-            ]
-        ],
+   "transactionRequest" => [
+    "transactionType" => "authCaptureTransaction",
+    "amount" => $amount,
+    "order" => [
+        "invoiceNumber" => $invoice,
+        "description"   => "Membership dues for {$m['first_name']} {$m['last_name']}"
+    ],
+    "billTo" => [
+        "firstName" => $m['first_name'],
+        "lastName"  => $m['last_name'],
+        "zip"       => $m['zip'] ?? ''
+    ],
+
+    // 🔻 ADD THIS: lets the webhook positively identify QuickPay
+    "merchantDefinedFields" => [
+        ["name" => "flow",     "value" => "quickpay"],
+        ["name" => "memberId", "value" => (string)$memberId],
+        ["name" => "invoiceId","value" => (string)$duesId]
+    ]
+],
+
         "hostedPaymentSettings" => [
             "setting" => [
                 [
