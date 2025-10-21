@@ -57,13 +57,14 @@ $payload = [
         "zip"       => $m['zip'] ?? ''
     ],
 
-    // 🔻 ADD THIS: lets the webhook positively identify QuickPay
-    "merchantDefinedFields" => [
+// ✅ correct for getHostedPaymentPageRequest → transactionRequest
+"userFields" => [
+    "userField" => [
         ["name" => "flow",     "value" => "quickpay"],
         ["name" => "memberId", "value" => (string)$memberId],
         ["name" => "invoiceId","value" => (string)$duesId]
     ]
-],
+]
 
         "hostedPaymentSettings" => [
             "setting" => [
