@@ -19,21 +19,28 @@ $headers = function_exists('getallheaders') ? getallheaders() : [];
   "=== [" . date('c') . "] POST ===\nHeaders:\n" . print_r($headers, true) . "Body:\n$raw\n",
   FILE_APPEND
 );
-
-// ── HMAC verify
+// --- HMAC verification (normalize cases, sanitize key) ---
 $hdr = $_SERVER['HTTP_X_ANET_SIGNATURE'] ?? '';
 if (!str_starts_with($hdr, 'sha512=')) {
   @file_put_contents($logFile, "CHECKPOINT: bad-signature-header\n\n", FILE_APPEND);
   http_response_code(200); echo json_encode(["ok"=>false,"error"=>"bad-signature-header"]); return;
 }
-if (!defined('AUTH_SIGNATURE_KEY_HEX') || !preg_match('/^[A-Fa-f0-9]{128}$/', AUTH_SIGNATURE_KEY_HEX)) {
-  @file_put_contents($logFile, "CHECKPOINT: signature-key-missing\n\n", FILE_APPEND);
+
+// sanitize key: remove whitespace just in case
+$keyHex = preg_replace('/\s+/', '', (defined('AUTH_SIGNATURE_KEY_HEX') ? AUTH_SIGNATURE_KEY_HEX : ''));
+if (!preg_match('/^[A-Fa-f0-9]{128}$/', $keyHex)) {
+  @file_put_contents($logFile, "CHECKPOINT: signature-key-missing (no 128-hex found)\n\n", FILE_APPEND);
   http_response_code(200); echo json_encode(["ok"=>false,"error"=>"signature-key-missing"]); return;
 }
-$provided = substr($hdr, 7);
-$computed = hash_hmac('sha512', $raw, pack('H*', AUTH_SIGNATURE_KEY_HEX));
-if (!hash_equals($computed, $provided)) {
-  @file_put_contents($logFile, "CHECKPOINT: signature-mismatch\n\n", FILE_APPEND);
+
+$providedHex = strtolower(substr($hdr, 7)); // strip "sha512=" and lowercase
+$computedHex = strtolower(hash_hmac('sha512', $raw, pack('H*', $keyHex)));
+
+if (!hash_equals($computedHex, $providedHex)) {
+  @file_put_contents($logFile,
+    "CHECKPOINT: signature-mismatch\nprovided=$providedHex\ncomputed=$computedHex\n\n",
+    FILE_APPEND
+  );
   http_response_code(200); echo json_encode(["ok"=>false,"error"=>"signature-mismatch"]); return;
 }
 @file_put_contents($logFile, "CHECKPOINT: signature-ok\n", FILE_APPEND);
