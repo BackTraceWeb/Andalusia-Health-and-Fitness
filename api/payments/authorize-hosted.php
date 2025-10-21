@@ -50,7 +50,7 @@ if (!$m || !$d) {
 }
 
 // ------------------------------------------------------------------
-// Build payload
+// Build payload (correct structure)
 // ------------------------------------------------------------------
 $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 $invoice = "DUES{$duesId}-MEM{$memberId}";
@@ -75,6 +75,7 @@ $payload = [
                 "zip"       => $m['zip'] ?? ''
             ]
         ],
+        // ⬇ hostedPaymentSettings must be at the SAME LEVEL as transactionRequest
         "hostedPaymentSettings" => [
             "setting" => [
                 [
