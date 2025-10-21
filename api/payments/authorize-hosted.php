@@ -101,6 +101,11 @@ $payload = [
     ]
 ];
 
+file_put_contents(
+    '/var/www/andalusiahealthandfitness/logs/authorize-debug.json',
+    json_encode($payload, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES)
+);
+
 // ------------------------------------------------------------------
 // Send request to Authorize.Net
 // ------------------------------------------------------------------
