@@ -1,57 +1,40 @@
 <?php
 /**
- * Authorize.Net Hosted Payment Page (QuickPay Integration)
- * Auto-redirects to webhook on successful payment.
+ * Authorize.Net Hosted Payment (Sandbox)
+ * Stable baseline — loads payment page and supports webhook return.
  */
-
 declare(strict_types=1);
 header('Content-Type: text/html; charset=utf-8');
 
-// ------------------------------------------------------------------
-// Includes
-// ------------------------------------------------------------------
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../../_bootstrap.php';
 
 $pdo = pdo();
 if (!$pdo) {
     http_response_code(500);
-    echo "Database not connected.";
-    exit;
+    exit('Database not connected.');
 }
 
-// ------------------------------------------------------------------
-// Inputs
-// ------------------------------------------------------------------
 $memberId = isset($_GET['memberId']) ? (int)$_GET['memberId'] : 0;
 $duesId   = isset($_GET['invoiceId']) ? (int)$_GET['invoiceId'] : 0;
-
 if ($memberId <= 0 || $duesId <= 0) {
     http_response_code(400);
-    echo "Missing memberId or invoiceId.";
-    exit;
+    exit('Missing memberId or invoiceId.');
 }
 
-// ------------------------------------------------------------------
-// Get member & dues data
-// ------------------------------------------------------------------
-$stmt = $pdo->prepare("SELECT first_name,last_name,email,zip FROM members WHERE id=?");
+$stmt = $pdo->prepare('SELECT first_name,last_name,email,zip FROM members WHERE id=?');
 $stmt->execute([$memberId]);
 $m = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$stmt2 = $pdo->prepare("SELECT amount_cents FROM dues WHERE id=?");
+$stmt2 = $pdo->prepare('SELECT amount_cents,period_start,period_end FROM dues WHERE id=?');
 $stmt2->execute([$duesId]);
 $d = $stmt2->fetch(PDO::FETCH_ASSOC);
 
 if (!$m || !$d) {
     http_response_code(404);
-    echo "Member or dues record not found.";
-    exit;
+    exit('Member or dues record not found.');
 }
 
-// ------------------------------------------------------------------
-// Build payload
-// ------------------------------------------------------------------
 $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 $invoice = "DUES{$duesId}-MEM{$memberId}";
 
@@ -79,100 +62,66 @@ $payload = [
                 [
                     "settingName"  => "hostedPaymentReturnOptions",
                     "settingValue" => json_encode([
-                        "showReceipt" => false,
-                        "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
-                        "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/",
-                        "linkMethod"  => "POST"
+                        "showReceipt"   => false,
+                        "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
+                        "urlText"       => "Return to Andalusia",
+                        "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
+                        "cancelUrlText" => "Cancel"
                     ], JSON_UNESCAPED_SLASHES)
                 ],
                 [
                     "settingName"  => "hostedPaymentButtonOptions",
-                    "settingValue" => '{"text":"Pay Now"}'
+                    "settingValue" => json_encode(["text" => "Pay Now"])
                 ],
                 [
                     "settingName"  => "hostedPaymentStyleOptions",
-                    "settingValue" => '{"bgColor":"#000000"}'
+                    "settingValue" => json_encode(["bgColor" => "#000000"])
                 ]
             ]
         ]
     ]
 ];
 
-// ------------------------------------------------------------------
-// Send request to Authorize.Net
-// ------------------------------------------------------------------
+$logDir = __DIR__ . '/../../logs';
+if (!is_dir($logDir)) mkdir($logDir, 0755, true);
+file_put_contents("$logDir/authorize-debug.json", json_encode($payload, JSON_PRETTY_PRINT));
+
 $ch = curl_init(AUTH_API_URL);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
-    CURLOPT_HTTPHEADER     => [
-        'Content-Type: application/json',
-        'Accept: application/json'
-    ],
+    CURLOPT_HTTPHEADER     => ['Content-Type: application/json','Accept: application/json'],
     CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_SLASHES),
     CURLOPT_TIMEOUT        => 20
 ]);
-
 $response  = curl_exec($ch);
 $curlError = curl_error($ch);
 curl_close($ch);
 
-// ------------------------------------------------------------------
-// Logging
-// ------------------------------------------------------------------
-$logDir = __DIR__ . '/../../logs';
-if (!is_dir($logDir)) mkdir($logDir, 0755, true);
-file_put_contents("$logDir/authorize-hosted.log",
-    date('c') . " Payload:\n" . json_encode($payload, JSON_PRETTY_PRINT) .
-    "\nResponse:\n" . $response . "\n\n",
-    FILE_APPEND
-);
+if ($curlError) exit("<h3>cURL Error</h3><pre>$curlError</pre>");
+if (!$response)  exit('<h3>No response from Authorize.Net</h3>');
 
-// ------------------------------------------------------------------
-// Handle response
-// ------------------------------------------------------------------
-if ($curlError) {
-    echo "<h3>cURL Error</h3><pre>{$curlError}</pre>";
-    exit;
-}
-
-if (!$response) {
-    echo "<h3>No response from Authorize.Net</h3>";
-    exit;
-}
-
-$response = preg_replace('/^\xEF\xBB\xBF/', '', $response);
-$data = json_decode($response, true);
-
+$data = json_decode(preg_replace('/^\xEF\xBB\xBF/', '', $response), true);
 if (json_last_error() !== JSON_ERROR_NONE) {
-    echo "<h3>JSON Decode Error:</h3><pre>" . json_last_error_msg() . "</pre>";
-    echo "<pre>RAW RESPONSE:\n" . htmlspecialchars($response) . "</pre>";
-    exit;
+    exit('<h3>JSON Decode Error:</h3><pre>' . json_last_error_msg() . '</pre>');
 }
 
-if (!isset($data['token'])) {
-    echo "<h2>Authorize.Net Error</h2><pre>" .
+if (empty($data['token'])) {
+    exit('<h2>Authorize.Net Error</h2><pre>' .
          htmlspecialchars(json_encode($data, JSON_PRETTY_PRINT)) .
-         "</pre>";
-    exit;
+         '</pre>');
 }
 
-// ------------------------------------------------------------------
-// Redirect to Hosted Payment Page
-// ------------------------------------------------------------------
 $token = htmlspecialchars($data['token']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Redirecting to Secure Payment...</title>
-</head>
+<head><meta charset="UTF-8"><title>Redirecting...</title></head>
 <body onload="document.forms[0].submit()">
-  <p>Redirecting to Secure Payment...</p>
-  <form method="POST" action="https://test.authorize.net/payment/payment">
-    <input type="hidden" name="token" value="<?= $token ?>">
-    <noscript><button type="submit">Continue</button></noscript>
-  </form>
+<p>Redirecting to Secure Payment...</p>
+<form method="POST" action="https://test.authorize.net/payment/payment">
+  <input type="hidden" name="token" value="<?= $token ?>">
+  <noscript><button type="submit">Continue</button></noscript>
+</form>
 </body>
 </html>
