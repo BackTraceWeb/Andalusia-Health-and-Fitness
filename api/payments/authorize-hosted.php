@@ -74,32 +74,29 @@ $payload = [
                 "lastName"  => $m['last_name'],
                 "zip"       => $m['zip'] ?? ''
             ]
+],
+// ⬇ hostedPaymentSettings must be at the SAME LEVEL as transactionRequest
+"hostedPaymentSettings" => [
+    "setting" => [
+        [
+            "settingName"  => "hostedPaymentReturnOptions",
+            "settingValue" => json_encode([
+                "showReceipt" => false,
+                "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId=" . $memberId . "&invoiceId=" . $duesId,
+                "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/",
+                "linkMethod"  => "POST"
+            ], JSON_UNESCAPED_SLASHES)
         ],
-        // ⬇ hostedPaymentSettings must be at the SAME LEVEL as transactionRequest
-        "hostedPaymentSettings" => [
-            "setting" => [
-                [
-                    "settingName"  => "hostedPaymentReturnOptions",
-                    "settingValue" => json_encode([
-                        "showReceipt"   => false,
-                        "url"           => $returnUrl,
-                        "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
-                        "cancelUrlText" => "Cancel",
-                        "linkMethod"    => "POST"
-                    ], JSON_UNESCAPED_SLASHES)
-                ],
-                [
-                    "settingName"  => "hostedPaymentButtonOptions",
-                    "settingValue" => json_encode(["text" => "Pay Now"])
-                ],
-                [
-                    "settingName"  => "hostedPaymentStyleOptions",
-                    "settingValue" => json_encode(["bgColor" => "#000000"])
-                ]
-            ]
+        [
+            "settingName"  => "hostedPaymentButtonOptions",
+            "settingValue" => '{"text":"Pay Now"}'
+        ],
+        [
+            "settingName"  => "hostedPaymentStyleOptions",
+            "settingValue" => '{"bgColor":"#000000"}'
         ]
     ]
-];
+]
 
 file_put_contents(
     '/var/www/andalusiahealthandfitness/logs/authorize-debug.json',
