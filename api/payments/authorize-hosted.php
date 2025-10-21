@@ -52,6 +52,8 @@ if (!$m || !$d) {
 $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 $invoice = "DUES{$duesId}-MEM{$memberId}";
 
+$returnUrl = "https://andalusiahealthandfitness.com/api/payments/authorize-return.php";
+
 $payload = [
     "getHostedPaymentPageRequest" => [
         "merchantAuthentication" => [
@@ -73,14 +75,22 @@ $payload = [
         ],
         "hostedPaymentSettings" => [
             "setting" => [
+                // --- Immediate redirect (no receipt screen) ---
                 [
                     "settingName"  => "hostedPaymentReturnOptions",
                     "settingValue" => json_encode([
                         "showReceipt"   => false,
-                        "url"           => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
+                        "url"           => $returnUrl,
                         "urlText"       => "Return to Andalusia",
                         "cancelUrl"     => "https://andalusiahealthandfitness.com/quickpay/",
                         "cancelUrlText" => "Cancel"
+                    ], JSON_UNESCAPED_SLASHES)
+                ],
+                // --- Forces Authorize.net to post to our return handler silently ---
+                [
+                    "settingName"  => "hostedPaymentIFrameCommunicatorUrl",
+                    "settingValue" => json_encode([
+                        "url" => $returnUrl
                     ], JSON_UNESCAPED_SLASHES)
                 ],
                 [
@@ -97,7 +107,7 @@ $payload = [
 ];
 
 // ------------------------------------------------------------------
-// Send request to Authorize.net
+// Send request to Authorize.Net
 // ------------------------------------------------------------------
 $ch = curl_init(AUTH_API_URL);
 curl_setopt_array($ch, [
@@ -120,7 +130,7 @@ curl_close($ch);
 $logDir = __DIR__ . '/../../logs';
 if (!is_dir($logDir)) mkdir($logDir, 0755, true);
 file_put_contents("$logDir/authorize-hosted.log",
-    date('c') . " Payload:\n" . json_encode($payload, JSON_PRETTY_PRINT) .
+    date('c') . " Payload:\n" . json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) .
     "\nResponse:\n" . $response . "\n\n",
     FILE_APPEND
 );
@@ -163,7 +173,8 @@ $token = htmlspecialchars($data['token']);
 <head><meta charset="UTF-8"><title>Redirecting...</title></head>
 <body onload="document.forms[0].submit()">
   <p>Redirecting to Secure Payment...</p>
- <form method="POST" action="https://test.authorize.net/payment/payment">
+  <!-- Use test or production URL based on config -->
+  <form method="POST" action="https://test.authorize.net/payment/payment">
     <input type="hidden" name="token" value="<?= $token ?>">
     <input type="hidden" name="invoice_id" value="<?= htmlspecialchars($duesId) ?>">
     <input type="hidden" name="member_id" value="<?= htmlspecialchars($memberId) ?>">
