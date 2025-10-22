@@ -1,71 +1,76 @@
 <?php
-// C:\AxTrax\webhook.php
-// Make sure the folder C:\AxTrax exists and is writable by PHP user.
+// api/webhooks/authorize-success.php
+declare(strict_types=1);
+date_default_timezone_set('UTC');
 
-date_default_timezone_set('UTC'); // keep UTC in the log
+// ---- CONFIG ----
+$csvPath = 'C:\\AxTrax\\payments.csv';           // make sure this path is writable on THIS server
+$prod = true;                                    // true in production
+$apiSignatureKeyHex =
+ '21C260460E71D8FFC7437BA38D1938A0D8C531810250F8FC36CB06197C93776609F7A6AB937FD53DE0C0E43409B4BF6AC89F7AC1FBA77BDFA4DE9ECC535F3C7C';
+// --------------
 
+// Input + HMAC verify
 $raw = file_get_contents('php://input');
-$headers = array_change_key_case(getallheaders(), CASE_UPPER);
+$headers = array_change_key_case(function_exists('getallheaders') ? getallheaders() : [], CASE_UPPER);
 $sig = $headers['X-ANET-SIGNATURE'] ?? '';
 
-// ---- HMAC verify (enable in PROD) ----
-$prod = true; // set to true in production
-$apiSignatureKeyHex = '21C260460E71D8FFC7437BA38D1938A0D8C531810250F8FC36CB06197C93776609F7A6AB937FD53DE0C0E43409B4BF6AC89F7AC1FBA77BDFA4DE9ECC535F3C7C'; // from Authorize.Net (Signature Key, hex)
 if ($prod) {
-    $calc = 'sha512=' . hash_hmac('sha512', $raw, pack('H*', $apiSignatureKeyHex));
-    if (!hash_equals(strtolower($calc), strtolower($sig))) {
-        http_response_code(401);
-        error_log("ANET HMAC mismatch. Provided=$sig Calc=$calc");
-        exit("invalid signature");
-    }
-} else {
-    error_log("⚠ HMAC bypass (sandbox/dev)");
+  $calc = 'sha512=' . hash_hmac('sha512', $raw, pack('H*', $apiSignatureKeyHex));
+  if (!hash_equals(strtolower($calc), strtolower($sig))) {
+    http_response_code(401);
+    error_log("ANET HMAC mismatch. Provided=$sig Calc=$calc");
+    exit("invalid signature");
+  }
 }
 
-// ---- Parse payload ----
+// Parse payload
 $body = json_decode($raw, true);
-if (!$body || !isset($body['payload'])) { http_response_code(400); exit("bad payload"); }
+if (!is_array($body) || empty($body['payload'])) { http_response_code(400); exit('bad payload'); }
 
-$evt  = $body['eventType'] ?? '';
+$evt  = (string)($body['eventType'] ?? '');
 $pl   = $body['payload'];
-$resp = $pl['responseCode'] ?? 0;
-$iid  = $pl['invoiceNumber'] ?? '';
-$pid  = $pl['id'] ?? '';
-$amt  = $pl['authAmount'] ?? 0;
+$resp = (int)($pl['responseCode'] ?? 0);
+$iid  = (string)($pl['invoiceNumber'] ?? '');
+$pid  = (string)($pl['id'] ?? '');
+$amt  = (float)($pl['authAmount'] ?? 0);
 
-if ($evt !== 'net.authorize.payment.authcapture.created' || (int)$resp !== 1) {
-    http_response_code(200); // ignore non-success
-    exit("ignored");
+// Only successful authcapture
+if ($evt !== 'net.authorize.payment.authcapture.created' || $resp !== 1) {
+  http_response_code(200); exit('ignored');
 }
 
-// ---- Extract MemberId from invoiceNumber "QP<batch>M<memberId>" ----
-$memberId = null;
+// Extract MemberId from invoice like "QP<batch>M<memberId>"
+$memberId = '';
 if (preg_match('/^QP(\d+)M(\d+)$/', $iid, $m)) {
-    $memberId = $m[2];
+  $memberId = $m[2];
 } else {
-    // if you ever change the format, log & bail
-    error_log("Invoice parse failed: $iid");
-    http_response_code(200);
-    exit("ignored");
+  error_log("Invoice parse failed: $iid");
+  http_response_code(200); exit('ignored');
 }
 
-// ---- Append to payments.csv ----
-// Columns: When,PaymentId,InvoiceNumber,MemberId,Amount
-$line = sprintf("%s,%s,%s,%s,%.2f\n",
-    gmdate('c'),           // ISO-8601 UTC
-    $pid,
-    $iid,
-    $memberId,
-    $amt
-);
+// Ensure directory + header exist
+$dir = dirname($csvPath);
+if (!is_dir($dir)) { @mkdir($dir, 0775, true); }
 
-$file = 'C:\\AxTrax\\payments.csv';
-$ok = file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
-if ($ok === false) {
-    error_log("Failed to write $file");
-    http_response_code(500);
-    exit("write failed");
+if (!file_exists($csvPath)) {
+  $header = "When,PaymentId,InvoiceNumber,MemberId,Amount\r\n";
+  if (file_put_contents($csvPath, $header, FILE_APPEND | LOCK_EX) === false) {
+    http_response_code(500); exit("header write failed");
+  }
 }
 
-http_response_code(200);
+// Append row (sanitize commas in invoice to keep CSV tidy)
+$invoiceSafe = str_replace(',', ' ', $iid);
+$line = sprintf("%s,%s,%s,%s,%.2f\r\n", gmdate('c'), $pid, $invoiceSafe, $memberId, $amt);
+
+$fh = fopen($csvPath, 'ab');
+if ($fh === false) { http_response_code(500); exit("open failed"); }
+flock($fh, LOCK_EX);
+fwrite($fh, $line);
+flock($fh, LOCK_UN);
+fclose($fh);
+
+http_response_code(202);
 echo "ok";
+
