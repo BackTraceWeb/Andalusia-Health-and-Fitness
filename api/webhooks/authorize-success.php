@@ -4,7 +4,7 @@ declare(strict_types=1);
 date_default_timezone_set('UTC');
 
 // ---- CONFIG ----
-$csvPath = 'C:\\AxTrax\\payments.csv';           // make sure this path is writable on THIS server
+$csvPath = __DIR__ . '/payments.csv';   // lives beside this PHP file
 $prod = true;                                    // true in production
 $apiSignatureKeyHex =
  '21C260460E71D8FFC7437BA38D1938A0D8C531810250F8FC36CB06197C93776609F7A6AB937FD53DE0C0E43409B4BF6AC89F7AC1FBA77BDFA4DE9ECC535F3C7C';
