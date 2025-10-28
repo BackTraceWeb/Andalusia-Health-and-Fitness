@@ -1,7 +1,7 @@
 <?php
 // Authorize.Net Sandbox Config
-define('AUTH_ENV', 'sandbox');
-define('AUTH_API_URL', 'https://apitest.authorize.net/xml/v1/request.api');
+define('AUTH_ENV', 'PROD');
+define('AUTH_API_URL', 'https://api2.authorize.net/xml/v1/request.api');
 
 define('AUTH_LOGIN_ID',        '75aKSj4J5');      // your sandbox login
 define('AUTH_TRANSACTION_KEY', '27Pdsz96u2EsC693'); // your sandbox trans key
