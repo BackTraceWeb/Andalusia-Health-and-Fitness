@@ -1,1 +1,1 @@
-/var/www/andalusiahealthandfitness/api/quickpay/lookup.php
+../quickpay/lookup.php
