@@ -14,3 +14,7 @@ _session/
 _attic/
 config/.env.php
 _bootstrap.php
+
+# Payments artifacts
+api/webhooks/*.csv
+
