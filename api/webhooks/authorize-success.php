@@ -71,6 +71,82 @@ fwrite($fh, $line);
 flock($fh, LOCK_UN);
 fclose($fh);
 
+// ----------------------------------------------------------------------
+// UPDATE MEMBER RECORD: Set valid_until to +30 days from today
+// ----------------------------------------------------------------------
+try {
+  require_once __DIR__ . '/../../_bootstrap.php';
+  $pdo = pdo();
+
+  // Calculate new valid_until date (30 days from today)
+  $newValidUntil = date('Y-m-d', strtotime('+30 days'));
+
+  // Update member record
+  $stmt = $pdo->prepare("
+    UPDATE members
+    SET valid_until = :valid_until,
+        status = 'current',
+        updated_at = NOW()
+    WHERE id = :member_id
+  ");
+
+  $stmt->execute([
+    ':valid_until' => $newValidUntil,
+    ':member_id' => $memberId
+  ]);
+
+  $rowsUpdated = $stmt->rowCount();
+  error_log("Payment webhook: Updated member #$memberId valid_until to $newValidUntil (rows: $rowsUpdated)");
+
+  // ----------------------------------------------------------------------
+  // TRIGGER AXTRAX SYNC (staged - will work when REST API creds are ready)
+  // ----------------------------------------------------------------------
+  try {
+    $webhookUrl = 'https://andalusiahealthandfitness.com/api/webhooks/payments-feed.php';
+    $bearerToken = config('WEBHOOK_BEARER_TOKEN', '9f8942431246fd7490b35fb27dfeb15edb7c68b01c3cc34e967ef43c8478113f');
+
+    $payload = json_encode([
+      'member_id' => (int)$memberId,
+      'valid_until' => $newValidUntil,
+      'payment_id' => $pid,
+      'amount' => $amt
+    ]);
+
+    $ch = curl_init($webhookUrl);
+    curl_setopt_array($ch, [
+      CURLOPT_POST => true,
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_HTTPHEADER => [
+        'Content-Type: application/json',
+        "Authorization: Bearer $bearerToken"
+      ],
+      CURLOPT_POSTFIELDS => $payload,
+      CURLOPT_TIMEOUT => 5
+    ]);
+
+    $axtraxResp = curl_exec($ch);
+    $axtraxHttp = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // Log AxTrax sync attempt (may fail with 501 until REST API is ready)
+    if ($axtraxHttp === 501) {
+      error_log("AxTrax sync staged for member #$memberId - REST API not ready yet");
+    } elseif ($axtraxHttp === 200) {
+      error_log("AxTrax sync successful for member #$memberId: $axtraxResp");
+    } else {
+      error_log("AxTrax sync HTTP $axtraxHttp for member #$memberId: $axtraxResp");
+    }
+
+  } catch (Throwable $axErr) {
+    error_log("AxTrax sync error for member #$memberId: " . $axErr->getMessage());
+    // Don't fail the payment webhook if AxTrax sync fails
+  }
+
+} catch (Throwable $e) {
+  error_log("Member update error: " . $e->getMessage());
+  // Log error but don't fail the webhook
+}
+
 http_response_code(202);
 echo "ok";
 

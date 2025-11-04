@@ -1,0 +1,28 @@
+<?php
+/**
+ * Payments Configuration Template
+ *
+ * Copy this file to payments.php and fill in your AxTrax REST API credentials
+ * when you receive them from your vendor.
+ *
+ * File: config/payments.php (DO NOT COMMIT - already in .gitignore)
+ */
+
+return [
+    'axtrax' => [
+        // AxTrax REST API Base URL
+        // Example: 'https://api.axtrax.com/v1' or your specific AxTrax server URL
+        'base_url' => 'https://your-axtrax-api-url.com',
+
+        // API Key / Bearer Token
+        // Provided by AxTrax/Rosslare vendor
+        'api_key' => 'your_axtrax_api_key_here',
+
+        // Site ID (if required by your AxTrax installation)
+        // May be optional depending on your setup
+        'site_id' => 'your_site_id_here',
+
+        // Request timeout in seconds
+        'timeout_s' => 8,
+    ],
+];
