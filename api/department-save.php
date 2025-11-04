@@ -1,6 +1,10 @@
 <?php
 require __DIR__ . '/../_bootstrap.php';
+require __DIR__ . '/../_rate_limit.php';
 header('Content-Type: application/json');
+
+// Rate limiting
+rate_limit('department-save');
 
 $data = json_decode(file_get_contents('php://input'), true);
 if (!$data) {

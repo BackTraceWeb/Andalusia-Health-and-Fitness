@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../_bootstrap.php';
+require __DIR__ . '/_auth.php';
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html>

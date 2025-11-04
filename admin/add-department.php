@@ -1,10 +1,6 @@
 <?php
-session_start();
-if (empty($_SESSION['logged_in'])) {
-  header('Location: index.php');
-  exit;
-}
-require 'config.php';
+require __DIR__ . '/_auth.php';
+verify_csrf(); // Verify CSRF token for POST requests
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $department_name = $conn->real_escape_string($_POST['department_name']);

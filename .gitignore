@@ -1,9 +1,15 @@
 # --- AHF QuickPay ---
-# Secrets
+# Secrets & Configuration
+config/.env.php
 config/payments.php
+config/bridge.key
+
+# Admin credentials (if you have a separate file)
+admin/config.php
 
 # Build/vendor
 /vendor/
+composer.lock
 
 # Logs & temp
 logs/
@@ -12,9 +18,15 @@ tmp/
 _cache/
 _session/
 _attic/
-config/.env.php
-_bootstrap.php
 
 # Payments artifacts
 api/webhooks/*.csv
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
 

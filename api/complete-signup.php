@@ -8,6 +8,10 @@ use Dompdf\Dompdf;
 require_once __DIR__ . '/../vendor/autoload.php';
 $cfg = require __DIR__ . '/../config/.env.php';
 
+// Rate limiting for signup endpoint
+require_once __DIR__ . '/../_rate_limit.php';
+rate_limit('complete-signup');
+
 function bailout(int $code, string $msg, array $extra = []): never {
   http_response_code($code);
   echo json_encode(['status'=>'error','error'=>$msg] + $extra);

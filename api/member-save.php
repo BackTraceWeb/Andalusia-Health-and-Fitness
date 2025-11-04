@@ -1,8 +1,9 @@
 <?php
 require __DIR__ . '/../_bootstrap.php';
+require __DIR__ . '/../_rate_limit.php';
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Rate limiting
+rate_limit('member-save');
 
 $pdo = pdo();
 $logFile = __DIR__ . '/../logs/member-save-debug.log';

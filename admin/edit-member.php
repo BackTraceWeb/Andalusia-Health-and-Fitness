@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../_bootstrap.php';
+require __DIR__ . '/_auth.php';
 header('Content-Type: text/html; charset=UTF-8');
 
 $pdo = pdo();

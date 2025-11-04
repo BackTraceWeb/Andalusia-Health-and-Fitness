@@ -1,21 +1,72 @@
 <?php
+// Load configuration
+require_once __DIR__ . '/../_bootstrap.php';
+
+// Configure secure session settings
+ini_set('session.cookie_httponly', config('SESSION_COOKIE_HTTPONLY', 1));
+ini_set('session.cookie_secure', config('SESSION_COOKIE_SECURE', 0)); // Set to 1 for HTTPS
+ini_set('session.cookie_samesite', config('SESSION_COOKIE_SAMESITE', 'Strict'));
+ini_set('session.use_strict_mode', 1);
+ini_set('session.gc_maxlifetime', config('SESSION_LIFETIME', 7200));
+
 session_start();
 
-$ADMIN_USER = 'admin';
-$ADMIN_PASS = 'fit2025!';
+// Session timeout check
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > config('SESSION_LIFETIME', 7200))) {
+    session_unset();
+    session_destroy();
+    session_start();
+}
+$_SESSION['last_activity'] = time();
+
+// Rate limiting for login attempts
+$max_attempts = 5;
+$lockout_time = 900; // 15 minutes
+
+if (!isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts'] = 0;
+    $_SESSION['last_attempt_time'] = time();
+}
+
+// Reset counter if lockout time has passed
+if (time() - $_SESSION['last_attempt_time'] > $lockout_time) {
+    $_SESSION['login_attempts'] = 0;
+}
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $user = trim($_POST['username'] ?? '');
-  $pass = trim($_POST['password'] ?? '');
+    // Check if locked out
+    if ($_SESSION['login_attempts'] >= $max_attempts) {
+        $remaining_time = $lockout_time - (time() - $_SESSION['last_attempt_time']);
+        $error = 'Too many failed attempts. Please try again in ' . ceil($remaining_time / 60) . ' minutes.';
+    } else {
+        $user = trim($_POST['username'] ?? '');
+        $pass = trim($_POST['password'] ?? '');
 
-  if ($user === $ADMIN_USER && $pass === $ADMIN_PASS) {
-    $_SESSION['logged_in'] = true;
-    header('Location: dashboard.php');
-    exit;
-  } else {
-    $error = 'Invalid username or password.';
-  }
+        $ADMIN_USER = config('ADMIN_USER', 'admin');
+        $ADMIN_PASS_HASH = config('ADMIN_PASS_HASH');
+
+        // Verify credentials
+        if ($user === $ADMIN_USER && password_verify($pass, $ADMIN_PASS_HASH)) {
+            // Regenerate session ID to prevent session fixation
+            session_regenerate_id(true);
+
+            $_SESSION['logged_in'] = true;
+            $_SESSION['username'] = $user;
+            $_SESSION['login_time'] = time();
+            $_SESSION['login_attempts'] = 0; // Reset on successful login
+
+            header('Location: dashboard.php');
+            exit;
+        } else {
+            $_SESSION['login_attempts']++;
+            $_SESSION['last_attempt_time'] = time();
+            $error = 'Invalid username or password.';
+
+            // Log failed attempt
+            error_log("Failed login attempt for user: $user from IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+        }
+    }
 }
 ?>
 <!DOCTYPE html>

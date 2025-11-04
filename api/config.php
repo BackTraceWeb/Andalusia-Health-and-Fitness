@@ -1,15 +1,23 @@
 <?php
-// Authorize.Net Sandbox Config
-define('AUTH_ENV', 'PROD');
-define('AUTH_API_URL', 'https://api2.authorize.net/xml/v1/request.api');
+// Authorize.Net Configuration
+// Load from centralized config file
 
-define('AUTH_LOGIN_ID',        '75aKSj4J5');      // your sandbox login
-define('AUTH_TRANSACTION_KEY', '27Pdsz96u2EsC693'); // your sandbox trans key
+require_once __DIR__ . '/../_bootstrap.php';
 
-// NEW: paste the 128-char hex Signature Key from the ANet dashboard
-define('AUTH_SIGNATURE_KEY_HEX', '1402B82DA340E43F9D13A8B85FF320919BCE81D56307534ED467BD00471C9C669201D0001F58F519D38631588862943BE06BBD9BC99F22EE38FF34B77E36EE87');
+// Define constants from config for backward compatibility
+define('AUTH_ENV', config('AUTH_ENV', 'SANDBOX'));
+define('AUTH_API_URL', config('AUTH_API_URL', 'https://apitest.authorize.net/xml/v1/request.api'));
+define('AUTH_LOGIN_ID', config('AUTH_LOGIN_ID'));
+define('AUTH_TRANSACTION_KEY', config('AUTH_TRANSACTION_KEY'));
+define('AUTH_SIGNATURE_KEY_HEX', config('AUTH_SIGNATURE_KEY_HEX'));
+define('SITE_BASE_URL', config('SITE_BASE_URL', 'https://andalusiahealthandfitness.com'));
 
-// NEW: used for return URLs (optional, but handy)
-define('SITE_BASE_URL', 'https://andalusiahealthandfitness.com');
+// Validate required config
+if (!AUTH_LOGIN_ID || !AUTH_TRANSACTION_KEY) {
+    error_log("CRITICAL: Authorize.Net credentials not configured in config/.env.php");
+    http_response_code(500);
+    echo json_encode(["error" => "configuration_error"]);
+    exit;
+}
 
 

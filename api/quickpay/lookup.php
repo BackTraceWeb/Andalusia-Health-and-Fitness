@@ -1,8 +1,11 @@
 <?php
 ob_clean();
 require __DIR__ . '/../../_bootstrap.php';
+require __DIR__ . '/../../_rate_limit.php';
 header('Content-Type: application/json; charset=utf-8');
-ini_set('display_errors', 0);
+
+// Rate limiting - more restrictive for public endpoint
+rate_limit('quickpay-lookup');
 
 // Utility to normalize strings
 function norm($s) {
