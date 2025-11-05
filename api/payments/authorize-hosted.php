@@ -53,7 +53,16 @@ $payload = [
       "transactionType" => "authCaptureTransaction",
       "amount" => $amount,
       "order" => [
-        "invoiceNumber" => $invoice
+        "invoiceNumber" => $invoice,
+        "description" => "Gym Membership Dues"
+      ],
+      "customer" => [
+        "email" => $m['email'] ?? ''
+      ],
+      "billTo" => [
+        "firstName" => $m['first_name'] ?? '',
+        "lastName" => $m['last_name'] ?? '',
+        "zip" => $m['zip'] ?? ''
       ]
     ],
     "hostedPaymentSettings" => [
