@@ -195,6 +195,7 @@
               <input type="number" id="waiverCount" min="1" value="1" readonly style="width:70px; text-align:center;">
             </div>
             <button type="button" id="launchWizard" class="pill-ghost">Fill Waivers Now</button>
+            <button type="button" id="refreshStatus" class="pill-ghost" style="font-size:0.85em;padding:8px 12px;">↻ Check Status</button>
             <span class="help" id="waiverStatus">0 / 1 completed</span>
           </div>
 
@@ -318,8 +319,16 @@
   // === Check waiver completion ===
   function checkWaiverCompletion() {
     const total = parseInt(waiverCount.value || '1', 10);
-    const ahfData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+    let ahfData = {};
+    try {
+      ahfData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+    } catch(e) {
+      console.error('Error reading sessionStorage:', e);
+    }
+
     const completed = (ahfData.waivers || []).length;
+
+    console.log('Waiver check:', {total, completed, ahfData}); // Debug log
 
     if (completed >= total) {
       // All waivers completed
@@ -336,8 +345,11 @@
     }
   }
 
-  // Check on page load
+  // Check on page load and periodically
   checkWaiverCompletion();
+
+  // Also check every 2 seconds in case user returns from waiver popup
+  setInterval(checkWaiverCompletion, 2000);
 
   // === Single-tab Waiver Wizard ===
   let waiverPopup = null;
@@ -346,6 +358,18 @@
     const url=`waiver.html?start=0&total=${total}`;
     waiverPopup = window.open(url,'_blank');
   });
+
+  // Manual refresh button
+  const refreshBtn = document.getElementById('refreshStatus');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      checkWaiverCompletion();
+      refreshBtn.textContent = '✓ Checked';
+      setTimeout(() => {
+        refreshBtn.textContent = '↻ Check Status';
+      }, 1500);
+    });
+  }
 
   // Listen for waiver completion messages
   window.addEventListener('message', (e) => {
