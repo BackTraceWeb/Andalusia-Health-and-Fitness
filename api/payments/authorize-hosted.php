@@ -40,6 +40,9 @@ $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 // Safe, short invoice (<=20 alnum)
 $invoice = substr(preg_replace('/[^A-Za-z0-9]/','', "QP{$duesId}M{$memberId}"), 0, 20);
 
+// Build return URL with parameters
+$returnUrl = "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId=$memberId&invoiceId=$duesId";
+
 $payload = [
   "getHostedPaymentPageRequest" => [
     "merchantAuthentication" => [
@@ -61,7 +64,7 @@ $payload = [
           "settingValue" => json_encode([
             "showReceipt" => false,
             // Pass memberId and invoiceId in return URL
-            "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
+            "url"         => $returnUrl,
             "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/"
           ], JSON_UNESCAPED_SLASHES)
         ],
