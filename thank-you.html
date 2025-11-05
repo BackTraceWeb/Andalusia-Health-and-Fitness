@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Welcome to Andalusia Health & Fitness!</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 80px 20px 40px;
+      min-height: 100vh;
+    }
+
+    main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 200px);
+    }
+
+    .success-card {
+      max-width: 600px;
+      background: #111;
+      border-radius: 24px;
+      padding: 60px 40px;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(216, 27, 96, 0.3);
+      border: 1px solid rgba(216, 27, 96, 0.2);
+    }
+
+    .checkmark {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #d81b60 0%, #ff4fa3 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 30px;
+      font-size: 48px;
+      animation: scaleIn 0.5s ease-out;
+    }
+
+    @keyframes scaleIn {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    h1 {
+      color: #d81b60;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      font-size: 1.3rem;
+      color: #fff;
+      margin-bottom: 30px;
+      font-weight: 500;
+    }
+
+    .message {
+      font-size: 1.1rem;
+      color: #ccc;
+      line-height: 1.8;
+      margin-bottom: 40px;
+    }
+
+    .next-steps {
+      background: #0a0a0a;
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+      border: 1px solid #333;
+    }
+
+    .next-steps h2 {
+      color: #ff4fa3;
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+    }
+
+    .next-steps ul {
+      list-style: none;
+      padding: 0;
+      text-align: left;
+    }
+
+    .next-steps li {
+      padding: 12px 0;
+      border-bottom: 1px solid #222;
+      font-size: 1rem;
+      color: #ddd;
+    }
+
+    .next-steps li:last-child {
+      border-bottom: none;
+    }
+
+    .next-steps li::before {
+      content: "✓";
+      color: #4ade80;
+      font-weight: bold;
+      margin-right: 12px;
+      font-size: 1.2rem;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #d81b60 0%, #ff4fa3 100%);
+      color: #fff;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(216, 27, 96, 0.4);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #ff4fa3;
+      border: 2px solid #d81b60;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(216, 27, 96, 0.1);
+    }
+
+    .contact-info {
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 1px solid #333;
+      color: #999;
+      font-size: 0.95rem;
+    }
+
+    .contact-info a {
+      color: #ff4fa3;
+      text-decoration: none;
+    }
+
+    .contact-info a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      .success-card {
+        padding: 40px 25px;
+        margin: 20px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body class="theme-andalusia">
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="shell">
+    <div class="brand-pill">
+      <a href="index.html"><img src="AHFlogo.png" alt="Andalusia Health & Fitness"></a>
+    </div>
+    <nav class="mainnav">
+      <a href="index.html">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
+    </nav>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="ctabar">
+  <div class="shell">
+    <a href="/quickpay/" class="pill-cta">Quick Pay</a>
+    <a href="tel:+13345822000" class="pill-cta">Call • (334) 582-2000</a>
+  </div>
+</div>
+
+<main>
+  <div class="success-card">
+    <div class="checkmark">✓</div>
+
+    <h1>Welcome to Andalusia Health & Fitness!</h1>
+    <p class="subtitle">Your membership is now active</p>
+
+    <p class="message">
+      Thank you for joining our fitness family! Your payment has been processed successfully,
+      and we've sent a confirmation email to <span id="memberEmail"></span>.
+    </p>
+
+    <div class="next-steps">
+      <h2>Next Steps</h2>
+      <ul>
+        <li>Please visit the gym to pick up your key fob(s)</li>
+        <li>Bring a valid driver's license for verification</li>
+        <li>Our staff will program your fob and show you around</li>
+        <li>Enjoy 24/7 access to all gym facilities and sauna</li>
+      </ul>
+    </div>
+
+    <div class="cta-buttons">
+      <a href="index.html" class="btn btn-primary">Return Home</a>
+      <a href="tel:+13345822000" class="btn btn-secondary">Call Us: (334) 582-2000</a>
+    </div>
+
+    <div class="contact-info">
+      <p>
+        <strong>Gym Location:</strong><br>
+        205 Church Street, Andalusia, AL 36420<br>
+        <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Get Directions</a>
+      </p>
+      <p>
+        Questions? Email us at
+        <a href="mailto:memberships@andalusiahealthandfitness.com">memberships@andalusiahealthandfitness.com</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Try to display member email if available
+    const signupData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+    if (signupData.email) {
+      document.getElementById('memberEmail').textContent = signupData.email;
+    } else {
+      document.getElementById('memberEmail').textContent = 'you';
+    }
+  </script>
+</main>
+
+<footer class="sitefoot">
+  <div class="shell">
+    <div class="footer-content">
+      <span>© <script>document.write(new Date().getFullYear())</script> Andalusia Health & Fitness — Open 24/7.</span>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/Legal/privacy.html">Privacy Policy</a> |
+        <a href="/Legal/terms.html">Terms & Conditions</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

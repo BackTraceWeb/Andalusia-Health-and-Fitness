@@ -10,20 +10,33 @@ ini_set('display_errors', '1');
 error_reporting(E_ALL);
 
 /**
- * Authorize.net Return Handler (QuickPay flow)
- * --------------------------------------------
- * Called automatically by Authorize.net after a successful hosted payment.
- * - Marks dues record as paid
- * - Calls internal webhook (authorize-success.php) to trigger NinjaOne → AxTrax update
- * - Displays confirmation message to member
+ * Authorize.net Return Handler
+ * ----------------------------
+ * Handles two flows:
+ * 1. QuickPay: Existing member paying dues (memberId + invoiceId)
+ * 2. Membership Signup: New member signing up (type=membership)
  */
 
 require_once __DIR__ . '/../../_bootstrap.php';
 header('Content-Type: text/html; charset=utf-8');
 
 // ----------------------------------------------------------------------
-// Capture return parameters
+// Detect flow type
 // ----------------------------------------------------------------------
+$flowType = $_GET['type'] ?? 'quickpay';
+
+// If membership signup, handle separately
+if ($flowType === 'membership') {
+    // Membership signup flow - use JavaScript to read sessionStorage
+    include __DIR__ . '/authorize-return-membership.php';
+    exit;
+}
+
+// ----------------------------------------------------------------------
+// QuickPay flow continues below
+// ----------------------------------------------------------------------
+
+// Capture return parameters
 $memberId = $_POST['memberId'] ?? $_GET['memberId'] ?? 0;
 $invoiceId = $_POST['invoiceId'] ?? $_GET['invoiceId'] ?? 0;
 

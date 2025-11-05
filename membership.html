@@ -297,10 +297,72 @@
   recalc();
 
   // === Single-tab Waiver Wizard ===
+  let waiverPopup = null;
   launchBtn.addEventListener('click',()=>{
     const total=parseInt(waiverCount.value||'1',10);
     const url=`waiver.html?start=0&total=${total}`;
-    window.open(url,'_blank');
+    waiverPopup = window.open(url,'_blank');
+  });
+
+  // Listen for waiver completion messages
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'waiver_completed') {
+      const statusEl = document.getElementById('waiverStatus');
+      if (statusEl) {
+        statusEl.textContent = `${e.data.current} / ${e.data.total} completed`;
+        if (e.data.current === e.data.total) {
+          statusEl.style.color = '#4ade80';
+          statusEl.textContent = `✓ All ${e.data.total} waivers completed`;
+        }
+      }
+    }
+  });
+
+  // Form submission: save to sessionStorage and redirect
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // Validate that waivers are completed
+    const total = parseInt(waiverCount.value || '1', 10);
+    const ahfData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+    const completedWaivers = (ahfData.waivers || []).length;
+
+    if (completedWaivers < total) {
+      alert(`Please complete all ${total} waivers before continuing. You have completed ${completedWaivers} of ${total}.`);
+      return;
+    }
+
+    // Collect form data
+    const plan = parsePlan();
+    const formData = new FormData(form);
+
+    const signupData = {
+      first_name: formData.get('first_name'),
+      last_name: formData.get('last_name'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      address1: formData.get('address1'),
+      city: formData.get('city'),
+      state: formData.get('state'),
+      zip: formData.get('zip'),
+      plan: plan.name,
+      plan_amount: plan.amount,
+      add_tanning: addTanning.checked,
+      extra_members: parseInt(extraMembers.value || '0', 10),
+      fob_count: parseInt(fobCount.value || '1', 10),
+      waive_initiation: waiveInit.checked,
+      waiver_count: total,
+      monthly_total: (plan.amount + (addTanning.checked ? TANNING_ADDON : 0) +
+                      (plan.name.toLowerCase().includes('family') ? parseInt(extraMembers.value || '0', 10) * EXTRA_CHILD_FEE : 0)).toFixed(2),
+      today_total: parseFloat(todayEl.textContent.replace('$', '')).toFixed(2),
+      waivers: ahfData.waivers || []
+    };
+
+    // Save to sessionStorage
+    sessionStorage.setItem('ahfSignup', JSON.stringify(signupData));
+
+    // Redirect to payments page
+    window.location.href = 'payments.html';
   });
 })();
 </script>

@@ -4,11 +4,12 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Waiver — Andalusia Health & Fitness</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
   <style>
-    :root{--bg:#0b0f19;--card:#0f1520;--line:#283248;--ink:#fff;--muted:rgba(255,255,255,.75);--accent:#e81e63}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
+    body{background:#000;color:#fff;}
     .wrap{max-width:900px;margin:28px auto;padding:0 16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+    .card{background:#111;border:1px solid #333;border-radius:14px;padding:16px;margin-top:14px}
     .grid{display:grid;gap:12px;grid-template-columns:1fr 1fr 1fr}
     .grid label{display:flex;flex-direction:column;gap:6px}
     @media (max-width: 860px){.grid{grid-template-columns:1fr}}
@@ -16,14 +17,39 @@
     .sigpad{width:100%;height:200px;background:#eee;border-radius:12px;border:1px solid #e5e7eb;opacity:.5;pointer-events:none}
     .sigpad.enabled{background:#fff;opacity:1;pointer-events:auto}
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .btn{border-radius:999px;padding:10px 14px;border:1px solid #2a3346;cursor:pointer}
-    .btn-ghost{background:#151c2a;color:#e8e9ee}
-    .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
-    .muted{color:var(--muted);font-size:12px}
+    .btn{border-radius:999px;padding:10px 14px;border:1px solid #d81b60;cursor:pointer}
+    .btn-ghost{background:#151c2a;color:#fff}
+    .btn-primary{background:#d81b60;border-color:#d81b60;color:#fff}
+    .btn-primary:hover{background:#ff4fa3;}
+    .muted{color:#aaa;font-size:12px}
     .err{background:#220b12;border:1px solid #6f1634;padding:10px;border-radius:10px;margin-top:10px;display:none}
   </style>
 </head>
-<body>
+
+<body class="theme-andalusia">
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="shell">
+    <div class="brand-pill">
+      <a href="index.html"><img src="AHFlogo.png" alt="Andalusia Health & Fitness"></a>
+    </div>
+    <nav class="mainnav">
+      <a href="index.html">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
+    </nav>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="ctabar">
+  <div class="shell">
+    <a href="/quickpay/" class="pill-cta">Quick Pay</a>
+    <a href="tel:+13345822000" class="pill-cta">Call • (334) 582-2000</a>
+  </div>
+</div>
+
   <div class="wrap">
     <h1>Membership Waiver</h1>
     <div class="muted" id="stepInfo">Loading…</div>
@@ -142,48 +168,175 @@
   let current = parseInt(params.get("start") || "0", 10);
   const total = parseInt(params.get("total") || "1", 10);
 
-  // Update header text
-  const header = document.querySelector("h1, .waiver-header, .waiver-title");
+  // Update header and step info
+  const header = document.querySelector("h1");
   if (header) header.textContent = `Membership Waiver — ${current + 1} of ${total}`;
+  const stepInfo = document.getElementById("stepInfo");
+  if (stepInfo) stepInfo.textContent = `Waiver ${current + 1} of ${total}`;
 
-  // Update label in case there’s a “Waiver 1 of 1” text node
-  const info = document.querySelector("#waiver-info, .waiver-count, legend");
-  if (info && total > 1) info.textContent = `Waiver ${current + 1} of ${total}`;
+  // Initialize signature pad
+  const canvas = document.getElementById("pad");
+  const signaturePad = new SignaturePad(canvas, {
+    backgroundColor: 'rgb(255, 255, 255)',
+    penColor: 'rgb(0, 0, 0)'
+  });
 
-  // Simulate “Submit” flow — this could eventually post data to server
-  const form = document.querySelector("form");
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
+  // Set canvas size to match display size
+  function resizeCanvas() {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.offsetHeight * ratio;
+    canvas.getContext("2d").scale(ratio, ratio);
+    signaturePad.clear(); // Clears but maintains background
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
 
-    // Save current waiver locally (can integrate with backend later)
-    console.log(`Waiver ${current + 1} signed`);
+  // Enable signature pad after scrolling through waiver
+  const waiverBox = document.getElementById("waiverBox");
+  let hasScrolled = false;
 
-    // If more waivers remain, load next one in same tab
+  waiverBox.addEventListener("scroll", function() {
+    if (!hasScrolled) {
+      const scrolledToBottom = waiverBox.scrollHeight - waiverBox.scrollTop <= waiverBox.clientHeight + 50;
+      if (scrolledToBottom) {
+        hasScrolled = true;
+        canvas.classList.add("enabled");
+        document.querySelector(".row .muted").textContent = "Sign above to continue.";
+      }
+    }
+  });
+
+  // Button handlers
+  const clearBtn = document.getElementById("clearBtn");
+  const undoBtn = document.getElementById("undoBtn");
+  const submitBtn = document.getElementById("submitBtn");
+  const errorBox = document.getElementById("errorBox");
+
+  clearBtn.addEventListener("click", () => {
+    signaturePad.clear();
+  });
+
+  undoBtn.addEventListener("click", () => {
+    const data = signaturePad.toData();
+    if (data) {
+      data.pop(); // Remove last stroke
+      signaturePad.fromData(data);
+    }
+  });
+
+  // Submit waiver
+  submitBtn.addEventListener("click", function() {
+    errorBox.style.display = "none";
+    errorBox.textContent = "";
+
+    // Validate inputs
+    const name = document.getElementById("name").value.trim();
+    const sigType = document.getElementById("sigType").value;
+    const email = document.getElementById("email").value.trim();
+
+    if (!name) {
+      errorBox.textContent = "Please enter the signer's full name.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    if (!hasScrolled) {
+      errorBox.textContent = "Please scroll through the entire waiver before signing.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    if (signaturePad.isEmpty()) {
+      errorBox.textContent = "Please provide a signature above.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    // Get signature as PNG base64
+    const signaturePNG = signaturePad.toDataURL("image/png");
+
+    // Get existing session data
+    let ahfData = {};
+    try {
+      ahfData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+    } catch(e) {
+      ahfData = {};
+    }
+
+    // Initialize waivers array if needed
+    if (!ahfData.waivers) {
+      ahfData.waivers = [];
+    }
+
+    // Add this waiver
+    ahfData.waivers.push({
+      name: name,
+      email: email,
+      sig_type: sigType,
+      signature_png: signaturePNG
+    });
+
+    // Save back to sessionStorage
+    sessionStorage.setItem('ahfSignup', JSON.stringify(ahfData));
+
+    // Notify parent window (if opened from membership.html)
+    if (window.opener && !window.opener.closed) {
+      try {
+        window.opener.postMessage({
+          type: 'waiver_completed',
+          current: current + 1,
+          total: total
+        }, '*');
+      } catch(e) {
+        console.log("Could not notify parent window");
+      }
+    }
+
+    // Navigate to next waiver or close
     if (current + 1 < total) {
-      const next = current + 1;
-      const nextUrl = `waiver.html?start=${next}&total=${total}`;
+      const nextUrl = `waiver.html?start=${current + 1}&total=${total}`;
       window.location.href = nextUrl;
     } else {
-      // All done
+      // All waivers completed - show success and close
       document.body.innerHTML = `
-        <div style="text-align:center; padding:50px; color:#fff;">
-          <h1>All Waivers Completed ✅</h1>
-          <p>Thank you! You can now return to your membership form.</p>
-          <a href="membership.html" class="pill-cta" style="
-            display:inline-block; 
-            background:#d81b60; 
-            color:#fff; 
-            text-decoration:none; 
-            padding:12px 24px; 
+        <div style="text-align:center; padding:50px; color:#fff; background:var(--bg);">
+          <h1 style="color:#4ade80;">All Waivers Completed ✅</h1>
+          <p style="font-size:18px;">Thank you! You can now close this window.</p>
+          <button onclick="window.close()" class="btn btn-primary" style="
+            display:inline-block;
+            background:#e81e63;
+            color:#fff;
+            border:none;
+            cursor:pointer;
+            padding:12px 24px;
             border-radius:999px;
-            margin-top:20px;">Return to Membership</a>
+            font-size:16px;
+            margin-top:20px;">Close Window</button>
         </div>
       `;
+
+      // Auto-close after 3 seconds
+      setTimeout(() => {
+        window.close();
+      }, 3000);
     }
   });
 
 })();
 </script>
+
+<footer class="sitefoot">
+  <div class="shell">
+    <div class="footer-content">
+      <span>© <script>document.write(new Date().getFullYear())</script> Andalusia Health & Fitness — Open 24/7.</span>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/Legal/privacy.html">Privacy Policy</a> |
+        <a href="/Legal/terms.html">Terms & Conditions</a>
+      </nav>
+    </div>
+  </div>
+</footer>
 
 </body>
 </html>

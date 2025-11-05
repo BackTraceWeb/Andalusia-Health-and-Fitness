@@ -7,22 +7,47 @@
   <link rel="stylesheet" href="styles.css"/>
   <style>
     body {
-      background-color:#0a0a0a; color:#fff; text-align:center; font-family:'Inter',sans-serif;
-      padding:80px 20px;
+      background:#000; color:#fff; text-align:center; font-family:"Helvetica Neue",Arial,sans-serif;
+      padding:80px 20px 40px;
     }
     .box {
       max-width:480px; margin:auto; background:#111; border-radius:16px;
-      padding:40px; box-shadow:0 0 25px rgba(255,0,100,0.25);
+      padding:40px; box-shadow:0 0 25px rgba(216,27,96,0.3);
+      border:1px solid rgba(216,27,96,0.2);
     }
-    h1 { color:#ff006e; margin-bottom:12px; }
+    h1 { color:#d81b60; margin-bottom:12px; }
     .total { font-size:1.8rem; font-weight:700; margin:10px 0 20px; }
-    .pill-cta { background:#ff006e; color:#fff; border:none; border-radius:999px;
-      padding:12px 32px; font-size:1rem; cursor:pointer;
+    .pill-cta { background:#d81b60; color:#fff; border:none; border-radius:999px;
+      padding:12px 32px; font-size:1rem; cursor:pointer; font-weight:600;
     }
     .pill-cta:hover { background:#ff4fa3; }
   </style>
 </head>
-<body>
+
+<body class="theme-andalusia">
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="shell">
+    <div class="brand-pill">
+      <a href="index.html"><img src="AHFlogo.png" alt="Andalusia Health & Fitness"></a>
+    </div>
+    <nav class="mainnav">
+      <a href="index.html">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
+    </nav>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="ctabar">
+  <div class="shell">
+    <a href="/quickpay/" class="pill-cta">Quick Pay</a>
+    <a href="tel:+13345822000" class="pill-cta">Call • (334) 582-2000</a>
+  </div>
+</div>
+
   <div class="box">
     <h1>Secure Checkout</h1>
     <p>Confirm your membership and continue to Authorize.Net for secure payment.</p>
@@ -43,6 +68,19 @@
       document.getElementById('invoice').value=Date.now();
     }
   </script>
+
+<footer class="sitefoot">
+  <div class="shell">
+    <div class="footer-content">
+      <span>© <script>document.write(new Date().getFullYear())</script> Andalusia Health & Fitness — Open 24/7.</span>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/Legal/privacy.html">Privacy Policy</a> |
+        <a href="/Legal/terms.html">Terms & Conditions</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>
 
