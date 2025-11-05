@@ -2,7 +2,7 @@
 /**
  * Authorize.Net Hosted Payment (Sandbox)
  * - urlMethod=GET so your return handler sees query params
- * - userFields to carry memberId/invoiceId through receipts/webhooks
+ * - userFields AFTER billTo to satisfy schema (fixes E00003)
  * - response logging for faster debugging
  * - acceptHostedUrl() guard maps apitest→test.accept to avoid prod flips
  */
@@ -74,18 +74,19 @@ $payload = [
       "customer" => [
         "email" => $m['email'] ?? '',
       ],
-      // Carry your identifiers through to webhooks/settlement
+      // billTo BEFORE userFields to satisfy schema order
+      "billTo" => [
+        "firstName" => $m['first_name'] ?? '',
+        "lastName"  => $m['last_name']  ?? '',
+        "zip"       => $m['zip']        ?? '',
+      ],
+      // Keep userFields LAST among your custom adds
       "userFields" => [
         "userField" => [
           [ "name" => "memberId",      "value" => (string)$memberId ],
           [ "name" => "invoiceId",     "value" => (string)$duesId ],
           [ "name" => "invoiceNumber", "value" => $invoice ],
         ]
-      ],
-      "billTo" => [
-        "firstName" => $m['first_name'] ?? '',
-        "lastName"  => $m['last_name']  ?? '',
-        "zip"       => $m['zip']        ?? '',
       ],
     ],
     "hostedPaymentSettings" => [
