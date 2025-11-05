@@ -61,8 +61,12 @@
 
   <script>
     const data = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
-    if(!data.today_total){ document.getElementById('amountDisplay').textContent='$0.00'; }
-    else {
+
+    // If no membership data, redirect back to membership form
+    if(!data.today_total || !data.first_name) {
+      alert('No membership data found. Please start from the membership form.');
+      window.location.href = 'membership.html';
+    } else {
       document.getElementById('amountDisplay').textContent='$'+parseFloat(data.today_total).toFixed(2);
       document.getElementById('amount').value=parseFloat(data.today_total).toFixed(2);
       document.getElementById('invoice').value=Date.now();
