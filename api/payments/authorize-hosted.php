@@ -60,8 +60,8 @@ $payload = [
           "settingName"  => "hostedPaymentReturnOptions",
           "settingValue" => json_encode([
             "showReceipt" => false,
-            // keep only the two *supported* properties; omit linkMethod/urlText for now
-            "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
+            // Pass memberId and invoiceId in return URL
+            "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
             "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/"
           ], JSON_UNESCAPED_SLASHES)
         ],
