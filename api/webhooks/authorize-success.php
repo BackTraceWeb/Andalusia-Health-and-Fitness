@@ -72,78 +72,56 @@ flock($fh, LOCK_UN);
 fclose($fh);
 
 // ----------------------------------------------------------------------
-// UPDATE MEMBER RECORD: Set valid_until to +30 days from today
+// CALL AXTRAX REST API TO UPDATE MEMBER VALIDITY
 // ----------------------------------------------------------------------
+// Correct flow: Authorize.Net → Our webhook → AxTrax REST API → AxTrax updates its DB → AxTrax calls back → We update our DB
 try {
   require_once __DIR__ . '/../../_bootstrap.php';
-  $pdo = pdo();
+  require_once __DIR__ . '/../integrations/axtrax/client.php';
 
   // Calculate new valid_until date (30 days from today)
   $newValidUntil = date('Y-m-d', strtotime('+30 days'));
 
-  // Update member record
-  $stmt = $pdo->prepare("
-    UPDATE members
-    SET valid_until = :valid_until,
-        status = 'current',
-        updated_at = NOW()
-    WHERE id = :member_id
-  ");
+  error_log("Payment webhook: Calling AxTrax REST API for member #$memberId with valid_until=$newValidUntil");
 
-  $stmt->execute([
-    ':valid_until' => $newValidUntil,
-    ':member_id' => $memberId
-  ]);
-
-  $rowsUpdated = $stmt->rowCount();
-  error_log("Payment webhook: Updated member #$memberId valid_until to $newValidUntil (rows: $rowsUpdated)");
-
-  // ----------------------------------------------------------------------
-  // TRIGGER AXTRAX SYNC (staged - will work when REST API creds are ready)
-  // ----------------------------------------------------------------------
   try {
-    $webhookUrl = 'https://andalusiahealthandfitness.com/api/webhooks/payments-feed.php';
-    $bearerToken = config('WEBHOOK_BEARER_TOKEN', '9f8942431246fd7490b35fb27dfeb15edb7c68b01c3cc34e967ef43c8478113f');
+    // Call AxTrax REST API to update member validity
+    $axtrax = AxtraxClient::buildFromConfig();
+    $axtraxResponse = $axtrax->updateMemberValidity((int)$memberId, $newValidUntil);
 
-    $payload = json_encode([
-      'member_id' => (int)$memberId,
-      'valid_until' => $newValidUntil,
-      'payment_id' => $pid,
-      'amount' => $amt
+    error_log("AxTrax REST API success for member #$memberId: " . json_encode($axtraxResponse));
+
+  } catch (LogicException $notReady) {
+    // AxTrax REST API not configured yet - log and continue
+    error_log("AxTrax REST API not configured yet (expected): " . $notReady->getMessage());
+    error_log("Once configured, AxTrax will update its database and call back to /api/webhooks/axtrax-callback.php");
+
+    // TEMPORARY: For now, update our database directly until AxTrax is configured
+    // This code will be removed once AxTrax callback is working
+    error_log("TEMPORARY: Updating our database directly until AxTrax is configured");
+    $pdo = pdo();
+    $stmt = $pdo->prepare("
+      UPDATE members
+      SET valid_until = :valid_until,
+          status = 'current',
+          updated_at = NOW()
+      WHERE id = :member_id
+    ");
+    $stmt->execute([
+      ':valid_until' => $newValidUntil,
+      ':member_id' => $memberId
     ]);
+    $rowsUpdated = $stmt->rowCount();
+    error_log("TEMPORARY: Direct DB update for member #$memberId (rows: $rowsUpdated)");
 
-    $ch = curl_init($webhookUrl);
-    curl_setopt_array($ch, [
-      CURLOPT_POST => true,
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_HTTPHEADER => [
-        'Content-Type: application/json',
-        "Authorization: Bearer $bearerToken"
-      ],
-      CURLOPT_POSTFIELDS => $payload,
-      CURLOPT_TIMEOUT => 5
-    ]);
-
-    $axtraxResp = curl_exec($ch);
-    $axtraxHttp = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    // Log AxTrax sync attempt (may fail with 501 until REST API is ready)
-    if ($axtraxHttp === 501) {
-      error_log("AxTrax sync staged for member #$memberId - REST API not ready yet");
-    } elseif ($axtraxHttp === 200) {
-      error_log("AxTrax sync successful for member #$memberId: $axtraxResp");
-    } else {
-      error_log("AxTrax sync HTTP $axtraxHttp for member #$memberId: $axtraxResp");
-    }
-
-  } catch (Throwable $axErr) {
-    error_log("AxTrax sync error for member #$memberId: " . $axErr->getMessage());
+  } catch (RuntimeException $axErr) {
+    // AxTrax configuration issue or API error
+    error_log("AxTrax REST API error for member #$memberId: " . $axErr->getMessage());
     // Don't fail the payment webhook if AxTrax sync fails
   }
 
 } catch (Throwable $e) {
-  error_log("Member update error: " . $e->getMessage());
+  error_log("Webhook processing error: " . $e->getMessage());
   // Log error but don't fail the webhook
 }
 

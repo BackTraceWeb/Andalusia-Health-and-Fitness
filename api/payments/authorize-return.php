@@ -98,36 +98,11 @@ try {
 }
 
 // ----------------------------------------------------------------------
-// Trigger internal webhook (fires NinjaOne → AxTrax)
+// Note: Member record will be updated via Authorize.Net webhook → AxTrax → callback flow
+// We only mark the invoice as paid here for immediate user feedback
 // ----------------------------------------------------------------------
-try {
-    $webhookUrl = 'https://andalusiahealthandfitness.com/api/webhooks/authorize-success.php';
-
-    $payload = [
-        "eventType" => "net.authorize.payment.authcapture.created",
-        "payload" => [
-            "invoiceNumber" => $invoiceId,
-            "memberId"      => $memberId,
-            "authAmount"    => 0
-        ]
-    ];
-
-    $ch = curl_init($webhookUrl);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => json_encode($payload),
-        CURLOPT_TIMEOUT => 5
-    ]);
-    $resp = curl_exec($ch);
-    $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    file_put_contents($logFile, date('c') . " Webhook HTTP:$http\nResponse:$resp\n\n", FILE_APPEND);
-} catch (Throwable $e) {
-    file_put_contents($logFile, date('c') . " Webhook Error: " . $e->getMessage() . "\n", FILE_APPEND);
-}
+file_put_contents($logFile, date('c') . " Payment return successful - invoice marked as paid\n", FILE_APPEND);
+file_put_contents($logFile, date('c') . " Member record will be updated via Authorize.Net webhook → AxTrax → callback flow\n", FILE_APPEND);
 
 // ----------------------------------------------------------------------
 // Display confirmation page
