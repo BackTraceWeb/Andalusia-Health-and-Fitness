@@ -277,19 +277,27 @@
       signature_png: signaturePNG
     });
 
-    // Save back to sessionStorage
+    // Save back to sessionStorage (popup window)
     sessionStorage.setItem('ahfSignup', JSON.stringify(ahfData));
 
-    // Notify parent window (if opened from membership.html)
+    // Notify parent window AND send waiver data
     if (window.opener && !window.opener.closed) {
       try {
         window.opener.postMessage({
           type: 'waiver_completed',
           current: current + 1,
-          total: total
+          total: total,
+          waiver: {
+            name: name,
+            email: email,
+            sig_type: sigType,
+            signature_png: signaturePNG
+          },
+          allWaivers: ahfData.waivers  // Send all waivers collected so far
         }, '*');
+        console.log('Sent waiver data to parent window');
       } catch(e) {
-        console.log("Could not notify parent window");
+        console.error("Could not notify parent window:", e);
       }
     }
 

@@ -419,6 +419,26 @@
   // Listen for waiver completion messages
   window.addEventListener('message', (e) => {
     if (e.data && e.data.type === 'waiver_completed') {
+      console.log('Received waiver data from popup:', e.data);
+
+      // Save waiver data to parent window's sessionStorage
+      if (e.data.allWaivers && e.data.allWaivers.length > 0) {
+        let ahfData = {};
+        try {
+          ahfData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+        } catch(err) {
+          ahfData = {};
+        }
+
+        // Update waivers array with data from popup
+        ahfData.waivers = e.data.allWaivers;
+
+        // Save to parent window's sessionStorage
+        sessionStorage.setItem('ahfSignup', JSON.stringify(ahfData));
+        console.log('Saved waiver data to parent sessionStorage:', ahfData);
+      }
+
+      // Update status display
       const statusEl = document.getElementById('waiverStatus');
       if (statusEl) {
         statusEl.textContent = `${e.data.current} / ${e.data.total} completed`;
@@ -427,6 +447,7 @@
           statusEl.textContent = `✓ All ${e.data.total} waivers completed`;
         }
       }
+
       // Check if we can enable submit button
       checkWaiverCompletion();
     }
