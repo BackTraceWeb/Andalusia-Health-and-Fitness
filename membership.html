@@ -78,10 +78,20 @@
       border-radius:999px;
       font-weight:bold;
       cursor:pointer;
-      transition:background 0.2s;
+      transition:background 0.2s, opacity 0.2s;
     }
 
     .pill-cta:hover { background:#ff4fa3; }
+
+    .pill-cta:disabled {
+      background:#555;
+      cursor:not-allowed;
+      opacity:0.5;
+    }
+
+    .pill-cta:disabled:hover {
+      background:#555;
+    }
 
     .pill-ghost {
       background:transparent;
@@ -219,7 +229,8 @@
       </fieldset>
 
       <div class="form-actions">
-        <button class="pill-cta" type="submit">Continue to Payment</button>
+        <button class="pill-cta" type="submit" id="submitBtn" disabled>Continue to Payment</button>
+        <p class="help" id="submitHelp" style="color:#ff4fa3;font-size:14px;margin-top:10px;">⚠️ Please complete all waivers before continuing</p>
       </div>
     </form>
   </div>
@@ -253,7 +264,10 @@
         fobEl=document.getElementById('fobsLine'),
         todayEl=document.getElementById('todayTotal'),
         waiverCount=document.getElementById('waiverCount'),
-        launchBtn=document.getElementById('launchWizard');
+        launchBtn=document.getElementById('launchWizard'),
+        submitBtn=document.getElementById('submitBtn'),
+        submitHelp=document.getElementById('submitHelp'),
+        waiverStatus=document.getElementById('waiverStatus');
 
   function parsePlan(){
     const sel=form.querySelector('input[name="plan"]:checked');
@@ -291,10 +305,39 @@
     initEl.textContent='$'+init.toFixed(2);
     fobEl.textContent='$'+fobs.toFixed(2);
     todayEl.textContent='$'+today.toFixed(2);
+
+    // Check waiver completion whenever waiver count changes
+    if (typeof checkWaiverCompletion === 'function') {
+      checkWaiverCompletion();
+    }
   }
 
   form.addEventListener('change',recalc);
   recalc();
+
+  // === Check waiver completion ===
+  function checkWaiverCompletion() {
+    const total = parseInt(waiverCount.value || '1', 10);
+    const ahfData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+    const completed = (ahfData.waivers || []).length;
+
+    if (completed >= total) {
+      // All waivers completed
+      submitBtn.disabled = false;
+      submitHelp.style.color = '#4ade80';
+      submitHelp.innerHTML = '✓ All waivers completed - Ready to proceed';
+      return true;
+    } else {
+      // Waivers incomplete
+      submitBtn.disabled = true;
+      submitHelp.style.color = '#ff4fa3';
+      submitHelp.innerHTML = `⚠️ Please complete all ${total} waivers before continuing (${completed}/${total} done)`;
+      return false;
+    }
+  }
+
+  // Check on page load
+  checkWaiverCompletion();
 
   // === Single-tab Waiver Wizard ===
   let waiverPopup = null;
@@ -315,6 +358,8 @@
           statusEl.textContent = `✓ All ${e.data.total} waivers completed`;
         }
       }
+      // Check if we can enable submit button
+      checkWaiverCompletion();
     }
   });
 
