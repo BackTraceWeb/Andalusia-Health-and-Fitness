@@ -79,6 +79,13 @@ $payload = [
           "settingValue" => json_encode([
             "show" => true
           ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
+          "settingName"  => "hostedPaymentBillingAddressOptions",
+          "settingValue" => json_encode([
+            "show" => false,
+            "required" => false
+          ], JSON_UNESCAPED_SLASHES)
         ]
       ]
     ]
