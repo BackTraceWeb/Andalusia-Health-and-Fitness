@@ -67,9 +67,19 @@
       alert('No membership data found. Please start from the membership form.');
       window.location.href = 'membership.html';
     } else {
+      // Generate invoice number
+      const invoiceNumber = 'MS' + Date.now();
+
+      // Save invoice to sessionStorage so it's available on return
+      data.invoice = invoiceNumber;
+      sessionStorage.setItem('ahfSignup', JSON.stringify(data));
+
+      // Display and set form values
       document.getElementById('amountDisplay').textContent='$'+parseFloat(data.today_total).toFixed(2);
       document.getElementById('amount').value=parseFloat(data.today_total).toFixed(2);
-      document.getElementById('invoice').value=Date.now();
+      document.getElementById('invoice').value=invoiceNumber;
+
+      console.log('Saved invoice to sessionStorage:', invoiceNumber);
     }
   </script>
 
