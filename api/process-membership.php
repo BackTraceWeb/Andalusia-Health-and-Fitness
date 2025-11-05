@@ -114,10 +114,7 @@ function sendMembershipEmail(array $data, int $memberId): void
         $html = buildEmailHTML($data, $memberId);
         $text = buildEmailText($data, $memberId);
 
-        // Load Microsoft Graph credentials
-        require_once __DIR__ . '/config.php';
-
-        // Get access token
+        // Get access token from Microsoft Graph
         $token = getMicrosoftGraphToken();
 
         // Send email via Microsoft Graph API
@@ -131,9 +128,10 @@ function sendMembershipEmail(array $data, int $memberId): void
 
 function getMicrosoftGraphToken(): string
 {
-    $tenant = GRAPH_TENANT_ID;
-    $clientId = GRAPH_CLIENT_ID;
-    $clientSecret = GRAPH_CLIENT_SECRET;
+    $graphConfig = config('graph');
+    $tenant = $graphConfig['tenant_id'];
+    $clientId = $graphConfig['client_id'];
+    $clientSecret = $graphConfig['client_secret'];
 
     $tokenUrl = "https://login.microsoftonline.com/$tenant/oauth2/v2.0/token";
 
@@ -162,8 +160,10 @@ function getMicrosoftGraphToken(): string
 
 function sendGraphEmail(string $token, string $subject, string $html, string $text, array $data): void
 {
-    $sender = GRAPH_SENDER_UPN;
-    $recipient = GRAPH_RECIPIENT;
+    $graphConfig = config('graph');
+    $sender = $graphConfig['sender_upn'];
+    $recipient = $graphConfig['to'];
+    $ccMember = $graphConfig['cc_member'] ?? false;
 
     $message = [
         'message' => [
@@ -182,6 +182,18 @@ function sendGraphEmail(string $token, string $subject, string $html, string $te
         ],
         'saveToSentItems' => true
     ];
+
+    // Optionally CC the member
+    if ($ccMember && !empty($data['email'])) {
+        $message['message']['ccRecipients'] = [
+            [
+                'emailAddress' => [
+                    'address' => $data['email'],
+                    'name' => ($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')
+                ]
+            ]
+        ];
+    }
 
     $ch = curl_init("https://graph.microsoft.com/v1.0/users/$sender/sendMail");
     curl_setopt_array($ch, [
