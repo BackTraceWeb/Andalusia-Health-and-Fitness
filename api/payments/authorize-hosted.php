@@ -63,28 +63,16 @@ $payload = [
           "settingName"  => "hostedPaymentReturnOptions",
           "settingValue" => json_encode([
             "showReceipt" => false,
-            // Pass memberId and invoiceId in return URL
             "url"         => $returnUrl,
-            "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/"
+            "urlText"     => "Continue",
+            "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/",
+            "cancelUrlText" => "Cancel"
           ], JSON_UNESCAPED_SLASHES)
         ],
         [
-          "settingName"  => "hostedPaymentPaymentOptions",
+          "settingName"  => "hostedPaymentButtonOptions",
           "settingValue" => json_encode([
-            "cardCodeRequired" => true
-          ], JSON_UNESCAPED_SLASHES)
-        ],
-        [
-          "settingName"  => "hostedPaymentOrderOptions",
-          "settingValue" => json_encode([
-            "show" => true
-          ], JSON_UNESCAPED_SLASHES)
-        ],
-        [
-          "settingName"  => "hostedPaymentBillingAddressOptions",
-          "settingValue" => json_encode([
-            "show" => true,
-            "required" => false
+            "text" => "Pay"
           ], JSON_UNESCAPED_SLASHES)
         ]
       ]
