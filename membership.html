@@ -148,7 +148,7 @@
 </section>
 
 <!-- MAIN FORM -->
-<main class="section" style="padding-top: 32px;">
+<main class="section" style="padding-top: 8px;">
   <div class="shell">
     <form id="membershipForm" class="form-card" method="GET" action="payments.html">
 
@@ -196,6 +196,7 @@
             </div>
             <button type="button" id="launchWizard" class="pill-ghost">Fill Waivers Now</button>
             <span class="help" id="waiverStatus" style="font-weight:600;">0 / 1 completed</span>
+            <button type="button" id="debugBtn" class="pill-ghost" style="font-size:0.85em;padding:6px 10px;margin-left:10px;">Debug</button>
           </div>
 
           <div class="totals">
@@ -320,14 +321,22 @@
     const total = parseInt(waiverCount.value || '1', 10);
     let ahfData = {};
     try {
-      ahfData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+      const stored = sessionStorage.getItem('ahfSignup');
+      console.log('Raw sessionStorage:', stored); // Debug
+      ahfData = JSON.parse(stored || '{}');
     } catch(e) {
       console.error('Error reading sessionStorage:', e);
+      ahfData = {};
     }
 
     const completed = (ahfData.waivers || []).length;
 
-    console.log('Waiver check:', {total, completed, ahfData}); // Debug log
+    console.log('Waiver check:', {
+      total: total,
+      completed: completed,
+      waivers: ahfData.waivers,
+      fullData: ahfData
+    }); // Enhanced debug log
 
     // Update waiver status text
     const statusEl = document.getElementById('waiverStatus');
@@ -341,7 +350,11 @@
       }
     }
 
-    if (completed >= total) {
+    // Check if checkbox is also required
+    const agreeCheckbox = document.getElementById('agree');
+    const allWaiversComplete = completed >= total;
+
+    if (allWaiversComplete) {
       // All waivers completed
       submitBtn.disabled = false;
       submitHelp.style.color = '#4ade80';
@@ -371,6 +384,29 @@
 
   // Check when window regains focus
   window.addEventListener('focus', checkWaiverCompletion);
+
+  // Debug button to check sessionStorage
+  const debugBtn = document.getElementById('debugBtn');
+  if (debugBtn) {
+    debugBtn.addEventListener('click', () => {
+      const stored = sessionStorage.getItem('ahfSignup');
+      console.log('=== DEBUG INFO ===');
+      console.log('sessionStorage key "ahfSignup":', stored);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          console.log('Parsed data:', parsed);
+          console.log('Waivers array:', parsed.waivers);
+          console.log('Waivers count:', (parsed.waivers || []).length);
+        } catch(e) {
+          console.error('Parse error:', e);
+        }
+      } else {
+        console.log('No data in sessionStorage!');
+      }
+      alert('Check browser console (F12) for debug info');
+    });
+  }
 
   // === Single-tab Waiver Wizard ===
   let waiverPopup = null;
