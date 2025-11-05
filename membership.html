@@ -314,6 +314,43 @@
   }
 
   form.addEventListener('change',recalc);
+
+  // Restore form state from sessionStorage (if returning from waiver)
+  function restoreFormState() {
+    try {
+      const ahfData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+      if (ahfData && Object.keys(ahfData).length > 0) {
+        console.log('Restoring form state:', ahfData);
+
+        // Restore text inputs
+        if (ahfData.first_name) document.querySelector('[name="first_name"]').value = ahfData.first_name;
+        if (ahfData.last_name) document.querySelector('[name="last_name"]').value = ahfData.last_name;
+        if (ahfData.email) document.querySelector('[name="email"]').value = ahfData.email;
+        if (ahfData.phone) document.querySelector('[name="phone"]').value = ahfData.phone;
+        if (ahfData.address1) document.querySelector('[name="address1"]').value = ahfData.address1;
+        if (ahfData.city) document.querySelector('[name="city"]').value = ahfData.city;
+        if (ahfData.state) document.querySelector('[name="state"]').value = ahfData.state;
+        if (ahfData.zip) document.querySelector('[name="zip"]').value = ahfData.zip;
+
+        // Restore plan selection
+        if (ahfData.plan && ahfData.plan_amount) {
+          const planValue = `${ahfData.plan}|${ahfData.plan_amount}`;
+          const planRadio = document.querySelector(`input[name="plan"][value="${planValue}"]`);
+          if (planRadio) planRadio.checked = true;
+        }
+
+        // Restore checkboxes and numbers
+        if (ahfData.add_tanning) addTanning.checked = ahfData.add_tanning;
+        if (ahfData.waive_initiation) waiveInit.checked = ahfData.waive_initiation;
+        if (ahfData.fob_count) fobCount.value = ahfData.fob_count;
+        if (ahfData.extra_members) extraMembers.value = ahfData.extra_members;
+      }
+    } catch(e) {
+      console.error('Error restoring form state:', e);
+    }
+  }
+
+  restoreFormState();
   recalc();
 
   // === Check waiver completion ===
@@ -408,12 +445,46 @@
     });
   }
 
-  // === Single-tab Waiver Wizard ===
-  let waiverPopup = null;
+  // === Same-window Waiver Wizard ===
   launchBtn.addEventListener('click',()=>{
     const total=parseInt(waiverCount.value||'1',10);
-    const url=`waiver.html?start=0&total=${total}`;
-    waiverPopup = window.open(url,'_blank');
+
+    // Save current form state before navigating
+    const formData = new FormData(form);
+    const plan = parsePlan();
+
+    const currentState = {
+      first_name: formData.get('first_name') || '',
+      last_name: formData.get('last_name') || '',
+      email: formData.get('email') || '',
+      phone: formData.get('phone') || '',
+      address1: formData.get('address1') || '',
+      city: formData.get('city') || '',
+      state: formData.get('state') || '',
+      zip: formData.get('zip') || '',
+      plan: plan.name,
+      plan_amount: plan.amount,
+      add_tanning: addTanning.checked,
+      extra_members: parseInt(extraMembers.value || '0', 10),
+      fob_count: parseInt(fobCount.value || '1', 10),
+      waive_initiation: waiveInit.checked,
+      waiver_count: total
+    };
+
+    // Save form state to sessionStorage
+    let ahfData = {};
+    try {
+      ahfData = JSON.parse(sessionStorage.getItem('ahfSignup') || '{}');
+    } catch(e) {
+      ahfData = {};
+    }
+
+    // Merge current state
+    Object.assign(ahfData, currentState);
+    sessionStorage.setItem('ahfSignup', JSON.stringify(ahfData));
+
+    // Navigate to waiver in same window
+    window.location.href = `waiver.html?start=0&total=${total}&return=membership.html`;
   });
 
   // Listen for waiver completion messages

@@ -155,7 +155,7 @@
 
     <!-- Buttons -->
     <div class="row" style="margin-top:14px">
-      <a class="btn btn-ghost" href="javascript:window.close()">Cancel</a>
+      <a class="btn btn-ghost" href="#" id="cancelBtn">Cancel</a>
       <span style="flex:1"></span>
       <button class="btn btn-primary" id="submitBtn" type="button">Submit Waiver</button>
     </div>
@@ -211,6 +211,7 @@
   const clearBtn = document.getElementById("clearBtn");
   const undoBtn = document.getElementById("undoBtn");
   const submitBtn = document.getElementById("submitBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
   const errorBox = document.getElementById("errorBox");
 
   clearBtn.addEventListener("click", () => {
@@ -222,6 +223,15 @@
     if (data) {
       data.pop(); // Remove last stroke
       signaturePad.fromData(data);
+    }
+  });
+
+  // Cancel button - return to membership page
+  cancelBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const returnUrl = params.get('return') || 'membership.html';
+    if (confirm('Cancel waiver? Your progress will not be saved.')) {
+      window.location.href = returnUrl;
     }
   });
 
@@ -277,57 +287,21 @@
       signature_png: signaturePNG
     });
 
-    // Save back to sessionStorage (popup window)
+    // Save back to sessionStorage (same window, persists!)
     sessionStorage.setItem('ahfSignup', JSON.stringify(ahfData));
+    console.log('Saved waiver to sessionStorage:', ahfData);
 
-    // Notify parent window AND send waiver data
-    if (window.opener && !window.opener.closed) {
-      try {
-        window.opener.postMessage({
-          type: 'waiver_completed',
-          current: current + 1,
-          total: total,
-          waiver: {
-            name: name,
-            email: email,
-            sig_type: sigType,
-            signature_png: signaturePNG
-          },
-          allWaivers: ahfData.waivers  // Send all waivers collected so far
-        }, '*');
-        console.log('Sent waiver data to parent window');
-      } catch(e) {
-        console.error("Could not notify parent window:", e);
-      }
-    }
+    // Get return URL from query params
+    const returnUrl = params.get('return') || 'membership.html';
 
-    // Navigate to next waiver or close
+    // Navigate to next waiver or return
     if (current + 1 < total) {
-      const nextUrl = `waiver.html?start=${current + 1}&total=${total}`;
+      const nextUrl = `waiver.html?start=${current + 1}&total=${total}&return=${encodeURIComponent(returnUrl)}`;
       window.location.href = nextUrl;
     } else {
-      // All waivers completed - show success and close
-      document.body.innerHTML = `
-        <div style="text-align:center; padding:50px; color:#fff; background:var(--bg);">
-          <h1 style="color:#4ade80;">All Waivers Completed ✅</h1>
-          <p style="font-size:18px;">Thank you! You can now close this window.</p>
-          <button onclick="window.close()" class="btn btn-primary" style="
-            display:inline-block;
-            background:#e81e63;
-            color:#fff;
-            border:none;
-            cursor:pointer;
-            padding:12px 24px;
-            border-radius:999px;
-            font-size:16px;
-            margin-top:20px;">Close Window</button>
-        </div>
-      `;
-
-      // Auto-close after 3 seconds
-      setTimeout(() => {
-        window.close();
-      }, 3000);
+      // All waivers completed - return to membership page
+      console.log('All waivers completed, returning to:', returnUrl);
+      window.location.href = returnUrl;
     }
   });
 
