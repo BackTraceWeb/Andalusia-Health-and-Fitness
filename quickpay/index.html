@@ -4,16 +4,23 @@
   <meta charset="UTF-8">
   <title>QuickPay Portal — Andalusia Health & Fitness</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../styles.css"/>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #000;
       color: #fff;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .quickpay-container {
+      flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
+      padding: 140px 20px 60px 20px;
     }
     .box {
       background: #111;
@@ -69,15 +76,48 @@
     .status.ok { color: #ffffff; }
     .status.error { color: #ff1744; }
     .status.info { color: #ffffff; }
-    footer {
-      margin-top: 40px;
-      font-size: 0.75rem;
-      color: #888;
+    .fine-print {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.5;
     }
-    footer a { color: #ff0066; text-decoration: none; }
+    .fine-print a {
+      color: #ff0066;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .fine-print a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
-<body>
+<body class="theme-andalusia">
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="shell">
+    <div class="brand-pill">
+      <a href="../index.html"><img src="../AHFlogo.png" alt="Andalusia Health & Fitness"></a>
+    </div>
+    <nav class="mainnav">
+      <a href="../index.html">Home</a>
+      <a href="../pricing.html">Pricing</a>
+      <a href="https://maps.google.com/?q=205+Church+St,+Andalusia,+AL+36420" target="_blank" rel="noopener">Location</a>
+    </nav>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="ctabar">
+  <div class="shell">
+    <a href="/quickpay/" class="pill-cta">Quick Pay</a>
+    <a href="tel:+13345822000" class="pill-cta">Call • (334) 582-2000</a>
+  </div>
+</div>
+
+<div class="quickpay-container">
   <div class="box">
     <h1>QuickPay Portal</h1>
 
@@ -93,10 +133,23 @@
     <input type="hidden" id="memberId">
     <input type="hidden" id="invoiceId">
 
-    <footer>
-       <a href="/Legal/terms.html">Terms & Conditions</a> | <a href="/Legal/privacy.html">Privacy Policy</a>
-    </footer>
+    <div class="fine-print">
+      If you experience any issues with QuickPay, please contact the office at <a href="tel:+13345822000">(334) 582-2000</a>
+    </div>
   </div>
+</div>
+
+<footer class="sitefoot">
+  <div class="shell">
+    <div class="footer-content">
+      <span>© <script>document.write(new Date().getFullYear())</script> Andalusia Health & Fitness — Open 24/7.</span>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/Legal/privacy.html">Privacy Policy</a> |
+        <a href="/Legal/terms.html">Terms & Conditions</a>
+      </nav>
+    </div>
+  </div>
+</footer>
 
   <script>
     const elFirst = document.getElementById('firstName');

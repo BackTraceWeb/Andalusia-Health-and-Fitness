@@ -113,7 +113,7 @@ img, svg, video, canvas{
    Hero
    ========================================================= */
 .hero{
-  min-height:100vh; position:relative; display:flex; align-items:center;
+  min-height:75vh; position:relative; display:flex; align-items:center;
   background:#0a0b0d url('girlgym.png') center/cover no-repeat;
 }
 .hero .overlay{
@@ -166,7 +166,7 @@ img, svg, video, canvas{
 /* =========================================================
    Features / Cards / Grid
    ========================================================= */
-.features{ background:#0a0b0d; padding:56px 0 }
+.features{ background:#0a0b0d; padding:40px 0 60px 0 }
 .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px }
 .card{
   background:#fff; border:1px solid var(--card-border); border-radius:16px; padding:20px;
@@ -195,7 +195,7 @@ img, svg, video, canvas{
 /* Intro spacing for pricing page */
 .section--intro{
   background:#0a0b0d;
-  padding:140px 0 32px;
+  padding:120px 0 24px;
   text-align:center;
 }
 .section--intro .lead{
