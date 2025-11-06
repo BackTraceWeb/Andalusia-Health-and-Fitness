@@ -1,18 +1,22 @@
 <?php
 declare(strict_types=1);
 
-/**
- * Minimal Accept Hosted launcher (no webhooks yet).
- * URL: /api/payments/authorize-hosted.php?memberId=123&invoiceId=3
- */
-require __DIR__ . '/../../_bootstrap.php';
-
-function envUrl(): string {
-  $env = cfg()['AUTHNET_ENV'] ?? 'production';
-  return $env === 'sandbox'
-    ? 'https://apitest.authorize.net/xml/v1/request.api'
-    : 'https://api2.authorize.net/xml/v1/request.api';
+// --- bootstrap guard ---------------------------------------------------------
+$bootTried = [];
+foreach ([
+  __DIR__ . '/../../_bootstrap.php',
+  dirname(__DIR__, 2) . '/_bootstrap.php',
+  '/var/www/andalusiahealthandfitness/_bootstrap.php',
+] as $cand) {
+  if (is_file($cand)) { require_once $cand; $bootTried[] = $cand; break; }
 }
+if (!function_exists('cfg')) {
+  http_response_code(500);
+  header('Content-Type: text/plain');
+  echo "Bootstrap not loaded.\nTried:\n - " . implode("\n - ", $bootTried ?: ['(no candidates)']);
+  exit;
+}
+// ----------------------------------------------------------------------------- 
 
 function h(?string $s): string { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
 
