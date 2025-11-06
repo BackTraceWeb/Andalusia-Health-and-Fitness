@@ -53,8 +53,16 @@ $payload = [
       "transactionType" => "authCaptureTransaction",
       "amount" => $amount,
       "order" => [
-        "invoiceNumber" => $invoice
-        // (omit description/billTo for the first pass)
+        "invoiceNumber" => $invoice,
+        "description" => "Gym Membership Dues"
+      ],
+      "customer" => [
+        "email" => !empty($m['email']) ? $m['email'] : 'noreply@andalusiahealthandfitness.com'
+      ],
+      "billTo" => [
+        "firstName" => $m['first_name'] ?? 'Member',
+        "lastName" => $m['last_name'] ?? 'Guest',
+        "zip" => !empty($m['zip']) ? $m['zip'] : '36420'
       ]
     ],
     "hostedPaymentSettings" => [
