@@ -56,7 +56,7 @@ try {
         $validUntil
     ]);
 
-    $memberId = $pdo->lastInsertId();
+    $memberId = (int)$pdo->lastInsertId();
 
     // Log the signup
     $logDir = __DIR__ . '/../logs';
