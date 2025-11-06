@@ -148,7 +148,7 @@
 </section>
 
 <!-- MAIN FORM -->
-<main class="section" style="padding-top: 8px;">
+<main class="section" style="padding-top: 20px; padding-bottom: 40px;">
   <div class="shell">
     <form id="membershipForm" class="form-card" method="GET" action="payments.html">
 
@@ -174,7 +174,7 @@
             <div class="plan-body"><strong>Tanning Only</strong><span class="muted">$45.00 / month · no gym access</span></div></label>
         </div>
 
-        <div class="calc">
+        <div class="calc" id="calcSection">
           <div class="row"><label class="toggle"><input type="checkbox" id="addTanning"><span>Add Tanning (gym add-on) — $27.50 / month</span></label></div>
 
           <div class="row" id="familyCountsRow" style="display:none;">
@@ -314,6 +314,17 @@
   }
 
   form.addEventListener('change',recalc);
+
+  // Auto-scroll to calculation section when a plan is selected
+  const planRadios = form.querySelectorAll('input[name="plan"]');
+  planRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      const calcSection = document.getElementById('calcSection');
+      if (calcSection) {
+        calcSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
 
   // Restore form state from sessionStorage (if returning from waiver)
   function restoreFormState() {
