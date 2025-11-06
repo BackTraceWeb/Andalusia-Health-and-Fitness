@@ -64,6 +64,14 @@ $payload = [
       "order" => [
         "invoiceNumber" => $invoice,
         "description"   => "Gym Membership Dues"
+      ],
+      "customer" => [
+        "email" => !empty($member['email']) ? $member['email'] : 'noreply@andalusiahealthandfitness.com'
+      ],
+      "billTo" => [
+        "firstName" => $member['first_name'] ?? 'Member',
+        "lastName"  => $member['last_name'] ?? 'Guest',
+        "zip"       => !empty($member['zip']) ? $member['zip'] : '36420'
       ]
     ],
     "hostedPaymentSettings" => [
