@@ -176,7 +176,7 @@ $token = htmlspecialchars($data['token'], ENT_QUOTES, 'UTF-8');
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Secure Payment — Andalusia Health & Fitness</title>
+  <title>Processing Payment — Andalusia Health & Fitness</title>
   <link rel="stylesheet" href="/styles.css"/>
   <style>
     body {
@@ -185,41 +185,49 @@ $token = htmlspecialchars($data['token'], ENT_QUOTES, 'UTF-8');
       font-family: "Helvetica Neue", Arial, sans-serif;
       margin: 0;
       padding: 80px 20px 40px;
+      text-align: center;
     }
     .payment-container {
-      max-width: 800px;
+      max-width: 500px;
       margin: 0 auto;
       background: #111;
       border-radius: 16px;
-      padding: 30px;
+      padding: 40px;
       box-shadow: 0 0 25px rgba(216, 27, 96, 0.3);
       border: 1px solid rgba(216, 27, 96, 0.2);
     }
     h1 {
       color: #d81b60;
-      margin: 0 0 10px;
+      margin: 0 0 20px;
       font-size: 28px;
     }
     .member-info {
       margin-bottom: 20px;
-      padding: 15px;
+      padding: 20px;
       background: #1a1a1a;
       border-radius: 8px;
       border-left: 3px solid #d81b60;
+      text-align: left;
     }
     .member-info p {
-      margin: 5px 0;
-      font-size: 14px;
+      margin: 8px 0;
+      font-size: 15px;
     }
     .member-info strong {
       color: #d81b60;
     }
-    #paymentFrame {
-      width: 100%;
-      height: 700px;
-      border: none;
-      border-radius: 8px;
-      background: white;
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid #d81b60;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -235,24 +243,26 @@ $token = htmlspecialchars($data['token'], ENT_QUOTES, 'UTF-8');
 </div>
 
 <div class="payment-container">
-  <h1>Secure Payment</h1>
+  <h1>Processing Payment</h1>
   <div class="member-info">
     <p><strong>Member:</strong> <?= htmlspecialchars($memberName) ?></p>
     <p><strong>Amount Due:</strong> $<?= $amount ?></p>
     <p><strong>Invoice:</strong> <?= htmlspecialchars($invoice) ?></p>
   </div>
+  <p>Redirecting to secure payment page...</p>
+  <div class="spinner"></div>
 
-  <iframe id="paymentFrame" name="paymentFrame"></iframe>
-
-  <form id="tokenForm" method="POST" action="<?= htmlspecialchars($hostedUrl, ENT_QUOTES, 'UTF-8') ?>" target="paymentFrame" style="display:none;">
+  <form id="tokenForm" method="POST" action="<?= htmlspecialchars($hostedUrl, ENT_QUOTES, 'UTF-8') ?>" style="display:none;">
     <input type="hidden" name="token" value="<?= $token ?>">
   </form>
 </div>
 
 <script>
 (function() {
-  // Submit token to iframe immediately
-  document.getElementById('tokenForm').submit();
+  // Auto-redirect to Authorize.Net payment page (like membership flow)
+  setTimeout(function() {
+    document.getElementById('tokenForm').submit();
+  }, 1500);
 })();
 </script>
 
