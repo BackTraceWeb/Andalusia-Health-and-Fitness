@@ -114,9 +114,8 @@ $payload = [
           "settingName"  => "hostedPaymentReturnOptions",
           "settingValue" => json_encode([
             "showReceipt" => false,                   // Don't show Authorize.Net receipt
-            // Return URL: Webhook will handle the actual payment processing
-            // No memberId/invoiceId params needed - webhook looks up via transactionId
-            "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
+            // Return URL: Pass memberId and invoiceId so authorize-return.php can identify the record
+            "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
             "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/"
           ], JSON_UNESCAPED_SLASHES)
         ],
