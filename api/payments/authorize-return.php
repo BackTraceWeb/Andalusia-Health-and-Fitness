@@ -46,63 +46,11 @@ file_put_contents($logFile, date('c') . " RETURN - GET: " . json_encode($_GET) .
 file_put_contents($logDir . "/authorize-return-post.log", date('c') . " POST: " . json_encode($_POST) . "\n", FILE_APPEND);
 
 // ----------------------------------------------------------------------
-// Extract memberId and invoiceId from transaction response
+// Note: Authorize.Net doesn't send any data back to the return URL
+// The webhook (authorize-success.php) handles all payment processing
+// This page just shows a generic success message to the user
 // ----------------------------------------------------------------------
-$memberId = $_POST['memberId'] ?? $_GET['memberId'] ?? 0;
-$invoiceId = $_POST['invoiceId'] ?? $_GET['invoiceId'] ?? 0;
-
-// If not in parameters, try to parse from invoice number (format: QP{duesId}M{memberId})
-if (!$invoiceId || !$memberId) {
-    $invoiceNum = $_GET['refId'] ?? $_POST['refId'] ?? '';
-    if (!$invoiceNum) {
-        // Try reading from response (Authorize.Net may send transaction details)
-        $transId = $_GET['transId'] ?? $_POST['transId'] ?? '';
-        // For now, we'll need to embed these in the return URL
-    }
-
-    // Parse invoice format: QP3M1700 -> duesId=3, memberId=1700
-    if (preg_match('/QP(\d+)M(\d+)/', $invoiceNum, $matches)) {
-        $invoiceId = (int)$matches[1];
-        $memberId = (int)$matches[2];
-        file_put_contents($logFile, date('c') . " Parsed invoice: $invoiceNum -> duesId=$invoiceId, memberId=$memberId\n", FILE_APPEND);
-    }
-}
-
-// ----------------------------------------------------------------------
-// Basic validation
-// ----------------------------------------------------------------------
-if (!$invoiceId || !$memberId) {
-    file_put_contents($logFile, date('c') . " Missing invoiceId or memberId (could not parse)\n", FILE_APPEND);
-    echo "<h3>Payment received, but we could not identify your record.</h3>";
-    echo "<p>Please contact support with your payment confirmation.</p>";
-    exit;
-}
-
-// ----------------------------------------------------------------------
-// Update database
-// ----------------------------------------------------------------------
-try {
-    $pdo = pdo();
-    $stmt = $pdo->prepare("
-        UPDATE dues
-           SET status='paid',
-               paid_at=NOW()
-         WHERE id=? AND status IN('due','failed')
-    ");
-    $stmt->execute([$invoiceId]);
-    $updated = $stmt->rowCount();
-
-    file_put_contents($logFile, date('c') . " Updated invoice #$invoiceId (member #$memberId) rows:$updated\n", FILE_APPEND);
-} catch (Throwable $e) {
-    file_put_contents($logFile, date('c') . " DB Error: " . $e->getMessage() . "\n", FILE_APPEND);
-}
-
-// ----------------------------------------------------------------------
-// Note: Member record will be updated via Authorize.Net webhook → AxTrax → callback flow
-// We only mark the invoice as paid here for immediate user feedback
-// ----------------------------------------------------------------------
-file_put_contents($logFile, date('c') . " Payment return successful - invoice marked as paid\n", FILE_APPEND);
-file_put_contents($logFile, date('c') . " Member record will be updated via Authorize.Net webhook → AxTrax → callback flow\n", FILE_APPEND);
+file_put_contents($logFile, date('c') . " Payment return page loaded - webhook handles all processing\n", FILE_APPEND);
 
 // ----------------------------------------------------------------------
 // Display confirmation page
@@ -144,8 +92,9 @@ file_put_contents($logFile, date('c') . " Member record will be updated via Auth
 <body>
   <div class="card">
     <h1>✅ Payment Successful!</h1>
-    <p>Your payment has been received and recorded for invoice <strong>#<?= htmlspecialchars($invoiceId) ?></strong>.</p>
+    <p>Your payment has been received and is being processed.</p>
     <p>Your access card will automatically be reactivated within a few moments.</p>
+    <p style="margin-top: 20px; color: #aaa; font-size: 14px;">You will receive a confirmation email shortly with your receipt.</p>
     <a href="/quickpay/">Return to QuickPay Portal</a>
   </div>
 </body>
