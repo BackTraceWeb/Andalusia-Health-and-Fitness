@@ -135,6 +135,21 @@ $payload = [
           "settingValue" => json_encode([
             "show" => true                            // Show order details to customer
           ], JSON_UNESCAPED_SLASHES)
+        ],
+
+        // Custom styling to match AHF brand
+        [
+          "settingName"  => "hostedPaymentStyleOptions",
+          "settingValue" => json_encode([
+            "bgColor" => "000000"                     // Black background
+          ], JSON_UNESCAPED_SLASHES)
+        ],
+
+        [
+          "settingName"  => "hostedPaymentButtonOptions",
+          "settingValue" => json_encode([
+            "text" => "Pay Now"                       // Button text
+          ], JSON_UNESCAPED_SLASHES)
         ]
       ]
     ]
