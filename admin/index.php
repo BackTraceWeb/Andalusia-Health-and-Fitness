@@ -44,10 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pass = trim($_POST['password'] ?? '');
 
         $ADMIN_USER = config('ADMIN_USER', 'admin');
-        $ADMIN_PASS_HASH = config('ADMIN_PASS_HASH');
+        $ADMIN_PASS = config('ADMIN_PASS', 'admin123');  // Changed to plaintext password
 
-        // Verify credentials
-        if ($user === $ADMIN_USER && password_verify($pass, $ADMIN_PASS_HASH)) {
+        // Verify credentials (no hashing - using plaintext comparison)
+        if ($user === $ADMIN_USER && $pass === $ADMIN_PASS) {
             // Regenerate session ID to prevent session fixation
             session_regenerate_id(true);
 
