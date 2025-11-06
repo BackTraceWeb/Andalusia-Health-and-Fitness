@@ -40,10 +40,14 @@ if ($evt !== 'net.authorize.payment.authcapture.created' || $resp !== 1) {
   http_response_code(200); exit('ignored');
 }
 
-// Extract MemberId from invoice like "QP<batch>M<memberId>"
+// Extract duesId and memberId from invoice like "QP3M1700"
+// Pattern: QP{duesId}M{memberId}
+$duesId = '';
 $memberId = '';
 if (preg_match('/^QP(\d+)M(\d+)$/', $iid, $m)) {
-  $memberId = $m[2];
+  $duesId = $m[1];      // dues.id (invoice ID)
+  $memberId = $m[2];     // members.id
+  error_log("Parsed invoice $iid -> duesId=$duesId, memberId=$memberId");
 } else {
   error_log("Invoice parse failed: $iid");
   http_response_code(200); exit('ignored');
@@ -100,6 +104,8 @@ try {
     // This code will be removed once AxTrax callback is working
     error_log("TEMPORARY: Updating our database directly until AxTrax is configured");
     $pdo = pdo();
+
+    // Update member validity
     $stmt = $pdo->prepare("
       UPDATE members
       SET valid_until = :valid_until,
@@ -111,8 +117,21 @@ try {
       ':valid_until' => $newValidUntil,
       ':member_id' => $memberId
     ]);
-    $rowsUpdated = $stmt->rowCount();
-    error_log("TEMPORARY: Direct DB update for member #$memberId (rows: $rowsUpdated)");
+    $memberRowsUpdated = $stmt->rowCount();
+    error_log("TEMPORARY: Direct DB update for member #$memberId (rows: $memberRowsUpdated)");
+
+    // Update dues to mark as paid
+    if (!empty($duesId)) {
+      $stmt2 = $pdo->prepare("
+        UPDATE dues
+        SET status = 'paid',
+            paid_at = NOW()
+        WHERE id = :dues_id AND status IN ('due', 'failed')
+      ");
+      $stmt2->execute([':dues_id' => $duesId]);
+      $duesRowsUpdated = $stmt2->rowCount();
+      error_log("TEMPORARY: Marked dues #$duesId as paid (rows: $duesRowsUpdated)");
+    }
 
   } catch (RuntimeException $axErr) {
     // AxTrax configuration issue or API error
