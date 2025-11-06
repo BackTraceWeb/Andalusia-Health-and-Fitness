@@ -105,13 +105,16 @@ $payload = [
         [
           "settingName"  => "hostedPaymentBillingAddressOptions",
           "settingValue" => json_encode([
-            "show" => false,
-            "required" => false
+            "show" => true,
+            "required" => true
           ], JSON_UNESCAPED_SLASHES)
         ],
         [
-          "settingName"  => "hostedPaymentIFrameCommunicatorUrl",
-          "settingValue" => "https://andalusiahealthandfitness.com/api/payments/iframe-communicator.html"
+          "settingName"  => "hostedPaymentShippingAddressOptions",
+          "settingValue" => json_encode([
+            "show" => false,
+            "required" => false
+          ], JSON_UNESCAPED_SLASHES)
         ]
       ]
     ]
