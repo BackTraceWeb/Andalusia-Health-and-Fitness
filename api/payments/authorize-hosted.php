@@ -51,13 +51,6 @@ $payload = [
         "firstName" => $m['first_name'] ?? 'Member',
         "lastName"  => $m['last_name']  ?? 'Guest',
         "zip"       => !empty($m['zip']) ? $m['zip'] : '36420'
-      ],
-      "userFields" => [
-        "userField" => [
-          [ "name" => "memberId",      "value" => (string)$memberId ],
-          [ "name" => "invoiceId",     "value" => (string)$duesId ],
-          [ "name" => "invoiceNumber", "value" => $invoice ]
-        ]
       ]
     ],
     "hostedPaymentSettings" => [
