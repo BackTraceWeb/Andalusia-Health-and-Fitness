@@ -203,12 +203,81 @@ $token = htmlspecialchars($data['token']);
 -->
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Redirecting...</title></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redirecting to Payment...</title>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .payment-container {
+      text-align: center;
+      background: #111;
+      border: 2px solid #d81b60;
+      border-radius: 20px;
+      padding: 60px 80px;
+      box-shadow: 0 0 30px rgba(216, 27, 96, 0.4);
+    }
+    h1 {
+      color: #d81b60;
+      margin: 0 0 30px;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    /* Spinner Animation */
+    .spinner {
+      border: 4px solid #333;
+      border-top: 4px solid #d81b60;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    p {
+      color: #bbb;
+      font-size: 16px;
+      margin: 0;
+    }
+    .noscript-btn {
+      margin-top: 30px;
+      padding: 12px 30px;
+      background: #d81b60;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .noscript-btn:hover {
+      background: #ff4081;
+    }
+  </style>
+</head>
 <body onload="document.forms[0].submit()">
-<p>Redirecting to Secure Payment...</p>
-<form method="POST" action="https://test.authorize.net/payment/payment">
-  <input type="hidden" name="token" value="<?= $token ?>">
-  <noscript><button type="submit">Continue</button></noscript>
-</form>
+  <div class="payment-container">
+    <h1>Pay Securely</h1>
+    <div class="spinner"></div>
+    <p>Redirecting to secure payment...</p>
+    <form method="POST" action="https://test.authorize.net/payment/payment">
+      <input type="hidden" name="token" value="<?= $token ?>">
+      <noscript><button type="submit" class="noscript-btn">Continue to Payment</button></noscript>
+    </form>
+  </div>
 </body>
 </html>
