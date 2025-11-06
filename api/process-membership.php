@@ -6,6 +6,10 @@
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../_bootstrap.php';
 
 // Get POST data
@@ -104,8 +108,11 @@ function sendMembershipEmail(array $data, int $memberId): void
         // Get access token from Microsoft Graph
         $token = getMicrosoftGraphToken();
 
-        // Send email via Microsoft Graph API
-        sendGraphEmail($token, $subject, $html, $text, $data);
+        // Generate waiver PDFs
+        $waiverPDFs = generateWaiverPDFs($data);
+
+        // Send email via Microsoft Graph API with waiver attachments
+        sendGraphEmail($token, $subject, $html, $text, $data, $waiverPDFs);
 
     } catch (Throwable $e) {
         error_log("Email error: " . $e->getMessage());
@@ -171,7 +178,7 @@ function getMicrosoftGraphToken(): string
     return $tokenData['access_token'];
 }
 
-function sendGraphEmail(string $token, string $subject, string $html, string $text, array $data): void
+function sendGraphEmail(string $token, string $subject, string $html, string $text, array $data, array $attachments = []): void
 {
     $graphConfig = config('graph');
     $sender = $graphConfig['sender_upn'];
@@ -195,6 +202,19 @@ function sendGraphEmail(string $token, string $subject, string $html, string $te
         ],
         'saveToSentItems' => true
     ];
+
+    // Add attachments if provided
+    if (!empty($attachments)) {
+        $message['message']['attachments'] = [];
+        foreach ($attachments as $attachment) {
+            $message['message']['attachments'][] = [
+                '@odata.type' => '#microsoft.graph.fileAttachment',
+                'name' => $attachment['name'],
+                'contentType' => 'application/pdf',
+                'contentBytes' => $attachment['base64']
+            ];
+        }
+    }
 
     // Optionally CC the member
     if ($ccMember && !empty($data['email'])) {
@@ -507,4 +527,107 @@ function buildWaiverText(array $waivers): string
     }
 
     return $text;
+}
+
+function generateWaiverPDFs(array $data): array
+{
+    $waivers = $data['waivers'] ?? [];
+    if (empty($waivers)) {
+        return [];
+    }
+
+    $attachments = [];
+
+    foreach ($waivers as $index => $waiver) {
+        $num = $index + 1;
+        $name = ($waiver['firstName'] ?? '') . ' ' . ($waiver['lastName'] ?? '');
+        $dob = $waiver['dob'] ?? 'N/A';
+        $signature = $waiver['signature'] ?? 'N/A';
+        $dateSigned = !empty($waiver['timestamp']) ? date('F j, Y g:i A', strtotime($waiver['timestamp'])) : date('F j, Y g:i A');
+
+        // Build waiver HTML
+        $html = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; color: #000; }
+                h1 { color: #d81b60; text-align: center; margin-bottom: 30px; }
+                h2 { color: #333; margin-top: 30px; }
+                .info-box { background: #f9f9f9; padding: 15px; border-left: 4px solid #d81b60; margin: 20px 0; }
+                .info-box p { margin: 5px 0; }
+                .info-box strong { color: #d81b60; }
+                .signature-box { border: 2px solid #000; padding: 20px; margin: 30px 0; text-align: center; }
+                .signature { font-family: 'Brush Script MT', cursive; font-size: 32px; font-style: italic; }
+                .terms { margin: 20px 0; padding: 15px; border: 1px solid #ddd; background: #fff; }
+                .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; font-size: 12px; color: #666; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <h1>Andalusia Health & Fitness</h1>
+            <h2 style='text-align:center; margin-bottom:30px;'>Membership Agreement & Liability Waiver</h2>
+
+            <div class='info-box'>
+                <p><strong>Member Name:</strong> " . htmlspecialchars($name) . "</p>
+                <p><strong>Date of Birth:</strong> " . htmlspecialchars($dob) . "</p>
+                <p><strong>Date Signed:</strong> " . htmlspecialchars($dateSigned) . "</p>
+            </div>
+
+            <div class='terms'>
+                <h2>Terms and Conditions</h2>
+                <p>I, the undersigned, hereby acknowledge and agree to the following terms and conditions:</p>
+                <ol>
+                    <li><strong>Assumption of Risk:</strong> I understand that participation in fitness activities involves inherent risks, including but not limited to: physical injury, heart attack, stroke, and in extreme cases, death.</li>
+                    <li><strong>Release of Liability:</strong> I hereby release, waive, discharge, and covenant not to sue Andalusia Health & Fitness, its owners, employees, and agents from any and all liability, claims, demands, or causes of action arising from my use of the facility.</li>
+                    <li><strong>Medical Clearance:</strong> I certify that I am physically fit and have no medical conditions that would prevent me from participating in fitness activities.</li>
+                    <li><strong>Facility Rules:</strong> I agree to abide by all facility rules and regulations as posted and updated from time to time.</li>
+                    <li><strong>Equipment Use:</strong> I agree to use all equipment properly and at my own risk.</li>
+                    <li><strong>Personal Property:</strong> I acknowledge that Andalusia Health & Fitness is not responsible for lost, stolen, or damaged personal property.</li>
+                </ol>
+
+                <p style='margin-top:20px;'><strong>By signing below, I acknowledge that I have read, understood, and agree to be bound by this waiver and release of liability.</strong></p>
+            </div>
+
+            <div class='signature-box'>
+                <p><strong>Signature:</strong></p>
+                <div class='signature'>" . htmlspecialchars($signature) . "</div>
+                <p style='margin-top:20px;'><strong>Date:</strong> " . htmlspecialchars($dateSigned) . "</p>
+            </div>
+
+            <div class='footer'>
+                <p><strong>Andalusia Health & Fitness</strong></p>
+                <p>205 Church St, Andalusia, AL 36420 | Phone: (334) 582-2000</p>
+                <p>Open 24/7 with key fob access</p>
+            </div>
+        </body>
+        </html>
+        ";
+
+        // Generate PDF using Dompdf
+        try {
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', false);
+
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            $pdfContent = $dompdf->output();
+            $base64PDF = base64_encode($pdfContent);
+
+            $attachments[] = [
+                'name' => "Waiver_{$num}_" . preg_replace('/[^a-zA-Z0-9]/', '_', $name) . ".pdf",
+                'base64' => $base64PDF
+            ];
+
+        } catch (Throwable $e) {
+            error_log("PDF generation error for waiver #{$num}: " . $e->getMessage());
+            // Continue with other waivers even if one fails
+        }
+    }
+
+    return $attachments;
 }
