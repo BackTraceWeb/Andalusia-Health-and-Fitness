@@ -77,9 +77,23 @@ $payload = [
           ], JSON_UNESCAPED_SLASHES)
         ],
         [
+          "settingName"  => "hostedPaymentButtonOptions",
+          "settingValue" => json_encode([
+            "text" => "Pay"
+          ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
           "settingName"  => "hostedPaymentPaymentOptions",
           "settingValue" => json_encode([
-            "cardCodeRequired" => true
+            "cardCodeRequired" => true,
+            "showCreditCard" => true,
+            "showBankAccount" => false
+          ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
+          "settingName"  => "hostedPaymentSecurityOptions",
+          "settingValue" => json_encode([
+            "captcha" => false
           ], JSON_UNESCAPED_SLASHES)
         ],
         [
@@ -93,6 +107,12 @@ $payload = [
           "settingValue" => json_encode([
             "show" => false,
             "required" => false
+          ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
+          "settingName"  => "hostedPaymentIFrameCommunicatorUrl",
+          "settingValue" => json_encode([
+            "url" => "https://andalusiahealthandfitness.com/api/payments/iframe-communicator.html"
           ], JSON_UNESCAPED_SLASHES)
         ]
       ]
