@@ -253,6 +253,9 @@ function buildEmailHTML(array $data, int $memberId): string
             <tr><td><strong>Waivers Signed:</strong></td><td>{$waiverCount}</td></tr>
         </table>
 
+        <h3>Signed Waivers</h3>
+        " . buildWaiverHTML($data['waivers'] ?? []) . "
+
         <h3>Payment</h3>
         <table style='border-collapse: collapse; width: 100%;'>
             <tr><td><strong>Today's Total:</strong></td><td>\${$todayTotal}</td></tr>
@@ -297,6 +300,9 @@ Monthly Dues: \${$monthlyTotal}
 Payment Type: " . ($data['waive_initiation'] ? 'Draft (Auto-pay)' : 'Manual') . "
 Fobs: {$data['fob_count']}
 Tanning: " . ($data['add_tanning'] ? 'Yes' : 'No') . "
+
+SIGNED WAIVERS
+" . buildWaiverText($data['waivers'] ?? []) . "
 
 PAYMENT
 Today's Total: \${$todayTotal}
@@ -445,4 +451,60 @@ If you have any questions, feel free to call us or stop by!
 Welcome to the AHF family!
 Andalusia Health & Fitness Team
     ";
+}
+
+function buildWaiverHTML(array $waivers): string
+{
+    if (empty($waivers)) {
+        return "<p style='color: #999;'>No waivers recorded</p>";
+    }
+
+    $html = "<table style='border-collapse: collapse; width: 100%; border: 1px solid #ddd;'>";
+    $html .= "<tr style='background: #f0f0f0;'>
+                <th style='padding: 10px; border: 1px solid #ddd; text-align: left;'>Name</th>
+                <th style='padding: 10px; border: 1px solid #ddd; text-align: left;'>Date of Birth</th>
+                <th style='padding: 10px; border: 1px solid #ddd; text-align: left;'>Signature</th>
+                <th style='padding: 10px; border: 1px solid #ddd; text-align: left;'>Date Signed</th>
+              </tr>";
+
+    foreach ($waivers as $index => $waiver) {
+        $name = htmlspecialchars($waiver['firstName'] ?? '') . ' ' . htmlspecialchars($waiver['lastName'] ?? '');
+        $dob = htmlspecialchars($waiver['dob'] ?? 'N/A');
+        $signature = htmlspecialchars($waiver['signature'] ?? 'N/A');
+        $dateSigned = !empty($waiver['timestamp']) ? date('m/d/Y g:i A', strtotime($waiver['timestamp'])) : 'N/A';
+
+        $html .= "<tr>
+                    <td style='padding: 10px; border: 1px solid #ddd;'>{$name}</td>
+                    <td style='padding: 10px; border: 1px solid #ddd;'>{$dob}</td>
+                    <td style='padding: 10px; border: 1px solid #ddd; font-style: italic;'>{$signature}</td>
+                    <td style='padding: 10px; border: 1px solid #ddd;'>{$dateSigned}</td>
+                  </tr>";
+    }
+
+    $html .= "</table>";
+    return $html;
+}
+
+function buildWaiverText(array $waivers): string
+{
+    if (empty($waivers)) {
+        return "No waivers recorded\n";
+    }
+
+    $text = "";
+    foreach ($waivers as $index => $waiver) {
+        $num = $index + 1;
+        $name = ($waiver['firstName'] ?? '') . ' ' . ($waiver['lastName'] ?? '');
+        $dob = $waiver['dob'] ?? 'N/A';
+        $signature = $waiver['signature'] ?? 'N/A';
+        $dateSigned = !empty($waiver['timestamp']) ? date('m/d/Y g:i A', strtotime($waiver['timestamp'])) : 'N/A';
+
+        $text .= "Waiver #{$num}:\n";
+        $text .= "  Name: {$name}\n";
+        $text .= "  DOB: {$dob}\n";
+        $text .= "  Signature: {$signature}\n";
+        $text .= "  Date Signed: {$dateSigned}\n\n";
+    }
+
+    return $text;
 }
