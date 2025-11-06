@@ -235,7 +235,9 @@ function buildEmailHTML(array $data, int $memberId): string
         <ul>
             <li>Program fobs for member</li>
             <li>Member should come in to pick up fobs</li>
-            <li>" . ($data['waive_initiation'] ? 'Set up draft payment in system' : 'Member will pay manually each month') . "</li>
+            <li>" . ($data['waive_initiation']
+                ? 'Set up draft payment in system'
+                : 'Member will pay manually each month via <a href=\"https://andalusiahealthandfitness.com/quickpay/\" style=\"color: #d81b60;\">QuickPay</a>') . "</li>
         </ul>
     </body>
     </html>
@@ -275,5 +277,8 @@ Status: PAID
 NEXT STEPS:
 - Program fobs for member
 - Member should come in to pick up fobs
+" . ($data['waive_initiation']
+    ? "- Set up draft payment in system"
+    : "- Member will pay manually each month via QuickPay: https://andalusiahealthandfitness.com/quickpay/") . "
     ";
 }
