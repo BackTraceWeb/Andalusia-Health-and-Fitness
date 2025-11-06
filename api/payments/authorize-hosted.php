@@ -1,8 +1,8 @@
 <?php
 /**
- * Authorize.Net Hosted Payment (ULTRA-stable)
+ * Authorize.Net Hosted Payment (ULTRA-stable with iframe)
  * - Only sends amount + transactionType
- * - No extra fields, no webhook coupling
+ * - Displays form embedded in iframe (no redirect)
  * - Uses AUTH_ENV to choose test vs prod hosted URL
  * - Logs raw token response for diagnosis
  */
@@ -31,11 +31,18 @@ $stmt->execute([$duesId]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$row) { http_response_code(404); exit('Dues record not found.'); }
 
+$stmt2 = $pdo->prepare('SELECT first_name,last_name FROM members WHERE id=?');
+$stmt2->execute([$memberId]);
+$member = $stmt2->fetch(PDO::FETCH_ASSOC);
+
 $amount = number_format(((int)$row['amount_cents'] / 100), 2, '.', '');
 if (!is_numeric($amount) || (float)$amount <= 0) {
   http_response_code(400);
   exit('Invalid amount for this invoice.');
 }
+
+$memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')) : 'Member';
+$invoice = "DUES{$duesId}-MEM{$memberId}";
 
 // ---------- Hosted URL by ENV ----------
 $hostedUrl = (defined('AUTH_ENV') && strtolower(AUTH_ENV) === 'sandbox')
@@ -108,12 +115,88 @@ $token = htmlspecialchars($data['token'], ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Redirecting…</title></head>
-<body onload="document.forms[0].submit()">
-  <p>Redirecting to Secure Payment…</p>
-  <form method="POST" action="<?= htmlspecialchars($hostedUrl, ENT_QUOTES, 'UTF-8') ?>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Secure Payment — Andalusia Health & Fitness</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 80px 20px 40px;
+    }
+    .payment-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #111;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 0 25px rgba(216, 27, 96, 0.3);
+      border: 1px solid rgba(216, 27, 96, 0.2);
+    }
+    h1 {
+      color: #d81b60;
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+    .member-info {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      border-left: 3px solid #d81b60;
+    }
+    .member-info p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .member-info strong {
+      color: #d81b60;
+    }
+    #paymentFrame {
+      width: 100%;
+      height: 700px;
+      border: none;
+      border-radius: 8px;
+      background: white;
+    }
+  </style>
+</head>
+<body class="theme-andalusia">
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="shell">
+    <div class="brand-pill">
+      <a href="/index.html"><img src="/AHFlogo.png" alt="Andalusia Health & Fitness"></a>
+    </div>
+  </div>
+</div>
+
+<div class="payment-container">
+  <h1>Secure Payment</h1>
+  <div class="member-info">
+    <p><strong>Member:</strong> <?= htmlspecialchars($memberName) ?></p>
+    <p><strong>Amount Due:</strong> $<?= $amount ?></p>
+    <p><strong>Invoice:</strong> <?= htmlspecialchars($invoice) ?></p>
+  </div>
+
+  <iframe id="paymentFrame" name="paymentFrame"></iframe>
+
+  <form id="tokenForm" method="POST" action="<?= htmlspecialchars($hostedUrl, ENT_QUOTES, 'UTF-8') ?>" target="paymentFrame" style="display:none;">
     <input type="hidden" name="token" value="<?= $token ?>">
-    <noscript><button type="submit">Continue</button></noscript>
   </form>
+</div>
+
+<script>
+(function() {
+  // Submit token to iframe immediately
+  document.getElementById('tokenForm').submit();
+})();
+</script>
+
 </body>
 </html>
