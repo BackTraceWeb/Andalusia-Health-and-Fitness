@@ -64,9 +64,7 @@ $payload = [
       "setting" => [
         [
           "settingName"  => "hostedPaymentIFrameCommunicatorUrl",
-          "settingValue" => json_encode([
-            "url" => "https://andalusiahealthandfitness.com/api/payments/iframe-communicator.html"
-          ], JSON_UNESCAPED_SLASHES)
+          "settingValue" => "https://andalusiahealthandfitness.com/api/payments/iframe-communicator.html"
         ],
         [
           "settingName"  => "hostedPaymentReturnOptions",
