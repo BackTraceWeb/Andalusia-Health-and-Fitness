@@ -1,16 +1,17 @@
 <?php
 /**
- * Authorize.Net Hosted Payment (Stable)
- * - Uses config.php for creds and env
+ * Authorize.Net Hosted Payment (Stable + Debug Logging)
+ * - Uses config.php for creds/env
  * - Builds Accept Hosted token and auto-redirects
- * - Return goes to authorize-return.php (your webhook handles the real work)
+ * - Logs request + raw response for fast diagnosis of E00001/etc.
+ * - Optional: &mode=qp → invoice "QP<duesId>M<memberId>"
  */
 
 declare(strict_types=1);
 header('Content-Type: text/html; charset=utf-8');
 
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../../_bootstrap.php';   // must provide pdo()
+require_once __DIR__ . '/../../_bootstrap.php';   // provides pdo()
 
 // ---------- DB ----------
 $pdo = pdo();
@@ -22,15 +23,13 @@ if (!$pdo) {
 // ---------- Inputs ----------
 $memberId = isset($_GET['memberId']) ? (int)$_GET['memberId'] : 0;
 $duesId   = isset($_GET['invoiceId']) ? (int)$_GET['invoiceId'] : 0;
+$mode     = isset($_GET['mode']) ? strtolower(trim($_GET['mode'])) : '';
+$isQuickPay = ($mode === 'qp');
 
 if ($memberId <= 0 || $duesId <= 0) {
     http_response_code(400);
     exit('Missing memberId or invoiceId.');
 }
-
-// Optional: if you want to tag this as QuickPay set &mode=qp
-$mode = isset($_GET['mode']) ? strtolower(trim($_GET['mode'])) : '';
-$isQuickPay = ($mode === 'qp');
 
 // ---------- Lookups ----------
 $stmt = $pdo->prepare('SELECT first_name,last_name,email,zip FROM members WHERE id=?');
@@ -48,8 +47,8 @@ if (!$m || !$d) {
 
 $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 $invoice = $isQuickPay
-         ? "QP{$duesId}M{$memberId}"            // webhook will act only on QP…
-         : "DUES{$duesId}-MEM{$memberId}";      // normal membership invoice
+         ? "QP{$duesId}M{$memberId}"            // webhook will act only on QuickPay
+         : "DUES{$duesId}-MEM{$memberId}";
 
 // ---------- Env-specific Accept Hosted URL ----------
 $hostedUrl = (defined('AUTH_ENV') && AUTH_ENV === 'sandbox')
@@ -57,6 +56,8 @@ $hostedUrl = (defined('AUTH_ENV') && AUTH_ENV === 'sandbox')
   : 'https://accept.authorize.net/payment/payment';
 
 // ---------- Build token request ----------
+$baseUrl = rtrim((defined('SITE_BASE_URL') ? SITE_BASE_URL : 'https://andalusiahealthandfitness.com'), '/');
+
 $payload = [
     "getHostedPaymentPageRequest" => [
         "merchantAuthentication" => [
@@ -81,11 +82,10 @@ $payload = [
                 [
                     "settingName"  => "hostedPaymentReturnOptions",
                     "settingValue" => json_encode([
-                        "showReceipt"   => false, // let us control UX
-                        "url"           => rtrim((defined('SITE_BASE_URL') ? SITE_BASE_URL : ''), '/') .
-                                           "/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
+                        "showReceipt"   => false,
+                        "url"           => "{$baseUrl}/api/payments/authorize-return.php?memberId={$memberId}&invoiceId={$duesId}",
                         "urlText"       => "",
-                        "cancelUrl"     => rtrim((defined('SITE_BASE_URL') ? SITE_BASE_URL : ''), '/') . "/quickpay/",
+                        "cancelUrl"     => "{$baseUrl}/quickpay/",
                         "cancelUrlText" => "Cancel",
                         "linkMethod"    => "POST",
                     ], JSON_UNESCAPED_SLASHES),
@@ -103,10 +103,13 @@ $payload = [
     ],
 ];
 
-// ---------- Debug log (non-fatal) ----------
+// ---------- Debug logs (non-fatal) ----------
 $logDir = __DIR__ . '/../../logs';
 if (!is_dir($logDir)) { @mkdir($logDir, 0755, true); }
-@file_put_contents("$logDir/authorize-debug.json", json_encode($payload, JSON_PRETTY_PRINT));
+
+// keep a timestamped copy of each request for easier diffing
+$nowTag = date('Ymd-His');
+@file_put_contents("$logDir/authorize-debug-$nowTag.json", json_encode($payload, JSON_PRETTY_PRINT));
 
 // ---------- Call Authorize.Net ----------
 $ch = curl_init(AUTH_API_URL);
@@ -120,6 +123,12 @@ curl_setopt_array($ch, [
 $response  = curl_exec($ch);
 $curlError = curl_error($ch);
 curl_close($ch);
+
+// log raw response for fast diagnosis
+@file_put_contents("$logDir/authorize-token-response.log",
+    "[".date('c')."] ENV=".(defined('AUTH_ENV')?AUTH_ENV:'?')." URL=".AUTH_API_URL." INV=".$invoice."\n".$response."\n\n",
+    FILE_APPEND
+);
 
 if ($curlError) {
     http_response_code(502);
