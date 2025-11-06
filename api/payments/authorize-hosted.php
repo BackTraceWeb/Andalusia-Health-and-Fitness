@@ -63,10 +63,6 @@ $payload = [
     "hostedPaymentSettings" => [
       "setting" => [
         [
-          "settingName"  => "hostedPaymentIFrameCommunicatorUrl",
-          "settingValue" => "https://andalusiahealthandfitness.com/api/payments/iframe-communicator.html"
-        ],
-        [
           "settingName"  => "hostedPaymentReturnOptions",
           "settingValue" => json_encode([
             "showReceipt" => false,
