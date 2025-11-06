@@ -1,21 +1,18 @@
 <?php
 declare(strict_types=1);
 
-// --- bootstrap guard ---------------------------------------------------------
-$bootTried = [];
-foreach ([
-  __DIR__ . '/../../_bootstrap.php',
-  dirname(__DIR__, 2) . '/_bootstrap.php',
-  '/var/www/andalusiahealthandfitness/_bootstrap.php',
-] as $cand) {
-  if (is_file($cand)) { require_once $cand; $bootTried[] = $cand; break; }
+require __DIR__ . '/../../_bootstrap.php';
+
+/* --- compatibility shims --- */
+if (!function_exists('cfg') && function_exists('config')) {
+  function cfg($key = null, $default = null) { return config($key, $default); }
 }
-if (!function_exists('cfg')) {
-  http_response_code(500);
-  header('Content-Type: text/plain');
-  echo "Bootstrap not loaded.\nTried:\n - " . implode("\n - ", $bootTried ?: ['(no candidates)']);
-  exit;
+if (!function_exists('pdo') && function_exists('db')) {
+  // if your bootstrap exposes db() instead of pdo()
+  function pdo() { return db(); }
 }
+/* --------------------------- */
+
 // ----------------------------------------------------------------------------- 
 
 function h(?string $s): string { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
