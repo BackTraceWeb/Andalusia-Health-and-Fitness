@@ -72,6 +72,9 @@ try {
     // Send email to staff
     sendMembershipEmail($data, $memberId);
 
+    // Send welcome email to member
+    sendMemberWelcomeEmail($data, $memberId);
+
     echo json_encode([
         'success' => true,
         'memberId' => $memberId,
@@ -106,6 +109,32 @@ function sendMembershipEmail(array $data, int $memberId): void
 
     } catch (Throwable $e) {
         error_log("Email error: " . $e->getMessage());
+        // Don't fail the entire signup if email fails
+    }
+}
+
+/**
+ * Send welcome email to new member
+ */
+function sendMemberWelcomeEmail(array $data, int $memberId): void
+{
+    try {
+        if (empty($data['email'])) {
+            return; // No email provided
+        }
+
+        $subject = "Welcome to Andalusia Health & Fitness!";
+        $html = buildMemberWelcomeHTML($data, $memberId);
+        $text = buildMemberWelcomeText($data, $memberId);
+
+        // Get access token from Microsoft Graph
+        $token = getMicrosoftGraphToken();
+
+        // Send to member (not staff)
+        sendGraphEmailToMember($token, $subject, $html, $text, $data);
+
+    } catch (Throwable $e) {
+        error_log("Member welcome email error: " . $e->getMessage());
         // Don't fail the entire signup if email fails
     }
 }
@@ -280,5 +309,140 @@ NEXT STEPS:
 " . ($data['waive_initiation']
     ? "- Set up draft payment in system"
     : "- Member will pay manually each month via QuickPay: https://andalusiahealthandfitness.com/quickpay/") . "
+    ";
+}
+
+function sendGraphEmailToMember(string $token, string $subject, string $html, string $text, array $data): void
+{
+    $graphConfig = config('graph');
+    $sender = $graphConfig['sender_upn'];
+
+    $message = [
+        'message' => [
+            'subject' => $subject,
+            'body' => [
+                'contentType' => 'HTML',
+                'content' => $html
+            ],
+            'toRecipients' => [
+                [
+                    'emailAddress' => [
+                        'address' => $data['email'],
+                        'name' => ($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')
+                    ]
+                ]
+            ]
+        ],
+        'saveToSentItems' => true
+    ];
+
+    $ch = curl_init("https://graph.microsoft.com/v1.0/users/$sender/sendMail");
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer ' . $token,
+            'Content-Type: application/json'
+        ],
+        CURLOPT_POSTFIELDS => json_encode($message)
+    ]);
+
+    curl_exec($ch);
+    curl_close($ch);
+}
+
+function buildMemberWelcomeHTML(array $data, int $memberId): string
+{
+    $monthlyTotal = number_format((float)($data['monthly_total'] ?? 0), 2);
+    $firstName = htmlspecialchars($data['first_name']);
+    $plan = htmlspecialchars($data['plan']);
+
+    $paymentInfo = $data['waive_initiation']
+        ? "<p>Your monthly dues of <strong>\${$monthlyTotal}</strong> will be automatically drafted from your account.</p>"
+        : "<p>Your monthly dues are <strong>\${$monthlyTotal}</strong>. You can pay online anytime using our <a href=\"https://andalusiahealthandfitness.com/quickpay/\" style=\"color: #d81b60; font-weight: bold;\">QuickPay portal</a>.</p>";
+
+    return "
+    <html>
+    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+            <div style='background: #000; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;'>
+                <h1 style='color: #d81b60; margin: 0;'>Welcome to AHF!</h1>
+            </div>
+
+            <div style='background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;'>
+                <p>Hi {$firstName},</p>
+
+                <p>Thank you for joining <strong>Andalusia Health & Fitness</strong>! We're excited to have you as a member.</p>
+
+                <h3 style='color: #d81b60;'>Your Membership Details</h3>
+                <ul>
+                    <li><strong>Plan:</strong> {$plan}</li>
+                    <li><strong>Monthly Dues:</strong> \${$monthlyTotal}</li>
+                    <li><strong>Member ID:</strong> #{$memberId}</li>
+                </ul>
+
+                <h3 style='color: #d81b60;'>Next Steps</h3>
+                <ol>
+                    <li><strong>Pick up your key fob</strong> - Stop by the gym to get your 24/7 access key</li>
+                    <li><strong>Start working out!</strong> - Your membership is active</li>
+                    <li><strong>Monthly payments</strong> - {$paymentInfo}</li>
+                </ol>
+
+                <h3 style='color: #d81b60;'>Gym Information</h3>
+                <p>
+                    <strong>Address:</strong> 205 Church St, Andalusia, AL 36420<br>
+                    <strong>Office Hours:</strong> Mon-Thu 8am-5pm, Fri 8am-12pm<br>
+                    <strong>Gym Access:</strong> 24/7 with your key fob<br>
+                    <strong>Phone:</strong> (334) 582-2000
+                </p>
+
+                <p style='margin-top: 30px;'>If you have any questions, feel free to call us or stop by!</p>
+
+                <p style='margin-top: 20px;'>
+                    <strong>Welcome to the AHF family!</strong><br>
+                    <em style='color: #666;'>Andalusia Health & Fitness Team</em>
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+}
+
+function buildMemberWelcomeText(array $data, int $memberId): string
+{
+    $monthlyTotal = number_format((float)($data['monthly_total'] ?? 0), 2);
+    $firstName = $data['first_name'];
+    $plan = $data['plan'];
+
+    $paymentInfo = $data['waive_initiation']
+        ? "Your monthly dues of \${$monthlyTotal} will be automatically drafted from your account."
+        : "Your monthly dues are \${$monthlyTotal}. You can pay online anytime using our QuickPay portal: https://andalusiahealthandfitness.com/quickpay/";
+
+    return "
+Hi {$firstName},
+
+Thank you for joining Andalusia Health & Fitness! We're excited to have you as a member.
+
+YOUR MEMBERSHIP DETAILS
+- Plan: {$plan}
+- Monthly Dues: \${$monthlyTotal}
+- Member ID: #{$memberId}
+
+NEXT STEPS
+1. Pick up your key fob - Stop by the gym to get your 24/7 access key
+2. Start working out! - Your membership is active
+3. Monthly payments - {$paymentInfo}
+
+GYM INFORMATION
+Address: 205 Church St, Andalusia, AL 36420
+Office Hours: Mon-Thu 8am-5pm, Fri 8am-12pm
+Gym Access: 24/7 with your key fob
+Phone: (334) 582-2000
+
+If you have any questions, feel free to call us or stop by!
+
+Welcome to the AHF family!
+Andalusia Health & Fitness Team
     ";
 }
