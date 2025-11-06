@@ -27,49 +27,33 @@ try {
     // Calculate valid_until date (30 days from now)
     $validUntil = date('Y-m-d', strtotime('+30 days'));
 
-    // Determine payment type
-    $paymentType = $data['waive_initiation'] ? 'draft' : 'manual';
+    // Determine payment type (table ENUM: 'draft','card','cash','other')
+    $paymentType = $data['waive_initiation'] ? 'draft' : 'card';
 
     // Insert member into database
+    // Note: Only using columns that exist in the members table
     $stmt = $pdo->prepare("
         INSERT INTO members (
             first_name,
             last_name,
             email,
-            phone,
-            address1,
-            city,
-            state,
             zip,
-            plan_name,
             monthly_fee,
             payment_type,
             status,
-            valid_until,
-            fob_count,
-            has_tanning,
-            initiation_paid,
-            created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            valid_until
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $stmt->execute([
         $data['first_name'],
         $data['last_name'],
         $data['email'],
-        $data['phone'] ?? '',
-        $data['address1'] ?? '',
-        $data['city'] ?? '',
-        $data['state'] ?? '',
         $data['zip'] ?? '',
-        $data['plan'],
         $data['plan_amount'],
         $paymentType,
         'current',
-        $validUntil,
-        $data['fob_count'] ?? 1,
-        $data['add_tanning'] ? 1 : 0,
-        $data['waive_initiation'] ? 0 : 1,
+        $validUntil
     ]);
 
     $memberId = $pdo->lastInsertId();
@@ -226,8 +210,8 @@ function buildEmailHTML(array $data, int $memberId): string
             <tr><td><strong>Member ID:</strong></td><td>#{$memberId}</td></tr>
             <tr><td><strong>Name:</strong></td><td>{$data['first_name']} {$data['last_name']}</td></tr>
             <tr><td><strong>Email:</strong></td><td>{$data['email']}</td></tr>
-            <tr><td><strong>Phone:</strong></td><td>{$data['phone']}</td></tr>
-            <tr><td><strong>Address:</strong></td><td>{$data['address1']}, {$data['city']}, {$data['state']} {$data['zip']}</td></tr>
+            <tr><td><strong>Phone:</strong></td><td>" . ($data['phone'] ?? 'Not provided') . "</td></tr>
+            <tr><td><strong>Address:</strong></td><td>" . ($data['address1'] ?? '') . ($data['city'] ? ", {$data['city']}" : '') . ($data['state'] ? ", {$data['state']}" : '') . " " . ($data['zip'] ?? '') . "</td></tr>
         </table>
 
         <h3>Membership Details</h3>
@@ -263,14 +247,18 @@ function buildEmailText(array $data, int $memberId): string
     $monthlyTotal = number_format((float)$data['monthly_total'], 2);
     $todayTotal = number_format((float)$data['today_total'], 2);
 
+    $phone = $data['phone'] ?? 'Not provided';
+    $address = ($data['address1'] ?? '') . ($data['city'] ? ", {$data['city']}" : '') . ($data['state'] ? ", {$data['state']}" : '') . " " . ($data['zip'] ?? '');
+    $address = trim($address) ?: 'Not provided';
+
     return "
 NEW MEMBERSHIP SIGNUP
 
 Member ID: #{$memberId}
 Name: {$data['first_name']} {$data['last_name']}
 Email: {$data['email']}
-Phone: {$data['phone']}
-Address: {$data['address1']}, {$data['city']}, {$data['state']} {$data['zip']}
+Phone: {$phone}
+Address: {$address}
 
 MEMBERSHIP DETAILS
 Plan: {$data['plan']}
