@@ -49,7 +49,9 @@ $hostedUrl = (defined('AUTH_ENV') && strtolower(AUTH_ENV) === 'sandbox')
   ? 'https://test.authorize.net/payment/payment'
   : 'https://accept.authorize.net/payment/payment';
 
-// ---------- Minimal token request ----------
+// ---------- Token request with minimal settings ----------
+$returnUrl = "https://andalusiahealthandfitness.com/api/payments/authorize-return.php?memberId=$memberId&invoiceId=$duesId";
+
 $payload = [
   "getHostedPaymentPageRequest" => [
     "merchantAuthentication" => [
@@ -58,7 +60,42 @@ $payload = [
     ],
     "transactionRequest" => [
       "transactionType" => "authCaptureTransaction",
-      "amount"          => $amount
+      "amount"          => $amount,
+      "order" => [
+        "invoiceNumber" => $invoice,
+        "description"   => "Gym Membership Dues"
+      ]
+    ],
+    "hostedPaymentSettings" => [
+      "setting" => [
+        [
+          "settingName"  => "hostedPaymentReturnOptions",
+          "settingValue" => json_encode([
+            "showReceipt" => false,
+            "url"         => $returnUrl,
+            "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/"
+          ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
+          "settingName"  => "hostedPaymentPaymentOptions",
+          "settingValue" => json_encode([
+            "cardCodeRequired" => true
+          ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
+          "settingName"  => "hostedPaymentOrderOptions",
+          "settingValue" => json_encode([
+            "show" => true
+          ], JSON_UNESCAPED_SLASHES)
+        ],
+        [
+          "settingName"  => "hostedPaymentBillingAddressOptions",
+          "settingValue" => json_encode([
+            "show" => false,
+            "required" => false
+          ], JSON_UNESCAPED_SLASHES)
+        ]
+      ]
     ]
   ]
 ];
