@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Authorize.Net IFrame Communicator</title>
+  <script type="text/javascript">
+  /**
+   * Authorize.Net IFrame Communicator
+   * This page facilitates communication between the Accept Hosted payment form
+   * (loaded in an iframe) and the parent page.
+   */
+  (function() {
+    var iframeName = 'paymentFrame';
+    var parentOrigin = window.location.origin;
+
+    // Send message to parent window
+    function sendMessageToParent(message) {
+      if (window.parent && window.parent.postMessage) {
+        window.parent.postMessage(message, parentOrigin);
+      }
+    }
+
+    // Listen for messages from Authorize.Net
+    window.addEventListener('message', function(event) {
+      // Accept messages from Authorize.Net domains
+      if (event.origin === 'https://test.authorize.net' ||
+          event.origin === 'https://accept.authorize.net') {
+
+        // Forward the message to parent
+        sendMessageToParent(event.data);
+      }
+    });
+
+    // Notify parent that communicator is ready
+    sendMessageToParent('communicatorReady');
+  })();
+  </script>
+</head>
+<body>
+  <!-- This page is used for iframe communication only -->
+</body>
+</html>
