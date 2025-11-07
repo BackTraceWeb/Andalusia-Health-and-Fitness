@@ -41,6 +41,16 @@ h1 { text-align:center; color:var(--brand); margin-top:0; }
   padding:0.5rem 1rem; border-radius:6px; cursor:pointer;
 }
 .filters button.active, .filters button:hover { background:var(--brand); }
+.filters .btn-axtrax {
+  background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color:#fff;
+  font-weight:600;
+}
+.filters .btn-axtrax:hover {
+  background:linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(102,126,234,0.4);
+}
 
 .search-box {
   display:flex; justify-content:center; margin-bottom:1rem;
@@ -168,6 +178,7 @@ tr:hover { background:#2a2a2a; cursor:pointer; }
   <button data-filter="draft">Draft</button>
   <button data-filter="cards">Cards</button>
   <button onclick="location='departments.php'">Departments</button>
+  <button class="btn-axtrax" onclick="window.open('http://192.168.1.101:3006/login', '_blank')">🔗 AxTrax Pro</button>
 </div>
 
 <div class="search-box">
