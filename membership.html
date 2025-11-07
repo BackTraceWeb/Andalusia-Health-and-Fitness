@@ -50,6 +50,7 @@
       border-radius:8px;
       background:#fff;
       color:#000;
+      font-size:16px; /* Prevent mobile zoom on focus */
     }
 
     label { color:#000; font-weight:600; display:block; margin-bottom:6px; }
@@ -109,6 +110,67 @@
     .toggle input { width:18px; height:18px; }
 
     .help { font-size:0.85em; color:#aaa; }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      /* Prevent horizontal scroll */
+      body {
+        overflow-x: hidden;
+      }
+
+      /* Stack form grid on mobile */
+      .grid-3 {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+      }
+
+      /* Full-width plan cards on mobile */
+      .plan-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+      }
+
+      /* Tighter padding on mobile */
+      .fieldset {
+        padding: 16px;
+      }
+
+      .calc {
+        padding: 16px;
+      }
+
+      /* Stack calc rows on mobile */
+      .calc .row {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch !important;
+      }
+
+      /* Full-width buttons on mobile */
+      .pill-ghost {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 8px;
+      }
+
+      /* Form actions stack */
+      .form-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .pill-cta {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .fieldset {
+        padding: 12px;
+      }
+    }
   </style>
 </head>
 
