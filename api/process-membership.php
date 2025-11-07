@@ -575,18 +575,73 @@ function generateWaiverPDFs(array $data): array
             </div>
 
             <div class='terms'>
-                <h2>Terms and Conditions</h2>
-                <p>I, the undersigned, hereby acknowledge and agree to the following terms and conditions:</p>
+                <h2 style='text-align:center;'>ANDALUSIA HEALTH AND FITNESS LLC</h2>
+                <p style='text-align:center;'>205 CHURCH STREET · ANDALUSIA, AL 36420</p>
+
+                <h3>WAIVER, RELEASE OF LIABILITY AND COVENANT-NOT-TO-SUE</h3>
+                <p>
+                    I UNDERSTAND AND AGREE that Andalusia Health and Fitness LLC is not responsible to any person for
+                    any injury or loss of property while that person is practicing, taking class, competing,
+                    participating in open gym, or otherwise involved in activities at Andalusia Health and Fitness LLC
+                    for any reason whatsoever, including ordinary negligence on the part of Andalusia Health and
+                    Fitness LLC, its owners, board of directors, officers, agents, employees, or trainers.
+                </p>
+                <p>
+                    I understand the facility is available 24 hours a day and, during non-staff hours, is an
+                    unsupervised facility. I use this facility at my own risk and will supply my own spotters.
+                    I am prohibited from allowing any non-member to use the facility or my membership. If I breach
+                    this agreement, Andalusia Health and Fitness may charge a fee per unauthorized person and may
+                    terminate my membership. I understand that electronic surveillance and other means may be used
+                    to enforce this policy.
+                </p>
+                <p>
+                    I understand it is my responsibility to consult my physician before using the facilities and that
+                    Andalusia Health and Fitness bears no responsibility for my physical health.
+                </p>
+                <p>
+                    In consideration of access to the facilities, I agree not to sue and release Andalusia Health and
+                    Fitness from any and all past, present, or future claims for property damage, personal injury,
+                    or wrongful death arising out of my participation in weight-lifting, weight-training, exercise
+                    routines, or related activities, including ordinary negligence.
+                </p>
+                <p>
+                    I recognize that weight-training and related activities involve certain risks, including but not
+                    limited to serious injury or death. Equipment, safety devices, and spotting may reduce but cannot
+                    eliminate these risks. I agree to use all safety equipment properly and understand risks may also
+                    arise from the actions of other participants.
+                </p>
+                <p>
+                    This waiver and covenant-not-to-sue is intended to be as broad and inclusive as permitted by
+                    Alabama law. If any portion is held invalid, the remainder shall continue in full force and effect.
+                    Jurisdiction and venue for any proceedings arising out of this agreement will be within the State
+                    of Alabama, County of Covington.
+                </p>
+                <p>
+                    I affirm I am of legal age and am freely signing this agreement. I have read and understand that
+                    by signing I am giving up legal rights and/or remedies which may be available for the ordinary
+                    negligence of Andalusia Health and Fitness.
+                </p>
+
+                <h3>MEMBERSHIP AGREEMENT</h3>
                 <ol>
-                    <li><strong>Assumption of Risk:</strong> I understand that participation in fitness activities involves inherent risks, including but not limited to: physical injury, heart attack, stroke, and in extreme cases, death.</li>
-                    <li><strong>Release of Liability:</strong> I hereby release, waive, discharge, and covenant not to sue Andalusia Health & Fitness, its owners, employees, and agents from any and all liability, claims, demands, or causes of action arising from my use of the facility.</li>
-                    <li><strong>Medical Clearance:</strong> I certify that I am physically fit and have no medical conditions that would prevent me from participating in fitness activities.</li>
-                    <li><strong>Facility Rules:</strong> I agree to abide by all facility rules and regulations as posted and updated from time to time.</li>
-                    <li><strong>Equipment Use:</strong> I agree to use all equipment properly and at my own risk.</li>
-                    <li><strong>Personal Property:</strong> I acknowledge that Andalusia Health & Fitness is not responsible for lost, stolen, or damaged personal property.</li>
+                    <li>Monthly dues are owed per membership selected and continue until cancelled per policy.</li>
+                    <li>Initiation fees are non-refundable; memberships are non-transferable and non-voting.</li>
+                    <li>Members may bring guests per rules and are responsible for guest conduct and charges.</li>
+                    <li>Termination requires proper notice; otherwise dues remain owed until 30 days after notice.</li>
+                    <li>Management may suspend or cancel membership for violations; rules may be updated.</li>
+                    <li>Member accepts the inherent risks of using club facilities and services.</li>
                 </ol>
 
-                <p style='margin-top:20px;'><strong>By signing below, I acknowledge that I have read, understood, and agree to be bound by this waiver and release of liability.</strong></p>
+                <h3>GENERAL RULES</h3>
+                <ul>
+                    <li>Wear proper gym attire (athletic shoes; no jeans, sandals, boots, or open-toe shoes).</li>
+                    <li>Re-rack weights and return benches to their area; wipe down equipment after use.</li>
+                    <li>No profanity; limit cardio to 30 minutes when others are waiting.</li>
+                    <li>Guests must sign a waiver; guest fee is $5.</li>
+                    <li>Do not leave items in locker/shower rooms; club not responsible for lost items.</li>
+                </ul>
+
+                <p style='margin-top:20px;'><strong>By signing below, I acknowledge that I have read, understood, and agree to be bound by this waiver, release of liability, membership agreement, and general rules.</strong></p>
             </div>
 
             <div class='signature-box'>
