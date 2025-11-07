@@ -11,138 +11,285 @@ header('Content-Type: text/html; charset=utf-8');
 <style>
 :root {
   --brand:#d81b60;
-  --bg:#111;
+  --brand-light:#f06292;
+  --bg:#0a0b0d;
   --text:#f2f2f2;
   --gray:#aaa;
-  --card:#1c1c1c;
-  --hover:#e33d7d;
+  --card:#1a1d23;
+  --hover:#2a2d35;
+  --success:#4caf50;
+  --warning:#ff9800;
+  --danger:#f44336;
+  --info:#2196f3;
 }
+
 * { box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+
 body {
   margin:0; background:var(--bg); color:var(--text);
   padding:2rem; display:flex; flex-direction:column;
+  min-height:100vh;
 }
-h1 { text-align:center; color:var(--brand); margin-top:0; }
 
+h1 {
+  text-align:center; color:var(--brand); margin-top:0; margin-bottom:2rem;
+  font-size:2rem; font-weight:700; letter-spacing:0.5px;
+}
+
+/* Stats Cards */
 .stats {
-  display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; margin-bottom:1.5rem;
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+  gap:1.5rem; margin-bottom:2rem; max-width:1400px; margin-left:auto; margin-right:auto;
 }
+
 .stat {
-  background:var(--card); padding:1rem 2rem; border-radius:10px; text-align:center;
-  box-shadow:0 0 8px rgba(216,27,96,0.25);
+  background:linear-gradient(135deg, #1e2228 0%, #2a2f38 100%);
+  padding:1.5rem; border-radius:12px; text-align:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  border:1px solid rgba(255,255,255,0.05);
+  transition:transform 0.2s ease, box-shadow 0.2s ease;
+  position:relative;
+  overflow:hidden;
 }
-.stat strong { font-size:1.8rem; display:block; }
 
+.stat:hover {
+  transform:translateY(-4px);
+  box-shadow:0 8px 20px rgba(216,27,96,0.3);
+}
+
+.stat::before {
+  content:'';
+  position:absolute;
+  top:0; right:0;
+  width:100px; height:100px;
+  background:radial-gradient(circle, rgba(216,27,96,0.1) 0%, transparent 70%);
+  border-radius:50%;
+}
+
+.stat-icon {
+  font-size:2rem;
+  margin-bottom:0.5rem;
+  opacity:0.8;
+}
+
+.stat strong {
+  font-size:2.5rem; display:block; font-weight:800;
+  background:linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.stat-label {
+  font-size:0.9rem; color:var(--gray);
+  text-transform:uppercase; letter-spacing:1px;
+  margin-top:0.5rem;
+}
+
+/* Filters */
 .filters {
-  display:flex; justify-content:center; gap:0.5rem; margin-bottom:1rem;
+  display:flex; justify-content:center; gap:0.75rem; margin-bottom:1.5rem;
+  flex-wrap:wrap;
 }
-.filters button {
-  background:#222; border:none; color:var(--text);
-  padding:0.5rem 1rem; border-radius:6px; cursor:pointer;
-}
-.filters button.active, .filters button:hover { background:var(--brand); }
 
-.search-box {
-  display:flex; justify-content:center; margin-bottom:1rem;
+.filters button {
+  background:#222529; border:1px solid rgba(255,255,255,0.1);
+  color:var(--text); padding:0.65rem 1.2rem; border-radius:8px;
+  cursor:pointer; font-weight:600; font-size:0.9rem;
+  transition:all 0.2s ease; display:inline-flex; align-items:center; gap:0.5rem;
 }
+
+.filters button:hover {
+  background:#2a2d35; border-color:var(--brand); transform:translateY(-2px);
+}
+
+.filters button.active {
+  background:var(--brand); border-color:var(--brand);
+  box-shadow:0 4px 12px rgba(216,27,96,0.4);
+}
+
+/* Search */
+.search-box {
+  display:flex; justify-content:center; margin-bottom:1.5rem;
+}
+
 .search-box input {
-  width:320px; padding:0.5rem 1rem; border-radius:6px; border:none;
-  background:#222; color:var(--text);
+  width:100%; max-width:500px; padding:0.75rem 1.2rem;
+  border-radius:10px; border:1px solid rgba(255,255,255,0.1);
+  background:#222529; color:var(--text); font-size:1rem;
+  transition:all 0.2s ease;
+}
+
+.search-box input:focus {
+  outline:none; border-color:var(--brand);
+  box-shadow:0 0 0 3px rgba(216,27,96,0.2);
+}
+
+/* Table Container */
+.table-container {
+  max-width:1400px; margin:0 auto; width:100%;
+  background:var(--card); border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  overflow:hidden;
 }
 
 table {
-  border-collapse:collapse; width:100%; margin-top:1rem;
+  border-collapse:collapse; width:100%;
 }
-th, td {
-  text-align:left; padding:0.6rem 1rem;
-}
-th {
-  background:var(--brand); color:#fff; text-transform:uppercase;
-  font-size:0.75rem;
-}
-tr:nth-child(even) { background:#1a1a1a; }
-tr:hover { background:#2a2a2a; cursor:pointer; }
 
+th, td {
+  text-align:left; padding:1rem 1.25rem;
+}
+
+th {
+  background:linear-gradient(135deg, #1a1d23 0%, #222529 100%);
+  color:var(--gray); text-transform:uppercase;
+  font-size:0.75rem; font-weight:700; letter-spacing:1px;
+  border-bottom:2px solid var(--brand);
+  cursor:pointer; user-select:none;
+  transition:background 0.2s ease;
+}
+
+th:hover {
+  background:#2a2d35;
+}
+
+th.sortable::after {
+  content:'⇅';
+  margin-left:0.5rem;
+  opacity:0.4;
+}
+
+th.sorted-asc::after {
+  content:'↑';
+  opacity:1;
+  color:var(--brand);
+}
+
+th.sorted-desc::after {
+  content:'↓';
+  opacity:1;
+  color:var(--brand);
+}
+
+tbody tr {
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  transition:background 0.2s ease;
+}
+
+tbody tr:hover {
+  background:#2a2d35; cursor:pointer;
+}
+
+/* Status Badges */
+.badge {
+  display:inline-block; padding:0.35rem 0.75rem;
+  border-radius:12px; font-size:0.75rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+
+.badge-current {
+  background:rgba(76,175,80,0.2); color:var(--success);
+  border:1px solid rgba(76,175,80,0.4);
+}
+
+.badge-due {
+  background:rgba(244,67,54,0.2); color:var(--danger);
+  border:1px solid rgba(244,67,54,0.4);
+}
+
+.badge-draft {
+  background:rgba(33,150,243,0.2); color:var(--info);
+  border:1px solid rgba(33,150,243,0.4);
+}
+
+.badge-manual {
+  background:rgba(255,152,0,0.2); color:var(--warning);
+  border:1px solid rgba(255,152,0,0.4);
+}
+
+/* Detail Panel */
 .detail {
-  position:fixed; top:0; right:0; width:400px; height:100%;
-  background:#0f0f0f; color:var(--text); padding:1.5rem;
-  border-left:2px solid var(--brand); overflow-y:auto; display:none;
+  position:fixed; top:0; right:0; width:450px; height:100%;
+  background:linear-gradient(135deg, #1a1d23 0%, #222529 100%);
+  color:var(--text); padding:2rem;
+  border-left:3px solid var(--brand); overflow-y:auto; display:none;
+  box-shadow:-4px 0 20px rgba(0,0,0,0.5);
 }
-.detail h2 { color:var(--brand); margin-top:0; }
+
+.detail h2 {
+  color:var(--brand); margin-top:0; font-size:1.5rem;
+  margin-bottom:1.5rem;
+}
+
 .detail-close {
-  position:absolute; right:10px; top:10px; cursor:pointer; color:#fff; font-size:20px;
+  position:absolute; right:20px; top:20px;
+  cursor:pointer; color:#fff; font-size:28px;
+  width:40px; height:40px; display:flex; align-items:center;
+  justify-content:center; border-radius:50%;
+  background:rgba(255,255,255,0.1);
+  transition:all 0.2s ease;
 }
+
+.detail-close:hover {
+  background:var(--danger); transform:rotate(90deg);
+}
+
+.detail-info {
+  background:rgba(255,255,255,0.03);
+  padding:1rem; border-radius:8px;
+  margin-bottom:1rem; border-left:3px solid var(--brand);
+}
+
+.detail-info p {
+  margin:0.5rem 0; display:flex; justify-content:space-between;
+}
+
+.detail-info strong {
+  color:var(--gray);
+}
+
 .edit-btn {
   display:inline-block; background:var(--brand); color:#fff;
-  border:none; border-radius:6px; padding:0.5rem 1rem;
+  border:none; border-radius:8px; padding:0.75rem 1.5rem;
   text-decoration:none; margin-top:1rem; cursor:pointer;
+  font-weight:600; transition:all 0.2s ease;
+  box-shadow:0 4px 12px rgba(216,27,96,0.4);
+}
+
+.edit-btn:hover {
+  background:var(--brand-light); transform:translateY(-2px);
+  box-shadow:0 6px 16px rgba(216,27,96,0.5);
 }
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   body { padding: 1rem; }
-
   h1 { font-size: 1.5rem; }
 
-  .stats {
-    gap: 1rem;
-  }
-  .stat {
-    padding: 0.75rem 1.5rem;
-    flex: 1 1 calc(50% - 1rem);
-    min-width: 140px;
-  }
-  .stat strong { font-size: 1.5rem; }
+  .stats { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .stat { padding: 1rem; }
+  .stat strong { font-size: 2rem; }
 
-  .filters {
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-  .filters button {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-  }
+  .filters { gap: 0.5rem; }
+  .filters button { padding: 0.5rem 0.9rem; font-size: 0.85rem; }
 
-  .search-box input {
-    width: 100%;
-    max-width: 100%;
-  }
+  .search-box input { max-width: 100%; }
 
-  /* Make table scrollable horizontally on mobile */
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  thead, tbody, tr {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-  }
-  th, td {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-  }
+  .table-container { overflow-x: auto; }
 
-  /* Detail panel becomes full-screen modal on mobile */
+  th, td { padding: 0.75rem; font-size: 0.85rem; }
+
   .detail {
-    width: 100%;
-    left: 0;
-    right: 0;
-    border-left: none;
-    border-top: 3px solid var(--brand);
+    width: 100%; left: 0; right: 0;
+    border-left: none; border-top: 3px solid var(--brand);
   }
 }
 
 @media (max-width: 480px) {
-  .stat {
-    flex: 1 1 100%;
-  }
-  .stats {
-    gap: 0.75rem;
-  }
+  .stats { grid-template-columns: 1fr; }
 
-  /* Hide some columns on very small screens */
+  /* Hide department and payment columns on tiny screens */
   th:nth-child(3), td:nth-child(3),
   th:nth-child(4), td:nth-child(4) {
     display: none;
@@ -152,43 +299,62 @@ tr:hover { background:#2a2a2a; cursor:pointer; }
 </head>
 <body>
 
-<h1>Andalusia Health & Fitness — Admin CRM</h1>
+<h1>🏋️ Andalusia Health & Fitness — Admin CRM</h1>
 
 <div class="stats">
-  <div class="stat"><strong id="stat-current">0</strong>Current</div>
-  <div class="stat"><strong id="stat-due">0</strong>Due</div>
-  <div class="stat"><strong id="stat-draft">0</strong>Draft</div>
-  <div class="stat"><strong id="stat-total">0</strong>Total</div>
+  <div class="stat">
+    <div class="stat-icon">✅</div>
+    <strong id="stat-current">0</strong>
+    <div class="stat-label">Current</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon">⚠️</div>
+    <strong id="stat-due">0</strong>
+    <div class="stat-label">Due</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon">💳</div>
+    <strong id="stat-draft">0</strong>
+    <div class="stat-label">Draft</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon">👥</div>
+    <strong id="stat-total">0</strong>
+    <div class="stat-label">Total</div>
+  </div>
 </div>
 
 <div class="filters">
-  <button data-filter="all" class="active">All</button>
-  <button data-filter="current">Current</button>
-  <button data-filter="due">Due</button>
-  <button data-filter="draft">Draft</button>
-  <button data-filter="cards">Cards</button>
-  <button onclick="location='departments.php'">Departments</button>
+  <button data-filter="all" class="active">📋 All</button>
+  <button data-filter="current">✅ Current</button>
+  <button data-filter="due">⚠️ Due</button>
+  <button data-filter="draft">💳 Draft</button>
+  <button data-filter="cards">🔑 Cards</button>
+  <button onclick="location='departments.php'">🏢 Departments</button>
 </div>
 
 <div class="search-box">
-  <input type="text" id="search" placeholder="Search by name, card, or department...">
+  <input type="text" id="search" placeholder="🔍 Search by name, card, or department...">
 </div>
 
-<table id="members-table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Name</th>
-      <th>Department</th>
-      <th>Payment</th>
-      <th>Monthly Fee</th>
-      <th>Valid Until</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td colspan="6" style="text-align:center;">Loading members...</td></tr>
-  </tbody>
-</table>
+<div class="table-container">
+  <table id="members-table">
+    <thead>
+      <tr>
+        <th class="sortable" data-column="id">ID</th>
+        <th class="sortable" data-column="name">Name</th>
+        <th class="sortable" data-column="department">Department</th>
+        <th class="sortable" data-column="payment">Payment</th>
+        <th class="sortable" data-column="fee">Monthly Fee</th>
+        <th class="sortable" data-column="valid_until">Valid Until</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="7" style="text-align:center; padding:2rem;">Loading members...</td></tr>
+    </tbody>
+  </table>
+</div>
 
 <div class="detail" id="member-detail">
   <span class="detail-close" onclick="closeDetail()">×</span>
@@ -198,6 +364,7 @@ tr:hover { background:#2a2a2a; cursor:pointer; }
 
 <script>
 let allMembers = [];
+let currentSort = { column: 'id', direction: 'asc' };
 
 async function loadMembers() {
   const res = await fetch('/api/members-list.php');
@@ -205,7 +372,7 @@ async function loadMembers() {
 
   if (!data.ok || !data.members) {
     document.querySelector('#members-table tbody').innerHTML =
-      '<tr><td colspan="6" style="text-align:center;">Failed to load members.</td></tr>';
+      '<tr><td colspan="7" style="text-align:center; padding:2rem;">Failed to load members.</td></tr>';
     return;
   }
 
@@ -226,21 +393,84 @@ function updateStats() {
   document.getElementById('stat-draft').textContent = draft;
 }
 
+function getStatusBadge(status) {
+  if (status === 'current') return '<span class="badge badge-current">✓ Current</span>';
+  if (status === 'due') return '<span class="badge badge-due">! Due</span>';
+  return '<span class="badge">' + status + '</span>';
+}
+
+function getPaymentBadge(type) {
+  if (type === 'draft') return '<span class="badge badge-draft">Draft</span>';
+  return '<span class="badge badge-manual">Manual</span>';
+}
+
+function sortTable(column) {
+  // Toggle direction if same column
+  if (currentSort.column === column) {
+    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSort.column = column;
+    currentSort.direction = 'asc';
+  }
+
+  // Update header styling
+  document.querySelectorAll('th').forEach(th => {
+    th.classList.remove('sorted-asc', 'sorted-desc');
+  });
+
+  const th = document.querySelector(`th[data-column="${column}"]`);
+  if (th) {
+    th.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+  }
+
+  // Sort the data
+  const sorted = [...allMembers].sort((a, b) => {
+    let aVal, bVal;
+
+    if (column === 'id') {
+      aVal = parseInt(a.id);
+      bVal = parseInt(b.id);
+    } else if (column === 'name') {
+      aVal = (a.first_name || '') + ' ' + (a.last_name || '');
+      bVal = (b.first_name || '') + ' ' + (b.last_name || '');
+    } else if (column === 'department') {
+      aVal = a.department_name || '';
+      bVal = b.department_name || '';
+    } else if (column === 'payment') {
+      aVal = a.payment_type || '';
+      bVal = b.payment_type || '';
+    } else if (column === 'fee') {
+      aVal = parseFloat(a.monthly_fee || 0);
+      bVal = parseFloat(b.monthly_fee || 0);
+    } else if (column === 'valid_until') {
+      aVal = a.valid_until || '';
+      bVal = b.valid_until || '';
+    }
+
+    if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  renderTable(sorted);
+}
+
 function renderTable(list) {
   const tbody = document.querySelector('#members-table tbody');
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No members found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem;">No members found.</td></tr>';
     return;
   }
 
   tbody.innerHTML = list.map(m => `
     <tr onclick="showDetail(${m.id})">
-      <td>${m.id}</td>
+      <td><strong>#${m.id}</strong></td>
       <td>${m.first_name} ${m.last_name || ''}</td>
-      <td>${m.department_name || ''}</td>
-      <td>${m.payment_type}</td>
-      <td>$${m.monthly_fee}</td>
-      <td>${m.valid_until || ''}</td>
+      <td>${m.department_name || '<span style="color:#666;">—</span>'}</td>
+      <td>${getPaymentBadge(m.payment_type)}</td>
+      <td><strong>$${m.monthly_fee}</strong></td>
+      <td>${m.valid_until || '<span style="color:#666;">—</span>'}</td>
+      <td>${getStatusBadge(m.status)}</td>
     </tr>
   `).join('');
 }
@@ -256,6 +486,11 @@ function filterMembers(type) {
 
   renderTable(filtered);
 }
+
+// Sortable columns
+document.querySelectorAll('th.sortable').forEach(th => {
+  th.addEventListener('click', () => sortTable(th.dataset.column));
+});
 
 document.querySelectorAll('.filters button[data-filter]').forEach(btn => {
   btn.addEventListener('click', () => filterMembers(btn.dataset.filter));
@@ -286,15 +521,26 @@ async function showDetail(id) {
 
   const m = data.member;
   content.innerHTML = `
-    <h3>${m.first_name} ${m.last_name || ''}</h3>
-    <p><strong>Department:</strong> ${m.department_name || '—'}</p>
-    <p><strong>Payment Type:</strong> ${m.payment_type}</p>
-    <p><strong>Status:</strong> <span style="color:${m.status === 'current' ? '#4caf50' : '#f44336'};">${m.status}</span></p>
-    <p><strong>Valid From:</strong> ${m.valid_from || '—'}</p>
-    <p><strong>Valid Until:</strong> ${m.valid_until || '—'}</p>
-    <p><strong>Monthly Fee:</strong> $${m.monthly_fee}</p>
-    <p><strong>Company:</strong> ${m.company_name || '—'}</p>
-    <p><strong>Last Updated:</strong> ${m.updated_at || '—'}</p>
+    <h3 style="margin-top:0;">${m.first_name} ${m.last_name || ''}</h3>
+    <div style="margin-bottom:1.5rem;">${getStatusBadge(m.status)}</div>
+
+    <div class="detail-info">
+      <p><strong>Member ID:</strong> <span>#${m.id}</span></p>
+      <p><strong>Department:</strong> <span>${m.department_name || '—'}</span></p>
+      <p><strong>Company:</strong> <span>${m.company_name || '—'}</span></p>
+    </div>
+
+    <div class="detail-info">
+      <p><strong>Payment Type:</strong> <span>${getPaymentBadge(m.payment_type)}</span></p>
+      <p><strong>Monthly Fee:</strong> <span style="color:var(--brand); font-weight:700;">$${m.monthly_fee}</span></p>
+    </div>
+
+    <div class="detail-info">
+      <p><strong>Valid From:</strong> <span>${m.valid_from || '—'}</span></p>
+      <p><strong>Valid Until:</strong> <span>${m.valid_until || '—'}</span></p>
+      <p><strong>Last Updated:</strong> <span>${m.updated_at || '—'}</span></p>
+    </div>
+
     <a href="edit-member.php?id=${m.id}" class="edit-btn">✏️ Edit Member</a>
   `;
 }
