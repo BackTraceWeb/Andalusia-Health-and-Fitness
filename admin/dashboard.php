@@ -178,7 +178,7 @@ tr:hover { background:#2a2a2a; cursor:pointer; }
   <button data-filter="draft">Draft</button>
   <button data-filter="cards">Cards</button>
   <button onclick="location='departments.php'">Departments</button>
-  <button class="btn-axtrax" onclick="window.open('http://100.103.220.72:3006/', '_blank')">🔗 AxTrax Pro</button>
+  <button class="btn-axtrax" onclick="window.open('http://192.168.1.101:3006/', '_blank')">🔗 AxTrax Pro</button>
 </div>
 
 <div class="search-box">
