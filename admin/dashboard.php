@@ -77,6 +77,77 @@ tr:hover { background:#2a2a2a; cursor:pointer; }
   border:none; border-radius:6px; padding:0.5rem 1rem;
   text-decoration:none; margin-top:1rem; cursor:pointer;
 }
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  body { padding: 1rem; }
+
+  h1 { font-size: 1.5rem; }
+
+  .stats {
+    gap: 1rem;
+  }
+  .stat {
+    padding: 0.75rem 1.5rem;
+    flex: 1 1 calc(50% - 1rem);
+    min-width: 140px;
+  }
+  .stat strong { font-size: 1.5rem; }
+
+  .filters {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .filters button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .search-box input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Make table scrollable horizontally on mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  thead, tbody, tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+  th, td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  /* Detail panel becomes full-screen modal on mobile */
+  .detail {
+    width: 100%;
+    left: 0;
+    right: 0;
+    border-left: none;
+    border-top: 3px solid var(--brand);
+  }
+}
+
+@media (max-width: 480px) {
+  .stat {
+    flex: 1 1 100%;
+  }
+  .stats {
+    gap: 0.75rem;
+  }
+
+  /* Hide some columns on very small screens */
+  th:nth-child(3), td:nth-child(3),
+  th:nth-child(4), td:nth-child(4) {
+    display: none;
+  }
+}
 </style>
 </head>
 <body>

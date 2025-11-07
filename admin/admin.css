@@ -187,3 +187,76 @@ button:hover {
   text-align: center;
   margin-top: 10px;
 }
+
+/* =========================================================
+   Mobile Responsiveness
+   ========================================================= */
+
+@media (max-width: 768px) {
+  /* Topbar stacks on mobile */
+  .topbar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .topbar h1 {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  /* Content has less padding */
+  .content {
+    margin: 20px 12px;
+    padding: 20px 16px;
+  }
+  .content h2 {
+    font-size: 20px;
+  }
+
+  /* Search box full width */
+  .search-box input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Table scrolls horizontally */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  th, td {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* Login box adjusts */
+  .login-box {
+    margin: 80px 16px;
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 10px 12px;
+  }
+  .topbar h1 {
+    font-size: 16px;
+  }
+
+  .content {
+    margin: 16px 8px;
+    padding: 16px 12px;
+  }
+
+  th, td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .login-box {
+    margin: 60px 12px;
+    padding: 20px 16px;
+  }
+}
