@@ -67,6 +67,13 @@
 
     .calc label { color:#fff; }
 
+    /* Ensure calc inputs also have 16px to prevent zoom */
+    .calc input[type="number"],
+    .calc input[type="text"],
+    .calc input[type="email"] {
+      font-size: 16px;
+    }
+
     .totals { display:grid; gap:6px; margin-top:10px; }
     .totals .line { display:flex; justify-content:space-between; }
     .totals .big { font-weight:bold; color:#d81b60; }
@@ -258,7 +265,6 @@
             </div>
             <button type="button" id="launchWizard" class="pill-ghost">Fill Waivers Now</button>
             <span class="help" id="waiverStatus" style="font-weight:600;">0 / 1 completed</span>
-            <button type="button" id="debugBtn" class="pill-ghost" style="font-size:0.85em;padding:6px 10px;margin-left:10px;">Debug</button>
           </div>
 
           <div class="totals">
@@ -383,7 +389,15 @@
     radio.addEventListener('change', () => {
       const calcSection = document.getElementById('calcSection');
       if (calcSection) {
-        calcSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Get header height (topbar + ctabar)
+        const headerHeight = window.innerWidth <= 768 ? 140 : 100;
+        const elementPosition = calcSection.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
       }
     });
   });
@@ -494,29 +508,6 @@
 
   // Check when window regains focus
   window.addEventListener('focus', checkWaiverCompletion);
-
-  // Debug button to check sessionStorage
-  const debugBtn = document.getElementById('debugBtn');
-  if (debugBtn) {
-    debugBtn.addEventListener('click', () => {
-      const stored = sessionStorage.getItem('ahfSignup');
-      console.log('=== DEBUG INFO ===');
-      console.log('sessionStorage key "ahfSignup":', stored);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          console.log('Parsed data:', parsed);
-          console.log('Waivers array:', parsed.waivers);
-          console.log('Waivers count:', (parsed.waivers || []).length);
-        } catch(e) {
-          console.error('Parse error:', e);
-        }
-      } else {
-        console.log('No data in sessionStorage!');
-      }
-      alert('Check browser console (F12) for debug info');
-    });
-  }
 
   // === Same-window Waiver Wizard ===
   launchBtn.addEventListener('click',()=>{
