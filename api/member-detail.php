@@ -69,22 +69,23 @@ try {
   // ----------------------------------------------------------------
   // DETERMINE STATUS
   // ----------------------------------------------------------------
-  $status = $member['status'] ?? 'current';
-  $now = time();
-  $today = new DateTime('today');
-
+  $paymentType = strtolower(trim($member['payment_type'] ?? ''));
   $validUntil = !empty($member['valid_until']) ? strtotime($member['valid_until']) : 0;
+  $now = time();
 
-  // Logic: mark as "due" if payment_type is card AND expired
-  if (
-    strtolower($member['payment_type']) === 'card' &&
-    $validUntil && $validUntil < $now
-  ) {
+  // BUSINESS LOGIC:
+  // 1. Draft members → ALWAYS current (no payment needed, no QuickPay)
+  // 2. Non-draft (card/cash/other) → Check if valid_until is past
+  // 3. If valid_until < today → DUE (needs payment)
+
+  if ($paymentType === 'draft') {
+    // Draft members are ALWAYS current - staff manages manually
+    $status = 'current';
+  } elseif ($validUntil && $validUntil < $now) {
+    // Expired: valid_until is in the past
     $status = 'due';
-  }
-
-  // Draft members are always current (no payment needed)
-  if (strtolower($member['payment_type']) === 'draft') {
+  } else {
+    // Not expired yet
     $status = 'current';
   }
 
@@ -94,7 +95,8 @@ try {
   $due = null;
   $amountCents = (int)round($member['monthly_fee'] * 100);
 
-  if ($status === 'due') {
+  // Only create invoices for NON-DRAFT members who are due
+  if ($status === 'due' && $paymentType !== 'draft') {
     // Look for existing unpaid invoice
     $dueCheck = $pdo->prepare("
       SELECT *
