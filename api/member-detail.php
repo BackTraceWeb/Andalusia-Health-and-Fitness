@@ -67,36 +67,74 @@ try {
   }
 
   // ----------------------------------------------------------------
-  // GET MOST RECENT DUES RECORD
-  // ----------------------------------------------------------------
-  $due = null;
-  $dueCheck = $pdo->prepare("
-    SELECT *
-    FROM dues
-    WHERE member_id = ?
-    ORDER BY period_end DESC
-    LIMIT 1
-  ");
-  $dueCheck->execute([$member['id']]);
-  $due = $dueCheck->fetch(PDO::FETCH_ASSOC);
-
-  // ----------------------------------------------------------------
   // DETERMINE STATUS
   // ----------------------------------------------------------------
   $status = $member['status'] ?? 'current';
   $now = time();
+  $today = new DateTime('today');
 
   $validUntil = !empty($member['valid_until']) ? strtotime($member['valid_until']) : 0;
 
-  // Logic: mark as "due" if payment_type is card AND (expired OR unpaid)
+  // Logic: mark as "due" if payment_type is card AND expired
   if (
     strtolower($member['payment_type']) === 'card' &&
-    (
-      ($validUntil && $validUntil < $now) ||
-      ($due && isset($due['is_paid']) && !$due['is_paid'])
-    )
+    $validUntil && $validUntil < $now
   ) {
     $status = 'due';
+  }
+
+  // Draft members are always current (no payment needed)
+  if (strtolower($member['payment_type']) === 'draft') {
+    $status = 'current';
+  }
+
+  // ----------------------------------------------------------------
+  // GET OR CREATE DUES INVOICE IF MEMBER IS DUE
+  // ----------------------------------------------------------------
+  $due = null;
+  $amountCents = (int)round($member['monthly_fee'] * 100);
+
+  if ($status === 'due') {
+    // Look for existing unpaid invoice
+    $dueCheck = $pdo->prepare("
+      SELECT *
+      FROM dues
+      WHERE member_id = ? AND status = 'due'
+      ORDER BY period_end DESC, id DESC
+      LIMIT 1
+    ");
+    $dueCheck->execute([$member['id']]);
+    $due = $dueCheck->fetch(PDO::FETCH_ASSOC);
+
+    // Auto-create invoice if none exists
+    if (!$due) {
+      $periodStart = (new DateTime('first day of this month'))->format('Y-m-d');
+      $periodEnd   = (new DateTime('last day of this month'))->format('Y-m-d');
+
+      $ins = $pdo->prepare("
+        INSERT INTO dues (member_id, period_start, period_end, amount_cents, currency, status)
+        VALUES (:mid, :ps, :pe, :amt, 'USD', 'due')
+      ");
+      $ins->execute([
+        ':mid' => $member['id'],
+        ':ps'  => $periodStart,
+        ':pe'  => $periodEnd,
+        ':amt' => $amountCents,
+      ]);
+
+      $invoiceId = $pdo->lastInsertId();
+      $due = [
+        'id'           => $invoiceId,
+        'member_id'    => $member['id'],
+        'period_start' => $periodStart,
+        'period_end'   => $periodEnd,
+        'amount_cents' => $amountCents,
+        'currency'     => 'USD',
+        'status'       => 'due',
+      ];
+
+      error_log("QuickPay: Auto-created invoice #{$invoiceId} for member {$member['id']}");
+    }
   }
 
     // ----------------------------------------------------------------
@@ -121,7 +159,7 @@ try {
       'period_start'  => $due['period_start'] ?? '',
       'period_end'    => $due['period_end'] ?? '',
       'amount_cents'  => isset($due['amount_cents']) ? (int)$due['amount_cents'] : 0,
-      'is_paid'       => (bool)($due['is_paid'] ?? 0)
+      'status'        => $due['status'] ?? 'due'
     ] : null,
     'status' => $status
   ]);
