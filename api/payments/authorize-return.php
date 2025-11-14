@@ -87,15 +87,56 @@ file_put_contents($logFile, date('c') . " Payment return page loaded - webhook h
       display: inline-block;
       box-shadow: 0 0 30px rgba(255, 0, 80, 0.4);
     }
+    #processingMessage {
+      color: #ffaa00;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>✅ Payment Successful!</h1>
     <p>Your payment has been received and is being processed.</p>
-    <p>Your access card will automatically be reactivated within a few moments.</p>
+    <p id="processingMessage">⏳ Activating your access card...</p>
     <p style="margin-top: 20px; color: #aaa; font-size: 14px;">You will receive a confirmation email shortly with your receipt.</p>
     <a href="/quickpay/">Return to QuickPay Portal</a>
   </div>
+  <script>
+    // Process payment immediately using sessionStorage data
+    (async function() {
+      const memberId = sessionStorage.getItem('quickpay_memberId');
+      const invoiceId = sessionStorage.getItem('quickpay_invoiceId');
+
+      if (!memberId || !invoiceId) {
+        console.log('No payment data in session');
+        document.getElementById('processingMessage').textContent = 'Your access will be activated within a few moments.';
+        return;
+      }
+
+      try {
+        // Call backend to process payment (extend AxTrax + update DB)
+        const response = await fetch('/api/payments/process-payment.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ memberId, invoiceId })
+        });
+
+        const result = await response.json();
+
+        if (result.ok) {
+          document.getElementById('processingMessage').innerHTML = '✓ Your access card has been activated!';
+        } else {
+          document.getElementById('processingMessage').innerHTML = '⚠ Your payment was received. Access will be activated shortly.';
+        }
+      } catch (err) {
+        console.error('Processing error:', err);
+        document.getElementById('processingMessage').innerHTML = 'Your payment was received. Access will be activated shortly.';
+      } finally {
+        // Clear session data
+        sessionStorage.removeItem('quickpay_memberId');
+        sessionStorage.removeItem('quickpay_invoiceId');
+      }
+    })();
+  </script>
 </body>
 </html>

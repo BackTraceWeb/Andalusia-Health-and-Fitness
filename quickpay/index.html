@@ -213,18 +213,35 @@
         }
 
         const m = data.member;
-        if (data.status === 'due' && data.invoice) {
+        const isDraft = m.is_draft === 1 || m.is_draft === '1';
+        const allowQuickPay = m.allow_quickpay === 1 || m.allow_quickpay === '1';
+
+        // Allow payment if:
+        // 1. Non-draft member with status === 'due' (normal flow)
+        // 2. Draft member with QuickPay enabled by staff (backup when automatic payment fails)
+        const canPay = data.invoice && (
+          (!isDraft && data.status === 'due') ||
+          (isDraft && allowQuickPay)
+        );
+
+        if (canPay) {
           const amount = `$${(data.invoice.amount_cents / 100).toFixed(2)}`;
+          const draftNote = isDraft ? '<br><small style="color:#d81b60;">💳 You are on automatic bank draft. Use this only if your automatic payment failed.</small>' : '';
           setStatus(`
             <strong>${m.first_name} ${m.last_name}</strong> found.<br>
             Amount due: <strong>${amount}</strong><br>
-            <small>Period ${data.invoice.period_start ?? ''} – ${data.invoice.period_end ?? ''}</small>
+            <small>Period ${data.invoice.period_start ?? ''} – ${data.invoice.period_end ?? ''}</small>${draftNote}
           `, 'ok');
 
           elMemberId.value = m.id;
           elInvoiceId.value = data.invoice.id;
           elPayBtn.disabled = false;
           elPayBtn.classList.add('active');
+        } else if (isDraft && !allowQuickPay) {
+          // Draft member but QuickPay not enabled
+          setStatus(`<strong>${m.first_name} ${m.last_name}</strong> found.<br>You are on automatic bank draft. If your payment failed, please contact the gym to enable manual payment.`, 'ok');
+          elPayBtn.disabled = true;
+          elPayBtn.classList.remove('active');
         } else {
           setStatus(`<strong>${m.first_name} ${m.last_name}</strong> found.<br>No payment is due right now.`, 'ok');
           elPayBtn.disabled = true;
@@ -247,6 +264,10 @@
         alert('No member or invoice selected.');
         return;
       }
+
+      // Store payment info in sessionStorage so return page can process it
+      sessionStorage.setItem('quickpay_memberId', memberId);
+      sessionStorage.setItem('quickpay_invoiceId', invoiceId);
 
       // Redirect directly into hosted Authorize.Net payment
       const url = `/api/payments/authorize-hosted.php?memberId=${encodeURIComponent(memberId)}&invoiceId=${encodeURIComponent(invoiceId)}`;
