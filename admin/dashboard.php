@@ -1784,17 +1784,19 @@ async function loadMembers() {
 }
 
 function updateStats() {
-  const total = allMembers.length;
-  const current = allMembers.filter(m => m.status === 'current').length;
-  const due = allMembers.filter(m => m.status === 'due').length;
-  const draft = allMembers.filter(m => m.is_draft === 1).length;
+  // Exclude inactive members from all payment-related stats
+  const activeMembers = allMembers.filter(m => m.status !== 'inactive');
+  const total = activeMembers.length;
+  const current = activeMembers.filter(m => m.status === 'current').length;
+  const due = activeMembers.filter(m => m.status === 'due').length;
+  const draft = activeMembers.filter(m => m.is_draft === 1).length;
 
-  // Calculate members past due within last 30 days
+  // Calculate members past due within last 30 days (excluding inactive)
   const today = new Date();
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(today.getDate() - 30);
 
-  const pastDue30 = allMembers.filter(m => {
+  const pastDue30 = activeMembers.filter(m => {
     if (m.status !== 'due' || !m.valid_until) return false;
     const validUntil = new Date(m.valid_until);
     return validUntil >= thirtyDaysAgo && validUntil <= today;
