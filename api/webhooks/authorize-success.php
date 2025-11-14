@@ -77,36 +77,45 @@ flock($fh, LOCK_UN);
 fclose($fh);
 
 // ----------------------------------------------------------------------
-// CALL AXTRAX REST API TO UPDATE MEMBER VALIDITY
+// CALL AXTRAX API TO EXTEND MEMBERSHIP & UPDATE DATABASE
 // ----------------------------------------------------------------------
-// Correct flow: Authorize.Net → Our webhook → AxTrax REST API → AxTrax updates its DB → AxTrax calls back → We update our DB
 try {
   require_once __DIR__ . '/../../_bootstrap.php';
-  require_once __DIR__ . '/../integrations/axtrax/client.php';
+  require_once __DIR__ . '/../axtrax-config.php';
+  require_once __DIR__ . '/../axtrax-helpers.php';
 
-  // Calculate new valid_until date (30 days from today)
-  $newValidUntil = date('Y-m-d', strtotime('+30 days'));
+  $pdo = pdo();
 
-  error_log("Payment webhook: Calling AxTrax REST API for member #$memberId with valid_until=$newValidUntil");
+  // Get member details from database
+  $stmt = $pdo->prepare("SELECT email, first_name, last_name FROM members WHERE id = ?");
+  $stmt->execute([$memberId]);
+  $member = $stmt->fetch(PDO::FETCH_ASSOC);
 
-  try {
-    // Call AxTrax REST API to update member validity
-    $axtrax = AxtraxClient::buildFromConfig();
-    $axtraxResponse = $axtrax->updateMemberValidity((int)$memberId, $newValidUntil);
+  if ($member) {
+    // Calculate new valid_until date (30 days from today)
+    $newValidUntil = date('Y-m-d', strtotime('+30 days'));
 
-    error_log("AxTrax REST API success for member #$memberId: " . json_encode($axtraxResponse));
+    error_log("Payment webhook: Extending membership for member #$memberId ({$member['first_name']} {$member['last_name']}) until $newValidUntil");
 
-  } catch (LogicException $notReady) {
-    // AxTrax REST API not configured yet - log and continue
-    error_log("AxTrax REST API not configured yet (expected): " . $notReady->getMessage());
-    error_log("Once configured, AxTrax will update its database and call back to /api/webhooks/axtrax-callback.php");
+    // Load AxTrax config
+    $axtraxConfig = require __DIR__ . '/../axtrax-config.php';
 
-    // TEMPORARY: For now, update our database directly until AxTrax is configured
-    // This code will be removed once AxTrax callback is working
-    error_log("TEMPORARY: Updating our database directly until AxTrax is configured");
-    $pdo = pdo();
+    // Extend membership in AxTrax (30 days)
+    $axtraxSuccess = axtraxExtendMembership(
+      $member['email'],
+      $member['first_name'],
+      $member['last_name'],
+      30, // days
+      $axtraxConfig
+    );
 
-    // Update member validity
+    if ($axtraxSuccess) {
+      error_log("AxTrax API: Successfully extended membership for member #$memberId");
+    } else {
+      error_log("AxTrax API: Failed to extend membership for member #$memberId - updating database directly as fallback");
+    }
+
+    // Update our database (always do this regardless of AxTrax success)
     $stmt = $pdo->prepare("
       UPDATE members
       SET valid_until = :valid_until,
@@ -118,10 +127,9 @@ try {
       ':valid_until' => $newValidUntil,
       ':member_id' => $memberId
     ]);
-    $memberRowsUpdated = $stmt->rowCount();
-    error_log("TEMPORARY: Direct DB update for member #$memberId (rows: $memberRowsUpdated)");
+    error_log("Database: Updated member #$memberId valid_until to $newValidUntil");
 
-    // Update dues to mark as paid
+    // Mark invoice as paid
     if (!empty($duesId)) {
       $stmt2 = $pdo->prepare("
         UPDATE dues
@@ -130,19 +138,15 @@ try {
         WHERE id = :dues_id AND status IN ('due', 'failed')
       ");
       $stmt2->execute([':dues_id' => $duesId]);
-      $duesRowsUpdated = $stmt2->rowCount();
-      error_log("TEMPORARY: Marked dues #$duesId as paid (rows: $duesRowsUpdated)");
+      error_log("Database: Marked dues #$duesId as paid");
     }
-
-  } catch (RuntimeException $axErr) {
-    // AxTrax configuration issue or API error
-    error_log("AxTrax REST API error for member #$memberId: " . $axErr->getMessage());
-    // Don't fail the payment webhook if AxTrax sync fails
+  } else {
+    error_log("ERROR: Member #$memberId not found in database");
   }
 
 } catch (Throwable $e) {
   error_log("Webhook processing error: " . $e->getMessage());
-  // Log error but don't fail the webhook
+  // Log error but don't fail the webhook - payment was successful
 }
 
 http_response_code(202);
