@@ -7,8 +7,11 @@ $logFile = __DIR__ . '/../logs/members-list-debug.log';
 try {
     $pdo = pdo();
 
-    // --- Fetch members (no last_updated column)
-    $sql = "SELECT 
+    // Get optional status filter from query parameter (?status=active or ?status=inactive)
+    $statusFilter = $_GET['status'] ?? 'active';  // Default to active members only
+
+    // --- Fetch members
+    $sql = "SELECT
                 id,
                 first_name,
                 last_name,
@@ -16,36 +19,39 @@ try {
                 payment_type,
                 monthly_fee,
                 valid_from,
-                valid_until
-            FROM members
-            ORDER BY id DESC";
+                valid_until,
+                status,
+                is_draft,
+                allow_quickpay,
+                notes
+            FROM members";
+
+    // Add WHERE clause based on status filter
+    if ($statusFilter === 'active') {
+        $sql .= " WHERE status != 'inactive'";
+    } elseif ($statusFilter === 'inactive') {
+        $sql .= " WHERE status = 'inactive'";
+    }
+    // 'all' returns everything (no WHERE clause)
+
+    $sql .= " ORDER BY id DESC";
+
     $stmt = $pdo->query($sql);
     $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     file_put_contents($logFile, date('c') . " - fetched " . count($members) . " members\n", FILE_APPEND);
 
-    $today = new DateTime('today');
-
     foreach ($members as &$m) {
-        $validUntil = !empty($m['valid_until']) ? new DateTime($m['valid_until']) : null;
-
-        // Always current if payment type is draft
-        if (strtolower(trim($m['payment_type'])) === 'draft') {
-            $m['status'] = 'current';
-        }
-        // Otherwise current if still valid
-        elseif ($validUntil && $validUntil >= $today) {
-            $m['status'] = 'current';
-        }
-        // Otherwise due
-        else {
-            $m['status'] = 'due';
-        }
-
         // Format values
         $m['monthly_fee'] = number_format((float)$m['monthly_fee'], 2);
         $m['valid_from'] = $m['valid_from'] ?: '';
         $m['valid_until'] = $m['valid_until'] ?: '';
+        $m['is_draft'] = (int)($m['is_draft'] ?? 0);
+        $m['allow_quickpay'] = (int)($m['allow_quickpay'] ?? 0);
+        $m['notes'] = $m['notes'] ?? '';
+
+        // Use status from database (already calculated in sync)
+        $m['status'] = $m['status'] ?: 'current';
     }
     unset($m);
 
