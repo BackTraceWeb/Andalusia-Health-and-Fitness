@@ -4,10 +4,11 @@ declare(strict_types=1);
 date_default_timezone_set('UTC');
 
 // ---- CONFIG ----
+require_once __DIR__ . '/../config.php';  // Load AUTH_SIGNATURE_KEY_HEX constant
+
 $csvPath = __DIR__ . '/payments.csv';   // lives beside this PHP file
-$prod = false;                                    // true in production
-$apiSignatureKeyHex =
- '21C260460E71D8FFC7437BA38D1938A0D8C531810250F8FC36CB06197C93776609F7A6AB937FD53DE0C0E43409B4BF6AC89F7AC1FBA77BDFA4DE9ECC535F3C7C';
+$prod = true;                            // Enable production mode with HMAC verification
+$apiSignatureKeyHex = AUTH_SIGNATURE_KEY_HEX;  // Use production signature key from config
 // --------------
 
 // Input + HMAC verify
