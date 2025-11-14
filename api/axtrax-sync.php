@@ -386,8 +386,8 @@ function syncMembers(array $config, bool $dryRun = false): void {
             $address = trim($user['tAddress'] ?? '');
 
             // Check if member is on bank draft (automatic payment)
-            // Check both tNotes and tAddress fields for "draft"
-            $isDraft = (stripos($notes, 'draft') !== false || stripos($address, 'draft') !== false) ? 1 : 0;
+            // Check tNotes and tAddress fields for "draft", "2nd cc", or "9th cc"
+            $isDraft = (stripos($notes, 'draft') !== false || stripos($address, 'draft') !== false || stripos($notes, '2nd cc') !== false || stripos($notes, '9th cc') !== false) ? 1 : 0;
 
             // Skip users without name
             if (empty($firstName) && empty($lastName)) {
