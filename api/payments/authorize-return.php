@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+session_start(); // Start session to retrieve payment data from authorize-hosted.php
 
 /**
  * Authorize.Net Hosted Payment Return Handler
@@ -102,18 +103,28 @@ file_put_contents($logFile, date('c') . " Payment return page loaded - webhook h
     <a href="/quickpay/">Return to QuickPay Portal</a>
   </div>
   <script>
-    // Process payment immediately using sessionStorage data
+    // Process payment immediately using payment intent from database
     (async function() {
-      const memberId = sessionStorage.getItem('quickpay_memberId');
-      const invoiceId = sessionStorage.getItem('quickpay_invoiceId');
-
-      if (!memberId || !invoiceId) {
-        console.log('No payment data in session');
-        document.getElementById('processingMessage').textContent = 'Your access will be activated within a few moments.';
-        return;
-      }
+      console.log('[QuickPay] Return page loaded - checking for recent payment intent...');
 
       try {
+        // Check database for most recent unprocessed payment intent
+        const intentResponse = await fetch('/api/payments/get-recent-intent.php');
+        const intentData = await intentResponse.json();
+
+        console.log('[QuickPay] Intent lookup result:', intentData);
+
+        if (!intentData.ok) {
+          console.log('[QuickPay] No recent payment intent found');
+          document.getElementById('processingMessage').textContent = 'Your access will be activated within a few moments.';
+          return;
+        }
+
+        const memberId = intentData.memberId;
+        const invoiceId = intentData.invoiceId;
+
+        console.log(`[QuickPay] Processing payment for member #${memberId}, invoice #${invoiceId}`);
+
         // Call backend to process payment (extend AxTrax + update DB)
         const response = await fetch('/api/payments/process-payment.php', {
           method: 'POST',
@@ -122,19 +133,18 @@ file_put_contents($logFile, date('c') . " Payment return page loaded - webhook h
         });
 
         const result = await response.json();
+        console.log('[QuickPay] Process result:', result);
 
         if (result.ok) {
           document.getElementById('processingMessage').innerHTML = '✓ Your access card has been activated!';
+          console.log('[QuickPay] Success! Valid until:', result.validUntil);
         } else {
-          document.getElementById('processingMessage').innerHTML = '⚠ Your payment was received. Access will be activated shortly.';
+          document.getElementById('processingMessage').innerHTML = '⚠ ' + (result.error || 'Your payment was received. Access will be activated shortly.');
+          console.error('[QuickPay] Processing failed:', result.error);
         }
       } catch (err) {
-        console.error('Processing error:', err);
+        console.error('[QuickPay] Error:', err);
         document.getElementById('processingMessage').innerHTML = 'Your payment was received. Access will be activated shortly.';
-      } finally {
-        // Clear session data
-        sessionStorage.removeItem('quickpay_memberId');
-        sessionStorage.removeItem('quickpay_invoiceId');
       }
     })();
   </script>

@@ -28,6 +28,27 @@ try {
     $pdo = pdo();
     $config = require __DIR__ . '/../axtrax-config.php';
 
+    // Check if payment intent exists and hasn't been processed
+    $stmt = $pdo->prepare('
+        SELECT id FROM payment_intents
+        WHERE member_id = ? AND invoice_id = ? AND processed_at IS NULL
+        ORDER BY created_at DESC LIMIT 1
+    ');
+    $stmt->execute([$memberId, $invoiceId]);
+    $intent = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$intent) {
+        // No unprocessed payment intent found - may have already been processed
+        error_log("QuickPay: No unprocessed payment intent found for member #$memberId, invoice #$invoiceId");
+        echo json_encode([
+            'ok' => false,
+            'error' => 'Payment already processed or invalid payment intent'
+        ]);
+        exit;
+    }
+
+    $intentId = $intent['id'];
+
     // Get member details
     $stmt = $pdo->prepare('SELECT email, first_name, last_name FROM members WHERE id = ?');
     $stmt->execute([$memberId]);
@@ -80,6 +101,15 @@ try {
     ");
     $stmt2->execute([':dues_id' => $invoiceId]);
     error_log("QuickPay: Database - Marked invoice #$invoiceId as paid");
+
+    // Mark payment intent as processed
+    $stmt3 = $pdo->prepare("
+        UPDATE payment_intents
+        SET processed_at = NOW()
+        WHERE id = :intent_id
+    ");
+    $stmt3->execute([':intent_id' => $intentId]);
+    error_log("QuickPay: Database - Marked payment intent #$intentId as processed");
 
     echo json_encode([
         'ok' => true,

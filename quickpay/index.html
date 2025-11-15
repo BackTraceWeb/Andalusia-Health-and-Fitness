@@ -265,9 +265,11 @@
         return;
       }
 
-      // Store payment info in sessionStorage so return page can process it
-      sessionStorage.setItem('quickpay_memberId', memberId);
-      sessionStorage.setItem('quickpay_invoiceId', invoiceId);
+      // Store payment info in localStorage so return page can process it
+      // localStorage survives redirects better than sessionStorage
+      localStorage.setItem('quickpay_memberId', memberId);
+      localStorage.setItem('quickpay_invoiceId', invoiceId);
+      localStorage.setItem('quickpay_timestamp', Date.now());
 
       // Redirect directly into hosted Authorize.Net payment
       const url = `/api/payments/authorize-hosted.php?memberId=${encodeURIComponent(memberId)}&invoiceId=${encodeURIComponent(invoiceId)}`;

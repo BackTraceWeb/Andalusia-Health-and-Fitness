@@ -26,6 +26,7 @@
  * - Logs all API requests to logs/authorize-debug.json for debugging
  */
 declare(strict_types=1);
+session_start(); // Start session to track payment across redirect
 header('Content-Type: text/html; charset=utf-8');
 
 require_once __DIR__ . '/../config.php';
@@ -76,6 +77,10 @@ $amount  = number_format(($d['amount_cents'] / 100), 2, '.', '');
 // Must be alphanumeric only, max 20 characters per Authorize.Net requirements
 $invoice = substr(preg_replace('/[^A-Za-z0-9]/','', "QP{$duesId}M{$memberId}"), 0, 20);
 
+// Store payment intent in database (survives cross-domain redirect)
+$stmt3 = $pdo->prepare("INSERT INTO payment_intents (member_id, invoice_id) VALUES (?, ?)");
+$stmt3->execute([$memberId, $duesId]);
+
 // ========================================
 // 3. Build Authorize.Net API Payload
 // ========================================
@@ -114,8 +119,6 @@ $payload = [
           "settingName"  => "hostedPaymentReturnOptions",
           "settingValue" => json_encode([
             "showReceipt" => false,                   // Don't show Authorize.Net receipt
-            // Return URL: Webhook will handle the actual payment processing
-            // No memberId/invoiceId params needed - webhook looks up via transactionId
             "url"         => "https://andalusiahealthandfitness.com/api/payments/authorize-return.php",
             "cancelUrl"   => "https://andalusiahealthandfitness.com/quickpay/"
           ], JSON_UNESCAPED_SLASHES)
@@ -289,7 +292,7 @@ $token = htmlspecialchars($data['token']);
     <h1>Pay Securely</h1>
     <div class="spinner"></div>
     <p>Redirecting to secure payment...</p>
-    <form method="POST" action="https://test.authorize.net/payment/payment">
+    <form method="POST" action="https://accept.authorize.net/payment/payment">
       <input type="hidden" name="token" value="<?= $token ?>">
       <noscript><button type="submit" class="noscript-btn">Continue to Payment</button></noscript>
     </form>
