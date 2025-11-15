@@ -86,6 +86,20 @@ try {
 
   $pdo = pdo();
 
+  // Check if invoice is already paid (payment intent may have already processed it)
+  if (!empty($duesId)) {
+    $stmt = $pdo->prepare("SELECT status FROM dues WHERE id = ?");
+    $stmt->execute([$duesId]);
+    $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($invoice && $invoice['status'] === 'paid') {
+      error_log("Webhook: Invoice #$duesId already paid (likely processed by payment intent), skipping duplicate processing");
+      http_response_code(202);
+      echo "ok - already processed";
+      exit;
+    }
+  }
+
   // Get member details from database
   $stmt = $pdo->prepare("SELECT email, first_name, last_name FROM members WHERE id = ?");
   $stmt->execute([$memberId]);
