@@ -239,12 +239,12 @@
           <label class="plan"><input type="radio" name="plan" value="Student|30">
             <div class="plan-body"><strong>Student</strong><span class="muted">$30.00 / month</span></div></label>
 
-          <label class="plan"><input type="radio" name="plan" value="Tanning Only (no gym)|55">
-            <div class="plan-body"><strong>Tanning Only</strong><span class="muted">$55.00 / month · no gym access</span></div></label>
+          <label class="plan"><input type="radio" name="plan" value="Tanning (Non-Member)|55">
+            <div class="plan-body"><strong>Tanning (Non-Member)</strong><span class="muted">$55.00 / month</span></div></label>
         </div>
 
         <div class="calc" id="calcSection">
-          <div class="row"><label class="toggle"><input type="checkbox" id="addTanning"><span>Add Tanning (gym add-on) — $27.50 / month</span></label></div>
+          <div class="row" id="tanningRow"><label class="toggle"><input type="checkbox" id="addTanning"><span>Add Tanning (gym add-on) — $35.00 / month</span></label></div>
 
           <div class="row" id="familyCountsRow" style="display:none;">
             <label>Additional Family Members
@@ -320,7 +320,7 @@
 <!-- Fixes for Andalusia Health & Fitness Membership Page -->
 <script>
 (function(){
-  const INIT_FEE=20,FOB_FEE=15,TANNING_ADDON=27.5,EXTRA_CHILD_FEE=10;
+  const INIT_FEE=20,FOB_FEE=15,TANNING_ADDON=35,EXTRA_CHILD_FEE=10;
   const form=document.getElementById('membershipForm'),
         addTanning=document.getElementById('addTanning'),
         fobCount=document.getElementById('fobCount'),
@@ -349,7 +349,12 @@
     const plan=parsePlan();
     const isFamily=plan.name.toLowerCase().includes('family');
     const isCouple=plan.name.toLowerCase().includes('couple');
+    const isTanningOnly=plan.name.toLowerCase().includes('tanning');
+    const tanningRow=document.getElementById('tanningRow');
+    const accessRow=document.getElementById('accessRow');
     familyRow.style.display=isFamily?'block':'none';
+    tanningRow.style.display=isTanningOnly?'none':'block';
+    if(isTanningOnly){addTanning.checked=false;}
 
     let addons=0;
     if(addTanning.checked)addons+=TANNING_ADDON;
