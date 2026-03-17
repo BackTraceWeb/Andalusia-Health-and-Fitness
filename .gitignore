@@ -30,3 +30,28 @@ api/webhooks/*.csv
 *.swo
 *~
 
+
+# Backups & debug files
+*.bak
+*.bak-*
+*.backup
+*.backup-*
+*.broken
+*.old
+
+# One-off utility/test scripts
+api/reset-*.php
+api/check-*.php
+api/test-*.php
+api/discover-*.php
+api/find-*.php
+api/create-test-*.php
+api/list-draft-members.php
+api/cleanup-pending.php
+config/fix-hash.php
+
+# .htaccess (nginx site)
+.htaccess
+.htaccess.*
+api/payments/authorize-debug-test.php
+api/payments/authorize-hosted-debug.php

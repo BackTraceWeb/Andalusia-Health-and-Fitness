@@ -354,6 +354,7 @@
     const accessRow=document.getElementById('accessRow');
     familyRow.style.display=isFamily?'block':'none';
     tanningRow.style.display=isTanningOnly?'none':'block';
+    waiveInit.parentElement.style.display=isTanningOnly?'none':'';
     if(isTanningOnly){addTanning.checked=false;}
 
     let addons=0;
@@ -368,7 +369,7 @@
     else if(isFamily)waiverTotal=3+Math.max(0,parseInt(extraMembers.value||'0',10));
     waiverCount.value=waiverTotal;
 
-    const init=waiveInit.checked?0:INIT_FEE;
+    const init=(isTanningOnly||waiveInit.checked)?0:INIT_FEE;
     const fobs=parseInt(fobCount.value||'0',10)*FOB_FEE;
 
     // 🧮 Include monthly dues in today's total

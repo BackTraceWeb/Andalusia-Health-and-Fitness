@@ -1246,6 +1246,8 @@ input:disabled + .toggle-slider {
   <!-- View Tabs -->
   <div class="view-tabs">
     <button class="view-tab active" data-view="members">👥 Members</button>
+    <button class="view-tab" data-view="signups">📋 Signups</button>
+    <button class="view-tab" data-view="quickpays">💳 QuickPay</button>
     <button class="view-tab" data-view="axtrax">🔐 AxTraxPro</button>
     <button class="view-tab" onclick="location='departments.php'">🏢 Departments</button>
   </div>
@@ -1293,6 +1295,69 @@ input:disabled + .toggle-slider {
       </tbody>
     </table>
   </div>
+  </div>
+
+  <!-- Signups View -->
+  <div id="view-signups" class="view-content">
+    <div style="display:flex;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <div style="background:var(--bg-tertiary);padding:1rem 1.5rem;border-radius:8px;min-width:140px;text-align:center;">
+        <div style="font-size:1.75rem;font-weight:700;color:var(--primary-light);" id="signups-total">—</div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Total</div>
+      </div>
+      <div style="background:var(--bg-tertiary);padding:1rem 1.5rem;border-radius:8px;min-width:140px;text-align:center;">
+        <div style="font-size:1.75rem;font-weight:700;color:var(--success);" id="signups-24h">—</div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Last 24h</div>
+      </div>
+      <div style="background:var(--bg-tertiary);padding:1rem 1.5rem;border-radius:8px;min-width:140px;text-align:center;">
+        <div style="font-size:1.75rem;font-weight:700;color:var(--info);" id="signups-7d">—</div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Last 7 Days</div>
+      </div>
+      <div style="flex:1;"></div>
+      <button class="filter-btn" onclick="loadSignups()">🔄 Refresh</button>
+    </div>
+
+    <h3 style="margin-bottom:0.75rem;font-size:1rem;color:var(--text-primary);">Completed Signups</h3>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Monthly</th><th>Completed</th></tr></thead>
+        <tbody id="signups-tbody"><tr><td colspan="7" style="text-align:center;padding:2rem;">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <h3 style="margin:2rem 0 0.75rem;font-size:1rem;color:var(--warning);">⚠️ Abandoned Signups</h3>
+    <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem;">Signup attempts older than 15 minutes that never completed. Payment may have been charged.</p>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Monthly</th><th>Age</th><th>Started</th></tr></thead>
+        <tbody id="abandoned-tbody"><tr><td colspan="8" style="text-align:center;padding:2rem;">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- QuickPay View -->
+  <div id="view-quickpays" class="view-content">
+    <div style="display:flex;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <div style="background:var(--bg-tertiary);padding:1rem 1.5rem;border-radius:8px;min-width:140px;text-align:center;">
+        <div style="font-size:1.75rem;font-weight:700;color:var(--primary-light);" id="qp-total">—</div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Total Payments</div>
+      </div>
+      <div style="background:var(--bg-tertiary);padding:1rem 1.5rem;border-radius:8px;min-width:140px;text-align:center;">
+        <div style="font-size:1.75rem;font-weight:700;color:var(--success);" id="qp-24h">—</div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Last 24h</div>
+      </div>
+      <div style="background:var(--bg-tertiary);padding:1rem 1.5rem;border-radius:8px;min-width:140px;text-align:center;">
+        <div style="font-size:1.75rem;font-weight:700;color:var(--info);" id="qp-7d">—</div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Last 7 Days</div>
+      </div>
+      <div style="flex:1;"></div>
+      <button class="filter-btn" onclick="loadQuickPays()">🔄 Refresh</button>
+    </div>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead><tr><th>ID</th><th>Member</th><th>Amount</th><th>Transaction ID</th><th>Status</th><th>Processed</th></tr></thead>
+        <tbody id="qp-tbody"><tr><td colspan="6" style="text-align:center;padding:2rem;">Loading...</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- AxTraxPro View -->
@@ -1377,6 +1442,8 @@ function switchView(viewName) {
   document.getElementById('view-' + viewName).classList.add('active');
 
   // Load data for the view
+  if (viewName === 'signups') loadSignups();
+  if (viewName === 'quickpays') loadQuickPays();
   if (viewName === 'axtrax') {
     // Load doors by default when opening AxTrax view
     loadDoors();
@@ -2129,6 +2196,70 @@ async function toggleQuickPay(memberId, enabled) {
     toggle.checked = !enabled;
   } finally {
     toggle.disabled = false;
+  }
+}
+
+async function loadSignups() {
+  const tbody = document.getElementById("signups-tbody");
+  try {
+    const res = await fetch("/api/admin/get-signups.php?limit=100");
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    document.getElementById("signups-total").textContent = data.stats.total;
+    document.getElementById("signups-24h").textContent = data.stats.last_24h;
+    document.getElementById("signups-7d").textContent = data.stats.last_7d;
+    if (!data.signups.length) {
+      tbody.innerHTML = "<tr><td colspan=7 style=text-align:center;padding:2rem;>No signups yet.</td></tr>";
+      return;
+    }
+    tbody.innerHTML = data.signups.map(s => {
+      const dt = s.completed_at ? new Date(s.completed_at).toLocaleString() : "—";
+      return `<tr><td>${s.id}</td><td>${s.member_name||"—"}</td><td>${s.member_email||"—"}</td><td>${s.member_phone||"—"}</td><td>${s.membership_plan||"—"}</td><td>$${s.monthly_fee||"0.00"}</td><td>${dt}</td></tr>`;
+    }).join("");
+  } catch(e) {
+    tbody.innerHTML = "<tr><td colspan=7 style=text-align:center;color:var(--danger);>Error: "+e.message+"</td></tr>";
+  }
+  // Also load abandoned signups
+  const atbody = document.getElementById("abandoned-tbody");
+  try {
+    const res2 = await fetch("/api/admin/get-abandoned-signups.php");
+    const data2 = await res2.json();
+    if (!data2.ok) throw new Error(data2.error);
+    if (!data2.pending || !data2.pending.length) {
+      atbody.innerHTML = "<tr><td colspan=8 style=\"text-align:center;padding:2rem;color:var(--success);\">No abandoned signups.</td></tr>";
+    } else {
+      atbody.innerHTML = data2.pending.map(s => {
+        const age = s.age_minutes >= 60 ? Math.round(s.age_minutes/60)+"h" : s.age_minutes+"m";
+        const dt = s.created_at ? new Date(s.created_at).toLocaleString() : "\u2014";
+        return `<tr style="color:var(--warning);"><td>${s.id}</td><td>${s.member_name||"\u2014"}</td><td>${s.member_email||"\u2014"}</td><td>${s.member_phone||"\u2014"}</td><td>${s.membership_plan||"\u2014"}</td><td>$${s.monthly_fee||"0.00"}</td><td>${age} ago</td><td>${dt}</td></tr>`;
+      }).join("");
+    }
+  } catch(e2) {
+    atbody.innerHTML = "<tr><td colspan=8 style=text-align:center;color:var(--danger);>Error: "+e2.message+"</td></tr>";
+  }
+}
+
+async function loadQuickPays() {
+  const tbody = document.getElementById("qp-tbody");
+  try {
+    const res = await fetch("/api/admin/get-quickpays.php?limit=100");
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    document.getElementById("qp-total").textContent = data.stats.total;
+    document.getElementById("qp-24h").textContent = data.stats.last_24h;
+    document.getElementById("qp-7d").textContent = data.stats.last_7d;
+    if (!data.quickpays.length) {
+      tbody.innerHTML = "<tr><td colspan=6 style=text-align:center;padding:2rem;>No payments yet.</td></tr>";
+      return;
+    }
+    tbody.innerHTML = data.quickpays.map(q => {
+      const amt = q.amount_cents ? "$" + (q.amount_cents/100).toFixed(2) : "—";
+      const dt = q.processed_at ? new Date(q.processed_at).toLocaleString() : "—";
+      const status = q.reactivated ? "<span style=color:var(--success);font-weight:600;>✓ Active</span>" : "<span style=color:var(--text-secondary);>Processed</span>";
+      return `<tr><td>${q.id}</td><td>${q.member_name||"—"}</td><td>${amt}</td><td style=font-family:monospace;font-size:0.8rem;>${q.transaction_id||"—"}</td><td>${status}</td><td>${dt}</td></tr>`;
+    }).join("");
+  } catch(e) {
+    tbody.innerHTML = "<tr><td colspan=6 style=text-align:center;color:var(--danger);>Error: "+e.message+"</td></tr>";
   }
 }
 

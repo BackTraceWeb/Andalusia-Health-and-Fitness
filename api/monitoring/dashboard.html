@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHF System Monitoring</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            color: #f8fafc;
+        }
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 24px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .status-card {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #64748b;
+        }
+        .status-card.healthy { border-left-color: #10b981; }
+        .status-card.warning { border-left-color: #f59e0b; }
+        .status-card.critical { border-left-color: #ef4444; }
+        .status-card.info { border-left-color: #3b82f6; }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .card-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            color: #cbd5e1;
+            letter-spacing: 0.05em;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-badge.healthy {
+            background: #10b981;
+            color: #fff;
+        }
+        .status-badge.warning {
+            background: #f59e0b;
+            color: #000;
+        }
+        .status-badge.critical {
+            background: #ef4444;
+            color: #fff;
+        }
+        .status-badge.info {
+            background: #3b82f6;
+            color: #fff;
+        }
+        .card-message {
+            font-size: 1.125rem;
+            color: #f8fafc;
+        }
+        .overall-status {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .overall-status.healthy { border: 2px solid #10b981; }
+        .overall-status.unhealthy { border: 2px solid #ef4444; }
+        .overall-status h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        .timestamp {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        .refresh-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+        .refresh-btn:hover {
+            background: #2563eb;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AHF System Monitoring</h1>
+        <p class="subtitle">Real-time system health dashboard</p>
+
+        <div id="overall" class="overall-status">
+            <div class="loading">Loading...</div>
+        </div>
+
+        <div id="checks" class="status-grid"></div>
+    </div>
+
+    <script>
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/api/monitoring/status.php');
+                const data = await response.json();
+                renderStatus(data);
+            } catch (error) {
+                document.getElementById('overall').innerHTML = `
+                    <h2 style="color: #ef4444;">Failed to load status</h2>
+                    <p>${error.message}</p>
+                    <button class="refresh-btn" onclick="fetchStatus()">Retry</button>
+                `;
+            }
+        }
+
+        function renderStatus(data) {
+            // Overall status
+            const overall = document.getElementById('overall');
+            const statusClass = data.status === 'healthy' ? 'healthy' : 'unhealthy';
+            const statusText = data.status === 'healthy' ? 'All Systems Operational' : 'Issues Detected';
+            const statusColor = data.status === 'healthy' ? '#10b981' : '#ef4444';
+
+            overall.className = `overall-status ${statusClass}`;
+            overall.innerHTML = `
+                <h2 style="color: ${statusColor};">${statusText}</h2>
+                <p class="timestamp">Last updated: ${new Date(data.timestamp).toLocaleString()}</p>
+                <button class="refresh-btn" onclick="fetchStatus()">Refresh</button>
+            `;
+
+            // Individual checks
+            const checks = document.getElementById('checks');
+            checks.innerHTML = '';
+
+            const checkNames = {
+                database: 'Database',
+                axtrax_api: 'AxTrax API',
+                payment_intents: 'Payment Intents',
+                recent_quickpays: 'QuickPay Payments (24h)',
+                recent_signups: 'New Signups (24h)',
+                abandoned_signups: 'Abandoned Signups',
+                axtrax_sync: 'AxTrax Sync'
+            };
+
+            Object.entries(data.checks).forEach(([key, check]) => {
+                const card = document.createElement('div');
+                card.className = `status-card ${check.status}`;
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="card-title">${checkNames[key] || key}</span>
+                        <span class="status-badge ${check.status}">${check.status.toUpperCase()}</span>
+                    </div>
+                    <div class="card-message">${check.message}</div>
+                `;
+                checks.appendChild(card);
+            });
+        }
+
+        // Auto-refresh every 30 seconds
+        fetchStatus();
+        setInterval(fetchStatus, 30000);
+    </script>
+</body>
+</html>
